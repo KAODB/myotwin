@@ -101,3 +101,25 @@ test('V92 (RAD on Mars, September 2017) and V93 (CRaTER layout) are verified, qu
   assert.equal(evidence.value('V93', 'tepZenithMm'), 53.992);
   assert.equal(evidence.value('V93', 'tepNadirMm'), 26.972);
 });
+
+test('V94-V96 (sarcopenia consensus tools and phase angle review) are verified, quoted and carry their cut-offs', () => {
+  for (const id of ['V94', 'V95', 'V96']) {
+    const it = evidence.get(id);
+    assert.equal(it.status, 'verified', id);
+    assert.equal(it.topic, 'muscle', id);
+    assert.ok(it.quote && it.quote.length > 100, id + ' needs a quote');
+  }
+  const v94 = evidence.get('V94').quote;
+  assert.ok(v94.includes('Find-Assess-Confirm-Severity') && v94.includes('SARC-F') && v94.includes('grip strength and chair stand') && v94.includes('DXA and BIA'));
+  assert.deepStrictEqual([evidence.value('V94', 'lowGripMenBelowKg'), evidence.value('V94', 'lowGripWomenBelowKg'), evidence.value('V94', 'lowChairStandFiveRisesAboveSec')], [27, 16, 15]);
+  assert.equal(evidence.value('V94', 'lowAsmPerHeight2WomenBelowKgM2'), 5.5);
+  assert.equal(evidence.value('V94', 'calfCircumferenceProxyBelowCm'), 31);
+  const v95 = evidence.get('V95').quote;
+  assert.ok(v95.includes('calf circumference (<34 cm in men, <33 cm in women)') && v95.includes('SARC-CalF (≥11)') && v95.includes('bioimpedance'));
+  assert.deepStrictEqual([evidence.value('V95', 'calfCircumferenceMenBelowCm'), evidence.value('V95', 'calfCircumferenceWomenBelowCm')], [34, 33]);
+  assert.deepStrictEqual([evidence.value('V95', 'sarcFAtLeast'), evidence.value('V95', 'sarcCalFAtLeast')], [4, 11]);
+  assert.deepStrictEqual([evidence.value('V95', 'lowGripMenBelowKg'), evidence.value('V95', 'lowGripWomenBelowKg'), evidence.value('V95', 'lowChairStandFiveTimesAtLeastSec')], [28, 18, 12]);
+  assert.deepStrictEqual([evidence.value('V95', 'lowMuscleBiaMenBelowKgM2'), evidence.value('V95', 'lowMuscleBiaWomenBelowKgM2')], [7.0, 5.7]);
+  assert.ok(evidence.get('V96').quote.includes('PhA is decreased in sarcopenic subjects'));
+  assert.deepStrictEqual([evidence.value('V96', 'cutoffLowDeg'), evidence.value('V96', 'cutoffHighDeg')], [4.05, 5.05]);
+});
