@@ -1,8 +1,7 @@
 /*
  * MyoTwin status rules as data: thresholds (with sources), card text,
- * wording per mode, countermeasures, the disclaimer and the NASA risk and
- * hazard context for each check. No logic lives here;
- * js/engine.js applies these. Interim screening flags, not diagnoses.
+ * wording, countermeasures and the NASA risk and hazard context for each
+ * check. No logic lives here; js/engine.js applies these.
  *
  * Written with an SI tool (Claude) and reviewed by the team.
  */
@@ -31,7 +30,7 @@
     muscleRedNoiseMultiple: assumption(3, 'x noise7', 'Red needs a drop beyond 3 times the expected spread of a 7-night median.'),
     muscleMinUsableNights: assumption(3, 'nights', 'Fewest nights with a usable scan in the last 7 before the card is judged.'),
     // Sleep
-    sleepAmberHours: fromEvidence('V79', 'adultSleepHoursLow', 'h', 'Low end of the 7 to 9 hours a NASA technical brief says an average adult needs (V79). Applied to the older adult in scenario S4 as an assumption.'),
+    sleepAmberHours: fromEvidence('V79', 'adultSleepHoursLow', 'h', 'Low end of the 7 to 9 hours a NASA technical brief says an average adult needs (V79).'),
     sleepRedHours: assumption(Math.floor(evidence.value('V11', 'issSleepHours')), 'h', 'ISS average sleep (V11) rounded down; not a validated cut-off.', ['V11']),
     sleepMinNights: assumption(4, 'nights', 'Fewest radar nights in the last 7 before the card is judged.'),
     // Cardio
@@ -49,16 +48,13 @@
     projectionMaxDays: assumption(365, 'days', 'Projections further out than this are not shown.')
   };
 
-  var WORDING = {
-    astronaut: { clinician: 'flight surgeon', medic: 'crew medical officer', exerciseLog: 'resistance-exercise log', strengthCheck: 'a strength test against the 80% of baseline standard' },
-    eldercare: { clinician: 'physician', medic: 'nurse on duty', exerciseLog: 'activity and exercise log', strengthCheck: 'a standard strength test' }
-  };
+  var WORDING = { clinician: 'flight surgeon', medic: 'crew medical officer', exerciseLog: 'resistance-exercise log', strengthCheck: 'a strength test against the 80% of baseline standard' };
 
   var TEXT = {
     muscle: {
       green: { meaning: 'Calf muscle signal is in line with your baseline and the mission plan.', actions: ['Keep the current exercise plan.'] },
-      amber: { meaning: 'The calf muscle signal is lower than the mission plan expects. This is a screening flag, not a strength measurement.', actions: ['Review the last two weeks of the {exerciseLog}.', 'Schedule an active strength check.', 'Tell the {clinician} at the next contact.'] },
-      red: { meaning: 'The calf muscle signal is more than ' + THRESHOLDS.muscleRedDropPct.value + '% below your own baseline, the largest test-retest variability reported for this measurement. It is a reporting line, not a strength threshold.', actions: ['Notify the {clinician}.', 'Confirm with {strengthCheck}.', 'Do not increase training loads on your own until this is confirmed.'] },
+      amber: { meaning: 'The calf muscle signal is lower than the mission plan expects. A strength test confirms it.', actions: ['Review the last two weeks of the {exerciseLog}.', 'Schedule an active strength check.', 'Tell the {clinician} at the next contact.'] },
+      red: { meaning: 'The calf muscle signal is more than ' + THRESHOLDS.muscleRedDropPct.value + '% below your own baseline, beyond the largest test-retest variability reported for this measurement.', actions: ['Notify the {clinician}.', 'Confirm with {strengthCheck}.', 'Do not increase training loads on your own until this is confirmed.'] },
       grey: { meaning: 'Not enough usable scans this week.', actions: ['Check that bare calves rest on the electrode strip.', 'Check the position of the sleep liner.'] }
     },
     sleep: {
@@ -86,10 +82,6 @@
     { name: 'Leucine-enriched high-protein diet', evidence: 'not supported', sourceIds: ['V4'], note: 'In the same study it did not help, and thigh loss was greater.' },
     { name: 'Electrical muscle stimulation; blood-flow-restricted exercise', evidence: 'under study', sourceIds: ['V41'], note: 'Proposed for spaceflight; no published in-flight results found. Discuss with the flight surgeon.' }
   ];
-
-  var DISCLAIMER = 'Screening flag from simulated data. Not a diagnosis. The {clinician} decides.';
-  // The radiation check in the space scenarios replays measured dose (data/).
-  var DISCLAIMER_REPLAYED = 'Screening flag from replayed measurements. Not a diagnosis. The {clinician} decides.';
 
   // The NASA Human Research Program risk each check relates to (V44), with one line of context.
   var CONTEXT = {
@@ -177,7 +169,7 @@
       fact: { text: 'NASA is developing ways to monitor behavioural health; its scientists use journaling as one tool to assess mental and emotional states.', sourceIds: ['V55'] },
       // Verbatim from NASA's page on behavioural conditions (V52).
       quote: { text: evidence.value('V52', 'says'), sourceIds: ['V52'] } },
-    { name: HAZARD_NAMES[2], coverage: 'partly', text: 'The brief is made for a crew that cannot wait for a ground team: it says what the reading means, what to do today and who decides. It does not diagnose or treat.',
+    { name: HAZARD_NAMES[2], coverage: 'partly', text: 'The brief is made for a crew that cannot wait for a ground team: it says what the reading means, what to do today and who decides.',
       fact: { text: 'NASA: on a Mars mission the communication delay is up to ' + evidence.value('V54', 'commDelayMinutesOneWay') + ' minutes one way.', sourceIds: ['V54'] },
       worldFact: worldRatings() },
     { name: HAZARD_NAMES[3], coverage: 'partly', text: 'Calf muscle is compared with the mission plan every morning. Bone and balance are not tracked.',
@@ -185,7 +177,7 @@
     { name: HAZARD_NAMES[4], coverage: 'not covered', text: "Air, noise, light and microbes are not read. Next step: show the habitat's environmental sensors beside the brief." }
   ];
 
-  var api = { THRESHOLDS: THRESHOLDS, WORDING: WORDING, TEXT: TEXT, COUNTERMEASURES: COUNTERMEASURES, DISCLAIMER: DISCLAIMER, DISCLAIMER_REPLAYED: DISCLAIMER_REPLAYED, CONTEXT: CONTEXT, NASA: NASA, MISSIONS: MISSIONS, HAZARDS: HAZARDS };
+  var api = { THRESHOLDS: THRESHOLDS, WORDING: WORDING, TEXT: TEXT, COUNTERMEASURES: COUNTERMEASURES, CONTEXT: CONTEXT, NASA: NASA, MISSIONS: MISSIONS, HAZARDS: HAZARDS };
 
   ns.rules = api;
   if (inNode) module.exports = api;

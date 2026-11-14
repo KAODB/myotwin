@@ -16,8 +16,9 @@ spends lying still. An assumed sensor panel in the bunk reads the calf muscle, s
 and breathing rate, and radiation overnight. In the morning one screen shows a
 body figure you can click, four checks in plain words, what NASA says about
 each risk, and what to do today. A flight surgeon decides; the software only
-flags. The same engine, with home wording, follows an older adult after a
-hospital stay.
+flags. The method comes from the tools clinics use to find muscle loss in
+older adults: a tape around the calf, a bioimpedance reading and a strength
+test.
 
 Ids such as (V85) are entries in [docs/EVIDENCE.md](docs/EVIDENCE.md).
 
@@ -30,8 +31,6 @@ Screenshots:
 ![Morning brief on Mars, day 45: the muscle card reports a decline beside the whole-body image and the sleep, heart and breathing, and radiation cards](demo/screenshots/brief-mars-day45.png)
 
 ![Whole-body image panel, density layer, change since arrival on Mars day 45](demo/screenshots/wholebody-density-diff.png)
-
-![Home wording for an older adult after a hospital stay, day 34: the muscle card is on watch](demo/screenshots/eldercare-day34.png)
 
 ## Run it
 

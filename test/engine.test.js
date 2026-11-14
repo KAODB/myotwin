@@ -209,7 +209,6 @@ test('headline: two ambers, red plus amber, the heart and breathing name, never 
   assert.equal(assessDay((d) => (d === 20 ? { radar: { sleep_h: 6.5 }, rad: { spe: true } } : { radar: { sleep_h: 6.5 } })).headline,
     'Report to the flight surgeon today: radiation. 1 check to watch: sleep.');
   assert.equal(assessDay(() => ({ radar: { hr_bpm: 58 } })).headline, '1 check to watch: heart and breathing.');
-  assert.equal(assessDay(tonightRad({ spe: true }), 20, { mode: 'eldercare' }).headline, 'Report to the physician today: radiation.');
 });
 
 // ---- phases never mix -------------------------------------------------------
@@ -243,24 +242,19 @@ test('windows on baseline nights use baseline nights only and do not say "since 
   assert.ok(!/arrival/.test(m.reason));
 });
 
-test('eldercare mode swaps the wording', () => {
+test('the crew wording fills the card text', () => {
   const shape = () => ({ eim: { phase50_deg: 8.6 } });
   const astro = card(assessDay(shape), 'muscle');
-  const elder = card(assessDay(shape, 20, { mode: 'eldercare' }), 'muscle');
   assert.equal(astro.decides, 'flight surgeon');
-  assert.equal(elder.decides, 'physician');
   assert.ok(astro.actions.some((s) => s.includes('resistance-exercise log')));
-  assert.ok(elder.actions.some((s) => s.includes('activity and exercise log')));
-  const red = card(assessDay(() => ({ eim: { phase50_deg: 7 } }), 20, { mode: 'eldercare' }), 'muscle');
-  assert.ok(red.actions.includes('Confirm with a standard strength test.'));
+  const red = card(assessDay(() => ({ eim: { phase50_deg: 7 } })), 'muscle');
+  assert.ok(red.actions.includes('Confirm with ' + rules.WORDING.strengthCheck + '.'));
 });
 
 test('no unfilled placeholders in any card text', () => {
-  for (const mode of Object.keys(rules.WORDING)) {
-    for (const shape of [() => ({}), () => ({ eim: { phase50_deg: 7 }, radar: { sleep_h: 5, hr_bpm: 70, rr_bpm: 20 }, rad: { spe: true } })]) {
-      for (const c of assessDay(shape, 20, { mode }).cards) {
-        assert.ok(!/[{}]/.test(c.meaning + c.actions.join(' ')), mode + ' ' + c.id);
-      }
+  for (const shape of [() => ({}), () => ({ eim: { phase50_deg: 7 }, radar: { sleep_h: 5, hr_bpm: 70, rr_bpm: 20 }, rad: { spe: true } })]) {
+    for (const c of assessDay(shape, 20).cards) {
+      assert.ok(!/[{}]/.test(c.meaning + c.actions.join(' ')), c.id);
     }
   }
 });

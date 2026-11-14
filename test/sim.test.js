@@ -6,7 +6,7 @@ const assert = require('node:assert');
 const model = require('../js/model.js');
 const sim = require('../js/sim.js');
 
-const NIGHTS = { S1: 60, S2: 90, S3: 45, S4: 63 };
+const NIGHTS = { S1: 60, S2: 90, S3: 45 };
 const surface = (recs) => recs.filter((r) => r.missionDay >= 0);
 const median = (a) => { const s = a.slice().sort((x, y) => x - y); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 
@@ -140,7 +140,6 @@ test('density image: exactly the solar-event and raised-dose nights of S3 are le
   assert.deepStrictEqual(out, [14, 15, 16, 17, 18, 20, 21, 22, 23, 24, 25, 26]);
   for (const s of ['S1', 'S2']) assert.ok(surface(sim.generate(s).records).every((r) => r._truth.tracksUsable === true), s);
   for (const s of ['S1', 'S2', 'S3']) assert.ok(sim.generate(s).records.filter((r) => r.missionDay < 0).every((r) => r._truth.tracksUsable === null), s);
-  assert.ok(sim.generate('S4').records.every((r) => r._truth.tracksUsable === null));
 });
 
 test('LRO CRaTER: D5&6 within 2% of D1&2 on quiet nights, about a quarter of it on 10 Sep 2017', () => {
@@ -168,10 +167,6 @@ test('S2 first surface night carries the 180-day transit loss', () => {
 test('S1 has null eim exactly on days 44-49', () => {
   const nulls = surface(sim.generate('S1').records).filter((r) => r.eim === null).map((r) => r.missionDay);
   assert.deepStrictEqual(nulls, [44, 45, 46, 47, 48, 49]);
-});
-
-test('S4 has rad null on every night', () => {
-  assert.ok(sim.generate('S4').records.every((r) => r.rad === null && r._truth.tracksPerCm2 === null));
 });
 
 test('what-if overrides change the outcome in the expected direction', () => {
@@ -220,10 +215,6 @@ test('S2 plan matches truth before the lapse and is above it by more than 3 poin
   assert.ok(plan.expectedChangePct[i42] - records[i42]._truth.muscleChangePct > 3);
 });
 
-test('S4 plan is 0 on every night', () => {
-  assert.ok(sim.generate('S4').plan.expectedChangePct.every((v) => v === 0));
-});
-
 test('exerciseAdherence override changes the truth but not the plan', () => {
   const a = sim.generate('S1');
   const b = sim.generate('S1', { exerciseAdherence: 0 });
@@ -235,7 +226,7 @@ const sd = (a) => { const m = a.reduce((x, y) => x + y, 0) / a.length; return Ma
 const baselineOf = (records, f) => records.filter((r) => r.missionDay < 0).map(f);
 
 test('inherited names are rejected with a clear error', () => {
-  for (const id of ['__proto__', 'constructor', 'toString', 'S9']) {
+  for (const id of ['__proto__', 'constructor', 'toString', 'S4', 'S9']) {
     assert.throws(() => sim.generate(id), /Unknown scenario/, id);
   }
 });
@@ -249,26 +240,16 @@ test('each scenario shows a different person', () => {
       assert.ok(Math.abs(m - scenario.person[k]) <= 0.03 * scenario.person[k], id + ' ' + k + ' ' + m);
       return m;
     });
-    assert.equal(new Set(meds).size, 4, k + ' ' + meds);
+    assert.equal(new Set(meds).size, 3, k + ' ' + meds);
   }
 });
 
 test('default seeds differ per scenario and opts.seed overrides', () => {
   const seeds = Object.keys(NIGHTS).map((id) => sim.SCENARIOS[id].seed);
-  assert.equal(new Set(seeds).size, 4);
+  assert.equal(new Set(seeds).size, 3);
   const s1 = sim.SCENARIOS.S1.seed;
   assert.deepStrictEqual(sim.generate('S1'), sim.generate('S1', { seed: s1 }));
   assert.notDeepStrictEqual(sim.generate('S1').records, sim.generate('S1', { seed: s1 + 1 }).records);
-});
-
-test('S4: 63 nights, at least 6% loss by night 34, recovering at the end, plan 0', () => {
-  const { records, plan } = sim.generate('S4');
-  const surf = surface(records);
-  assert.equal(surf.length, 63);
-  assert.ok(surf[34]._truth.muscleChangePct <= -6, String(surf[34]._truth.muscleChangePct));
-  assert.ok(surf[62]._truth.muscleChangePct > surf[61]._truth.muscleChangePct);
-  assert.ok(surf[62]._truth.muscleChangePct > surf[34]._truth.muscleChangePct);
-  assert.ok(plan.expectedChangePct.every((v) => v === 0));
 });
 
 test('eimNoiseSdFraction widens the baseline phase spread; out-of-range values are ignored', () => {
@@ -280,5 +261,5 @@ test('eimNoiseSdFraction widens the baseline phase spread; out-of-range values a
 });
 
 test('transitDays is exposed for the chart', () => {
-  assert.deepStrictEqual(Object.keys(NIGHTS).map((id) => sim.SCENARIOS[id].transitDays), [0, 180, 0, 0]);
+  assert.deepStrictEqual(Object.keys(NIGHTS).map((id) => sim.SCENARIOS[id].transitDays), [0, 180, 0]);
 });

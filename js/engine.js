@@ -233,9 +233,7 @@
   }
 
   function assess(records, index, opts) {
-    var mode = (opts && opts.mode) || 'astronaut';
-    var words = rules.WORDING[mode];
-    if (!words) throw new Error('Unknown mode: ' + mode);
+    var words = rules.WORDING;
     var recs = records.slice(0, index + 1);
     var rec = recs[index];
     if (!rec) throw new Error('No record at index ' + index);
@@ -256,7 +254,7 @@
     var recs = records.slice(0, index + 1);
     var b = baseline(recs);
     if (b.eim.median === null || !recs[index] || !surface(recs[index])) return null;
-    if (muscleCard(recs, index, b, rules.WORDING.astronaut).status === 'red') return null;
+    if (muscleCard(recs, index, b, rules.WORDING).status === 'red') return null;
     var pts = [];
     for (var k = 0; k < t('projectionWeeks'); k++) {
       var w = weeklyMedian(recs, index, k);

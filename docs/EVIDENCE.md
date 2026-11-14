@@ -625,11 +625,10 @@ another citation without opening the original; **fitted** means estimated from e
 | sleepEfficiency | 0.88 | 0..1 | assumption |  | Mean sleep efficiency. |
 | rrBpm | 14 | breaths/min | assumption |  | Default mean night respiratory rate; each scenario person overrides it. |
 | hrBpm | 54 | beats/min | assumption |  | Default mean night heart rate; each scenario person overrides it. |
-| personS1 | {"baselinePhaseDeg":9.2,"hrBpm":52,"rrBpm":13.5} | deg, beats/min, breaths/min | assumption |  | S1 crew member; values chosen so the four scenarios show different people. |
-| personS2 | {"baselinePhaseDeg":8.8,"hrBpm":56,"rrBpm":14.5} | deg, beats/min, breaths/min | assumption |  | S2 crew member; values chosen so the four scenarios show different people. |
-| personS3 | {"baselinePhaseDeg":9.5,"hrBpm":50,"rrBpm":13} | deg, beats/min, breaths/min | assumption |  | S3 crew member; values chosen so the four scenarios show different people. |
-| personS4 | {"baselinePhaseDeg":7.4,"hrBpm":64,"rrBpm":16} | deg, beats/min, breaths/min | assumption | V9 | S4 older adult. EIM phase falls with age (V9), so the baseline phase is lower; the value itself is an assumption. |
-| scenarioSeeds | {"S1":11,"S2":23,"S3":37,"S4":41} | seed | assumption |  | Default random seed per scenario so each scenario shows its own nights; opts.seed overrides. |
+| personS1 | {"baselinePhaseDeg":9.2,"hrBpm":52,"rrBpm":13.5} | deg, beats/min, breaths/min | assumption |  | S1 crew member; values chosen so the three scenarios show different people. |
+| personS2 | {"baselinePhaseDeg":8.8,"hrBpm":56,"rrBpm":14.5} | deg, beats/min, breaths/min | assumption |  | S2 crew member; values chosen so the three scenarios show different people. |
+| personS3 | {"baselinePhaseDeg":9.5,"hrBpm":50,"rrBpm":13} | deg, beats/min, breaths/min | assumption |  | S3 crew member; values chosen so the three scenarios show different people. |
+| scenarioSeeds | {"S1":11,"S2":23,"S3":37} | seed | assumption |  | Default random seed per scenario so each scenario shows its own nights; opts.seed overrides. |
 | eimNoiseSdMax | 0.2 | fraction of value | assumption |  | Largest accepted what-if EIM noise (opts.eimNoiseSdFraction); other values are ignored. |
 | movement | 0.2 | 0..1 | assumption |  | Mean movement index. |
 | sleepHoursPerNight | 8 | h | assumption |  | Hours of dose accumulation per sleep period. On Mars nights the replayed sol median dose rate is multiplied by it. |
@@ -647,9 +646,6 @@ another citation without opening the original; **fitted** means estimated from e
 | coneHalfAngleDeg | 20 | deg | assumption |  | Half-angle of the accepted track cone. |
 | s2TransitDays | 180 | days | assumption |  | Earth-Mars transit at g = 0 before the first surface night. |
 | s2TransitAdherence | 0.9 | fraction | assumption |  | Exercise adherence during the transit. |
-| s4LowActivityG | 0.6 | g equivalent | assumption |  | Five weeks of low activity after hospital discharge represented as partial unloading at g = 0.6. Not a sourced equivalence. |
-| s4LowActivityDays | 35 | days | assumption |  | Length of the low-activity period after discharge. |
-| s4SleepMeanH | 7.3 | h | assumption | V79 | S4 mean sleep. The 7 h line (V79) is stated for an average adult and may not apply to an older adult, so a permanently amber sleep card would mislead. |
 
 ### Simulator noise (`sim.NOISE`)
 

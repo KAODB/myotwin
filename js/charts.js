@@ -91,8 +91,8 @@
   // Perceptually ordered ramps built from the palette in css/style.css: 'heat' is a single-hue
   // ramp black - working blue - white; 'diverging' is blue - neutral - accent (safe for red-green
   // colour blindness), centred on 0 by the caller; 'gray' stays neutral. In a browser the stops
-  // are read from --map-heat and --map-diverging on <body>, so the home presentation gets its own
-  // blue and pink; these copies of the dark (space) values are used in Node and as a fallback.
+  // are read from --map-heat and --map-diverging on <body>; these copies of the same values are
+  // used in Node and as a fallback.
   var MAPS = {
     gray: [[12, 16, 24], [235, 239, 245]],
     heat: [[2, 7, 10], [1, 79, 117], [2, 151, 222], [166, 221, 245], [252, 255, 255]],

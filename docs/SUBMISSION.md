@@ -19,7 +19,7 @@ On the Moon or Mars a crew member has to notice changes in their own body. From 
 
 MyoTwin is a morning health brief built from the hours a crew member already spends lying still. A sensor panel in the bunk, which I assume and have not built, measures the calf muscle, sleep, heart and breathing rate, and radiation overnight. Nothing is worn and it takes no crew time. In the morning one screen shows a body figure you can click, four checks in plain words, what NASA says about each risk, and what to do today.
 
-The radiation numbers are real measurements replayed night by night: Curiosity's RAD on Mars and LRO's CRaTER at the Moon, including the solar storms of September 2017. The crew member's own readings are simulated, and every card says which kind it shows.
+The radiation numbers are real measurements replayed night by night: Curiosity's RAD on Mars and LRO's CRaTER at the Moon, including the solar storms of September 2017. The crew member's own readings are simulated, and the radiation card says where its number was measured.
 
 ## Link to Project Demo
 
@@ -45,9 +45,9 @@ Each morning MyoTwin answers three questions for the person who slept in the bun
 
 The body figure is the way in. Select the head, the chest or the calves to open that check, or the whole body for radiation. Each check shows its status in words (In range, Watch, Report, No data), what it means, what to do now and who decides. Below that comes the NASA context: the Human Research Program risk it relates to, NASA's rating of that risk for the mission selected, two sentences from NASA's own page on the risk, the NASA standard that applies, and one open NASA research gap.
 
-Every morning also brings a whole-body image in three layers: a density map made from the scattering of the cosmic rays that already pass through the sleeper, a pressure map, and the calf impedance. The density layer is experimental and is labelled that way.
+Every morning also brings a whole-body image in three layers: a density map made from the scattering of the cosmic rays that already pass through the sleeper, a pressure map, and the calf impedance. The density layer is experimental.
 
-There are four scenarios: a Moon base for 60 nights; the first 90 nights on Mars after a 180-day transit, with a three-week exercise lapse and a short illness; a Moon base during the solar particle events of September 2017; and an older adult at home after a hospital stay.
+There are three scenarios: a Moon base for 60 nights; the first 90 nights on Mars after a 180-day transit, with a three-week exercise lapse and a short illness; and a Moon base during the solar particle events of September 2017.
 
 ### How it works
 
@@ -86,9 +86,9 @@ In four ways, and the page keeps them apart.
 11. The transit. In weightlessness the sleeper does not rest on the panel, so MyoTwin starts at arrival (V42). Next: pair it with a worn sensor for the transit.
 12. Mood, air, noise and light are not read (V43). Next: show the habitat's environmental sensors beside the brief.
 
-### Use on Earth
+### Where the method comes from
 
-The Canadian Space Agency describes the effects seen in astronauts as "similar to accelerated aging and health problems caused by a sedentary lifestyle". The fourth scenario runs the same engine for an older adult at home after a hospital stay, with home wording and the spaceflight parts hidden.
+On Earth, clinics look for muscle loss in older adults with a few simple tools: a tape around the calf, a bioimpedance reading and a strength test. The Canadian Space Agency describes the effects seen in astronauts as "similar to accelerated aging and health problems caused by a sedentary lifestyle". MyoTwin takes those tools to the Moon and Mars. The calf is read by impedance every night instead of once in a clinic visit, and a strength test is asked for when the nightly reading falls behind the mission plan.
 
 ### Tools and languages
 
@@ -137,7 +137,7 @@ NASA ratings, standards and reports:
 Space agency partners:
 
 - **Canadian Space Agency, Monitoring radiation for astronaut health, 2026** (V46), a resource listed on the challenge page. Neutrons are about 30% of total radiation on the ISS; the CANS spectrometer is being developed to measure them. MyoTwin does not measure neutrons and says so. https://www.asc-csa.gc.ca/eng/news/articles/2026/2026-02-26-monitoring-radiation-astronaut-health.asp
-- **Canadian Space Agency, Why do we conduct science experiments in space?** (V47), a resource listed on the challenge page. The reason for the home scenario. https://www.asc-csa.gc.ca/eng/iss/science/why-do-we-conduct-science-experiments-in-space.asp
+- **Canadian Space Agency, Why do we conduct science experiments in space?** (V47), a resource listed on the challenge page. The reason tools built for older adults are the starting point. https://www.asc-csa.gc.ca/eng/iss/science/why-do-we-conduct-science-experiments-in-space.asp
 - **European Space Agency, MARES** (V89). The 200 kg dynamometer on the ISS, which ESA describes as too complex for everyday exercise. https://www.esa.int/Science_Exploration/Human_and_Robotic_Exploration/Columbus/Muscle_Atrophy_Research_and_Exercise_System
 - **University of Tsukuba-led study with JAXA, using JAXA's centrifuge on the ISS.** Tsuji R et al., Sci Adv 2026 (V6). In mice, 0.33 g preserved soleus size and 0.67 g was sufficient to maintain muscle function. Cited as the reason the gravity term is an adjustable assumption. https://doi.org/10.1126/sciadv.aed2258
 - **ESA muscle stimulation study (ongoing)** and Hackney KJ et al. 2012 (V41), read as search summaries only. Cited in the countermeasure list as under study. https://www.axiomspace.com/research/muscle-stimulation

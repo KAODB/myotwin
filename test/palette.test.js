@@ -1,5 +1,5 @@
 // Checks the colour scheme in css/style.css: every colour pair the page uses meets WCAG AA
-// in both presentations (space: :root, home: body.mode-eldercare), the accent colour stays
+// (the :root palette), the accent colour stays
 // reserved for Watch, Report and the attention headline, the old status colours are gone,
 // and js/charts.js builds its canvas colour scales from the same palette.
 // Written with an SI tool (Claude) and reviewed by the team.
@@ -21,7 +21,6 @@ function block(selector) {
   return vars;
 }
 const DARK = block(':root');
-const HOME = Object.assign({}, DARK, block('body.mode-eldercare'));
 
 function rgba(v) {
   let m = /^#([0-9a-f]{6})$/i.exec(v);
@@ -66,7 +65,7 @@ const PAIRS = [
   ['attention', ['attention-soft'], MARK, 'outline and ink of the Watch icon on its light tint']
 ];
 
-for (const [mode, P] of [['space (dark)', DARK], ['home (light)', HOME]]) {
+for (const [mode, P] of [['space (dark)', DARK]]) {
   test('contrast pairs meet WCAG AA: ' + mode, () => {
     const rows = [];
     for (const [fg, bgs, min, use] of PAIRS) {
@@ -82,9 +81,8 @@ for (const [mode, P] of [['space (dark)', DARK], ['home (light)', HOME]]) {
   });
 }
 
-test('the scheme uses the exact values of the two sets', () => {
+test('the scheme uses the exact values of the set', () => {
   assert.deepStrictEqual([DARK.bg, DARK.accent, DARK.attention].map((s) => s.toUpperCase()), ['#02070A', '#0297DE', '#FC734D']);
-  assert.deepStrictEqual([HOME.bg, HOME.accent, HOME.attention].map((s) => s.toUpperCase()), ['#FCFFFF', '#0593C6', '#D83995']);
 });
 
 test('the accent is reserved for Watch, Report and the attention headline', () => {
@@ -96,8 +94,8 @@ test('the accent is reserved for Watch, Report and the attention headline', () =
     assert.match(sel.trim(), allowed, 'accent used outside a Watch/Report rule: ' + sel.trim());
   }
   // The accent value itself appears only in the palette, never as a literal elsewhere.
-  const outside = css.replace(/:root \{[^}]*\}|body\.mode-eldercare \{[^}]*\}|\/\*[\s\S]*?\*\//g, '');
-  assert.doesNotMatch(outside, /#FC734D|#D83995|252,\s*115,\s*77|216,\s*57,\s*149/i);
+  const outside = css.replace(/:root \{[^}]*\}|\/\*[\s\S]*?\*\//g, '');
+  assert.doesNotMatch(outside, /#FC734D|252,\s*115,\s*77/i);
 });
 
 test('the old status and badge colours are gone', () => {
@@ -113,7 +111,7 @@ test('every palette variable is used', () => {
 });
 
 test('canvas colour scales come from the palette', () => {
-  for (const [mode, P] of [['space', DARK], ['home', HOME]]) {
+  for (const [mode, P] of [['space', DARK]]) {
     const heat = charts.parseStops(P['map-heat']), div = charts.parseStops(P['map-diverging']);
     assert.ok(heat && div, mode + ': --map-heat and --map-diverging parse');
     const hex = (c) => '#' + c.map((v) => v.toString(16).padStart(2, '0')).join('').toUpperCase();

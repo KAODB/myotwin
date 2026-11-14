@@ -16,18 +16,28 @@ const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 const H = new Function('sim', 'has', block + '\nreturn { parseHash, hashFor, scenarioChanges, WHATIF };')(sim, has);
 
 test('a plain link opens without the notice and is written back unchanged', () => {
-  const st = H.parseHash('#s=S3&d=20&layer=density&view=raw&mode=astronaut&card=radiation');
+  const st = H.parseHash('#s=S3&d=20&layer=density&view=raw&card=radiation');
   assert.strictEqual(st.rejected, false);
-  assert.strictEqual(H.hashFor(st), '#s=S3&d=20&layer=density&view=raw&mode=astronaut&card=radiation');
+  assert.strictEqual(H.hashFor(st), '#s=S3&d=20&layer=density&view=raw&card=radiation');
 });
 
-test('an old link with a mode that no longer matches the scenario opens without the notice', () => {
-  const st = H.parseHash('#s=S4&d=34&mode=astronaut&card=muscle');
-  assert.strictEqual(st.rejected, false);
-  assert.strictEqual(st.mode, 'eldercare');
-  assert.strictEqual(st.layer, 'pressure');
-  assert.strictEqual(H.parseHash('#s=S2&mode=eldercare').rejected, false);
+test('an old link with a mode opens without the notice; the mode is ignored and not written back', () => {
+  for (const m of ['astronaut', 'eldercare']) {
+    const st = H.parseHash('#s=S3&d=20&layer=density&view=raw&mode=' + m + '&card=radiation');
+    assert.strictEqual(st.rejected, false, m);
+    assert.ok(!('mode' in st), m);
+    assert.strictEqual(H.hashFor(st), '#s=S3&d=20&layer=density&view=raw&card=radiation', m);
+  }
   assert.strictEqual(H.parseHash('#s=S2&mode=pilot').rejected, true);   // not a mode at all
+});
+
+test('a link to the removed home scenario S4 shows the notice and the default view', () => {
+  const st = H.parseHash('#s=S4&d=34&mode=eldercare&card=sleep');
+  assert.strictEqual(st.rejected, true);
+  const def = H.parseHash('');
+  delete st.rejected; delete def.rejected;
+  assert.deepStrictEqual(st, def);
+  assert.strictEqual(H.hashFor(st), '#s=S2&d=42&layer=density&view=raw&card=muscle');
 });
 
 test('a repeated key shows the notice', () => {
@@ -42,31 +52,26 @@ test('really invalid values still show the notice', () => {
   }
 });
 
-test('in the home scenario ex, gs and sh are ignored and left out of the address', () => {
-  const st = H.parseHash('#s=S4&d=34&ex=0.5&gs=4&sh=0.6&nz=0.05');
+test('what-if values are kept in the address only when they differ from the default', () => {
+  const st = H.parseHash('#s=S1&d=30&ex=0.5&gs=4&sh=0.6&nz=0.05');
   assert.strictEqual(st.rejected, false);
-  assert.deepStrictEqual([st.ex, st.gs, st.sh], [H.WHATIF.ex.def, H.WHATIF.gs.def, H.WHATIF.sh.def]);
-  assert.strictEqual(st.nz, 0.05);                       // sensor noise applies at home too
-  assert.strictEqual(H.hashFor(st), '#s=S4&d=34&layer=pressure&view=raw&mode=eldercare&card=muscle&nz=0.05');
-  // A state carried over from a space scenario does not write them either.
-  assert.doesNotMatch(H.hashFor(Object.assign({}, st, { gs: 2, ex: 0.4, sh: 0.8 })), /gs=|ex=|sh=/);
-  // In a space scenario they stay.
-  assert.match(H.hashFor(H.parseHash('#s=S2&gs=2')), /&gs=2$/);
+  assert.strictEqual(H.hashFor(st), '#s=S1&d=30&layer=density&view=raw&card=muscle&ex=0.5&gs=4&sh=0.6&nz=0.05');
+  assert.strictEqual(H.hashFor(H.parseHash('#s=S2&gs=1')), '#s=S2&d=42&layer=density&view=raw&card=muscle');
 });
 
 test('each scenario remembers its own night, layer and view within the page session', () => {
   const mem = {};
   let st = H.parseHash('#s=S2&d=30');
-  // Mars day 30 -> Eldercare: the home scenario opens on its defaults (last night, pressure).
-  let ch = H.scenarioChanges(mem, st, 'S4');
-  assert.deepStrictEqual(ch, { s: 'S4', d: null, layer: 'pressure', view: 'raw' });
-  st = Object.assign({}, st, ch, { d: 50, view: 'diff' });
-  // -> back to Mars: day 30 and the density layer again, not day 42 or the home layer.
+  // Mars day 30 -> the solar-event Moon base: it opens on its defaults (last night, density).
+  let ch = H.scenarioChanges(mem, st, 'S3');
+  assert.deepStrictEqual(ch, { s: 'S3', d: null, layer: 'density', view: 'raw' });
+  st = Object.assign({}, st, ch, { d: 20, layer: 'pressure', view: 'diff' });
+  // -> back to Mars: day 30 and the density layer again, not day 42 or the S3 layer.
   ch = H.scenarioChanges(mem, st, 'S2');
   assert.deepStrictEqual(ch, { s: 'S2', d: 30, layer: 'density', view: 'raw' });
   st = Object.assign({}, st, ch);
-  // A space scenario never visited opens on its defaults, not on the home scenario's pressure layer.
+  // A scenario never visited opens on its defaults.
   assert.deepStrictEqual(H.scenarioChanges(mem, st, 'S1'), { s: 'S1', d: null, layer: 'density', view: 'raw' });
-  // The home scenario comes back as it was left.
-  assert.deepStrictEqual(H.scenarioChanges(mem, st, 'S4'), { s: 'S4', d: 50, layer: 'pressure', view: 'diff' });
+  // S3 comes back as it was left.
+  assert.deepStrictEqual(H.scenarioChanges(mem, st, 'S3'), { s: 'S3', d: 20, layer: 'pressure', view: 'diff' });
 });
