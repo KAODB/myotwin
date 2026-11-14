@@ -64,16 +64,17 @@
 
   var SCENARIOS = {
     S1: {
-      id: 'S1', title: 'Moon base, 60 nights', env: 'moon', baselineNights: 14, sleepMeanH: 7.3,
+      id: 'S1', title: 'Moon base, 60 nights', env: 'moon', baselineNights: 14, sleepMeanH: 7.5,
       summary: 'Sixty nights at a lunar base with full exercise; a week of poor sleep and a misplaced EIM liner. All data are simulated.',
       phases: [{ days: 60, g: G.moon, exerciseAdherence: 1 }],
+      planPhases: [{ days: 60, g: G.moon, exerciseAdherence: 1 }],
       events: [
         { from: 30, to: 36, label: 'Poor sleep', sleepMeanH: 5.5 },
         { from: 44, to: 49, label: 'EIM liner misplaced', eimMissing: true }
       ]
     },
     S2: {
-      id: 'S2', title: 'Mars surface, first 90 nights', env: 'mars', baselineNights: 14, sleepMeanH: 6.7,
+      id: 'S2', title: 'Mars surface, first 90 nights', env: 'mars', baselineNights: 14, sleepMeanH: 7.4,
       summary: 'The first 90 nights on Mars after a 180-day transit, with a three-week exercise lapse and a short illness. All data are simulated.',
       phases: [
         { days: ASSUMPTIONS.s2TransitDays.value, g: G.microgravity, exerciseAdherence: ASSUMPTIONS.s2TransitAdherence.value, transit: true },
@@ -81,15 +82,20 @@
         { days: 21, g: G.mars, exerciseAdherence: 0 },
         { days: 47, g: G.mars, exerciseAdherence: 1 }
       ],
+      planPhases: [
+        { days: ASSUMPTIONS.s2TransitDays.value, g: G.microgravity, exerciseAdherence: ASSUMPTIONS.s2TransitAdherence.value, transit: true },
+        { days: 90, g: G.mars, exerciseAdherence: 1 }
+      ],
       events: [
         { from: 22, to: 42, label: 'Exercise lapse' },
         { from: 60, to: 63, label: 'Illness', rrAddBpm: 3, hrAddBpm: 9 }
       ]
     },
     S3: {
-      id: 'S3', title: 'Moon base, solar particle event', env: 'moon', baselineNights: 14, sleepMeanH: 7.2,
+      id: 'S3', title: 'Moon base, solar particle event', env: 'moon', baselineNights: 14, sleepMeanH: 7.5,
       summary: 'Forty-five nights at a lunar base with a solar particle event on night 20. All data are simulated.',
       phases: [{ days: 45, g: G.moon, exerciseAdherence: 1 }],
+      planPhases: [{ days: 45, g: G.moon, exerciseAdherence: 1 }],
       events: [
         { from: 20, to: 20, label: 'Solar particle event', doseFactor: 40, spe: true },
         { from: 21, to: 21, label: 'Event tail', doseFactor: 4 }
@@ -102,6 +108,7 @@
         { days: 28, g: ASSUMPTIONS.s4LowActivityG.value, exerciseAdherence: 0 },
         { days: 28, g: G.earth, exerciseAdherence: 0 }
       ],
+      planPhases: [{ days: 56, g: G.earth, exerciseAdherence: 0 }],
       events: []
     }
   };
@@ -142,6 +149,9 @@
         { days: p.days, g: p.g, exerciseAdherence: opts.exerciseAdherence };
     });
     var muscle = model.simulate(phases, { gravityShape: opts.gravityShape });
+    // The plan is the scenario as intended, so the adherence override does not touch it.
+    var planMuscle = model.simulate(sc.planPhases, { gravityShape: opts.gravityShape });
+    var planTransitDays = sc.planPhases.reduce(function (t, p) { return t + (p.transit ? p.days : 0); }, 0);
     var transitDays = 0, dayAdherence = [];
     phases.forEach(function (p) {
       if (p.transit) { transitDays += p.days; return; }
@@ -156,7 +166,7 @@
     for (var s = 0; s < 8; s++) sectorWeight.push(s === A.hotSectorIndex.value ? 1 + A.hotSectorExcess.value : 1);
     var weightSum = sectorWeight.reduce(function (x, y) { return x + y; }, 0);
 
-    var records = [];
+    var records = [], expected = [];
     var base = A.baselineNights.value;
     for (var k = 0; k < base + dayAdherence.length; k++) {
       var md = k - base;
@@ -206,6 +216,7 @@
         spe: !!ev.spe
       } : null;
 
+      expected.push(surf ? round(planMuscle[planTransitDays + md + 1], 3) : 0);
       records.push({
         night: isoDay(surf ? k + transitDays : k),
         missionDay: md,
@@ -220,7 +231,7 @@
         }
       });
     }
-    return { scenario: sc, records: records };
+    return { scenario: sc, records: records, plan: { expectedChangePct: expected } };
   }
 
   var api = { SCENARIOS: SCENARIOS, ASSUMPTIONS: ASSUMPTIONS, NOISE: NOISE, generate: generate };
