@@ -21,15 +21,21 @@
   var ASSUMPTIONS = {
     baselineNights: a(14, 'nights', 'Pre-departure baseline nights on Earth (missionDay -14 .. -1).'),
     firstNightIso: a('2031-01-01', 'ISO date', 'Date of the first baseline night; any date works.'),
-    baselinePhaseDeg: a(9.0, 'deg', 'Baseline 50 kHz EIM phase of the calf; same order as the 9.46 deg uncasted leg in V8.', ['V8']),
+    baselinePhaseDeg: a(9.0, 'deg', 'Default baseline 50 kHz EIM phase of the calf; same order as the 9.46 deg uncasted leg in V8. Each scenario person overrides it.', ['V8']),
     arrivalFluidOffsetPct: a(-1.0, '% of phase', 'Offset on moon and mars nights for changed fluid distribution under partial gravity; size assumed. Bioimpedance is fluid-sensitive (V28).', ['V28']),
     contactMin: a(0.6, '0..1', 'Lowest contact quality of a usable scan (contract: usable = contact >= 0.6).'),
     contactMax: a(0.95, '0..1', 'Highest simulated contact quality.'),
     scansMin: a(3, 'scans', 'Fewest usable EIM scans per night.'),
     scansMax: a(6, 'scans', 'Most usable EIM scans per night.'),
     sleepEfficiency: a(0.88, '0..1', 'Mean sleep efficiency.'),
-    rrBpm: a(14, 'breaths/min', 'Mean night respiratory rate.'),
-    hrBpm: a(54, 'beats/min', 'Mean night heart rate.'),
+    rrBpm: a(14, 'breaths/min', 'Default mean night respiratory rate; each scenario person overrides it.'),
+    hrBpm: a(54, 'beats/min', 'Default mean night heart rate; each scenario person overrides it.'),
+    personS1: a({ baselinePhaseDeg: 9.2, hrBpm: 52, rrBpm: 13.5 }, 'deg, beats/min, breaths/min', 'S1 crew member; values chosen so the four scenarios show different people.'),
+    personS2: a({ baselinePhaseDeg: 8.8, hrBpm: 56, rrBpm: 14.5 }, 'deg, beats/min, breaths/min', 'S2 crew member; values chosen so the four scenarios show different people.'),
+    personS3: a({ baselinePhaseDeg: 9.5, hrBpm: 50, rrBpm: 13 }, 'deg, beats/min, breaths/min', 'S3 crew member; values chosen so the four scenarios show different people.'),
+    personS4: a({ baselinePhaseDeg: 7.4, hrBpm: 64, rrBpm: 16 }, 'deg, beats/min, breaths/min', 'S4 older adult. EIM phase falls with age (V9), so the baseline phase is lower; the value itself is an assumption.', ['V9']),
+    scenarioSeeds: a({ S1: 11, S2: 23, S3: 37, S4: 41 }, 'seed', 'Default random seed per scenario so each scenario shows its own nights; opts.seed overrides.'),
+    eimNoiseSdMax: a(0.2, 'fraction of value', 'Largest accepted what-if EIM noise (opts.eimNoiseSdFraction); other values are ignored.'),
     movement: a(0.2, '0..1', 'Mean movement index.'),
     sleepHoursPerNight: a(8, 'h', 'Hours of dose accumulation per sleep period.'),
     shieldingFactor: a(1, 'fraction', 'Default multiplier on dose and tracks for habitat shielding at the sleep station (1 = as measured by the surface instrument).'),
@@ -40,11 +46,13 @@
     coneHalfAngleDeg: a(20, 'deg', 'Half-angle of the accepted track cone.'),
     s2TransitDays: a(180, 'days', 'Earth-Mars transit at g = 0 before the first surface night.'),
     s2TransitAdherence: a(0.9, 'fraction', 'Exercise adherence during the transit.'),
-    s4LowActivityG: a(0.7, 'g equivalent', 'Low activity after hospital discharge represented as partial unloading. Not a sourced equivalence.')
+    s4LowActivityG: a(0.6, 'g equivalent', 'Five weeks of low activity after hospital discharge represented as partial unloading at g = 0.6. Not a sourced equivalence.'),
+    s4LowActivityDays: a(35, 'days', 'Length of the low-activity period after discharge.'),
+    s4SleepMeanH: a(7.3, 'h', 'S4 mean sleep. The 7 h recommendation (V25) was written for adults in general and may not apply to an older adult, so a permanently amber sleep card would mislead.', ['V25'])
   };
 
   var NOISE = {
-    eimPhaseSdFraction: { value: 0.02, unit: 'fraction of value', status: 'assumption', note: 'Night-to-night SD of the EIM phase (median of several scans).' },
+    eimPhaseSdFraction: { value: 0.02, unit: 'fraction of value', status: 'assumption', note: 'Night-to-night SD of the EIM phase. Operator-applied EIM varies by 4.2% between sessions (V10). A night gives several scans and their median is used, so 2% is assumed. A bed-integrated sensor may be noisier; use the what-if to see the effect.' },
     sleepHoursSd: { value: 0.4, unit: 'h', status: 'assumption', note: 'Night-to-night SD of hours asleep.' },
     sleepEfficiencySd: { value: 0.04, unit: '0..1', status: 'assumption', note: 'Night-to-night SD of sleep efficiency.' },
     rrSd: { value: 0.5, unit: 'breaths/min', status: 'assumption', note: 'Night-to-night SD of the respiratory-rate median.' },
@@ -64,7 +72,8 @@
 
   var SCENARIOS = {
     S1: {
-      id: 'S1', title: 'Moon base, 60 nights', env: 'moon', baselineNights: 14, sleepMeanH: 7.5,
+      id: 'S1', title: 'Moon base, 60 nights', env: 'moon', baselineNights: 14, transitDays: 0, sleepMeanH: 7.5,
+      person: ASSUMPTIONS.personS1.value, seed: ASSUMPTIONS.scenarioSeeds.value.S1,
       summary: 'Sixty nights at a lunar base with full exercise; a week of poor sleep and a misplaced EIM liner. All data are simulated.',
       phases: [{ days: 60, g: G.moon, exerciseAdherence: 1 }],
       planPhases: [{ days: 60, g: G.moon, exerciseAdherence: 1 }],
@@ -74,7 +83,8 @@
       ]
     },
     S2: {
-      id: 'S2', title: 'Mars surface, first 90 nights', env: 'mars', baselineNights: 14, sleepMeanH: 7.4,
+      id: 'S2', title: 'Mars surface, first 90 nights', env: 'mars', baselineNights: 14, transitDays: ASSUMPTIONS.s2TransitDays.value, sleepMeanH: 7.4,
+      person: ASSUMPTIONS.personS2.value, seed: ASSUMPTIONS.scenarioSeeds.value.S2,
       summary: 'The first 90 nights on Mars after a 180-day transit, with a three-week exercise lapse and a short illness. All data are simulated.',
       phases: [
         { days: ASSUMPTIONS.s2TransitDays.value, g: G.microgravity, exerciseAdherence: ASSUMPTIONS.s2TransitAdherence.value, transit: true },
@@ -92,8 +102,9 @@
       ]
     },
     S3: {
-      id: 'S3', title: 'Moon base, solar particle event', env: 'moon', baselineNights: 14, sleepMeanH: 7.5,
-      summary: 'Forty-five nights at a lunar base with a solar particle event on night 20. All data are simulated.',
+      id: 'S3', title: 'Moon base, solar particle event', env: 'moon', baselineNights: 14, transitDays: 0, sleepMeanH: 7.5,
+      person: ASSUMPTIONS.personS3.value, seed: ASSUMPTIONS.scenarioSeeds.value.S3,
+      summary: 'Forty-five nights at a lunar base with a solar particle event on night 20; the scenario places thinner shielding on one side. All data are simulated.',
       phases: [{ days: 45, g: G.moon, exerciseAdherence: 1 }],
       planPhases: [{ days: 45, g: G.moon, exerciseAdherence: 1 }],
       events: [
@@ -102,13 +113,15 @@
       ]
     },
     S4: {
-      id: 'S4', title: 'Earth, older adult after hospital discharge', env: 'earth', baselineNights: 14, sleepMeanH: 6.4,
-      summary: 'Eight weeks at home after discharge: four weeks of low activity, modelled as partial unloading (g = 0.7, an assumption), then normal activity. All data are simulated.',
+      id: 'S4', title: 'Earth, older adult after hospital discharge', env: 'earth', baselineNights: 14, transitDays: 0,
+      sleepMeanH: ASSUMPTIONS.s4SleepMeanH.value,
+      person: ASSUMPTIONS.personS4.value, seed: ASSUMPTIONS.scenarioSeeds.value.S4,
+      summary: 'Nine weeks at home after discharge: five weeks of low activity, modelled as partial unloading (g = 0.6, an assumption, not a sourced equivalence), then four weeks of normal activity. All data are simulated.',
       phases: [
-        { days: 28, g: ASSUMPTIONS.s4LowActivityG.value, exerciseAdherence: 0 },
+        { days: ASSUMPTIONS.s4LowActivityDays.value, g: ASSUMPTIONS.s4LowActivityG.value, exerciseAdherence: 0 },
         { days: 28, g: G.earth, exerciseAdherence: 0 }
       ],
-      planPhases: [{ days: 56, g: G.earth, exerciseAdherence: 0 }],
+      planPhases: [{ days: ASSUMPTIONS.s4LowActivityDays.value + 28, g: G.earth, exerciseAdherence: 0 }],
       events: []
     }
   };
@@ -133,15 +146,17 @@
 
   function generate(scenarioId, opts) {
     opts = opts || {};
+    if (!Object.prototype.hasOwnProperty.call(SCENARIOS, scenarioId)) throw new Error('Unknown scenario: ' + scenarioId);
     var sc = SCENARIOS[scenarioId];
-    if (!sc) throw new Error('Unknown scenario: ' + scenarioId);
-    var rand = mulberry32(opts.seed == null ? 1 : opts.seed);
+    var rand = mulberry32(opts.seed == null ? sc.seed : opts.seed);
     var normal = function () {
       return Math.sqrt(-2 * Math.log(1 - rand())) * Math.cos(2 * Math.PI * rand());
     };
     var A = ASSUMPTIONS, N = NOISE;
     var shield = opts.shieldingFactor == null ? A.shieldingFactor.value : opts.shieldingFactor;
     var sleepMean = opts.sleepOpportunityH == null ? sc.sleepMeanH : opts.sleepOpportunityH;
+    var e = opts.eimNoiseSdFraction;
+    var eimSd = typeof e === 'number' && e >= 0 && e <= A.eimNoiseSdMax.value ? e : N.eimPhaseSdFraction.value;
 
     // Overrides apply to surface phases only, not to the S2 transit.
     var phases = sc.phases.map(function (p) {
@@ -187,9 +202,9 @@
         dose: normal(), dir: sectorWeight.map(normal), exercise: rand()
       };
 
-      var phase = model.eimPhase(A.baselinePhaseDeg.value, change) *
+      var phase = model.eimPhase(sc.person.baselinePhaseDeg, change) *
         (env === 'moon' || env === 'mars' ? 1 + A.arrivalFluidOffsetPct.value / 100 : 1) *
-        (1 + N.eimPhaseSdFraction.value * u.phase);
+        (1 + eimSd * u.phase);
       var eim = ev.eimMissing ? null : {
         site: 'calf_L',
         phase50_deg: round(phase, 3),
@@ -200,8 +215,8 @@
       var radar = {
         sleep_h: round(clamp((ev.sleepMeanH == null ? sleepMean : ev.sleepMeanH) + N.sleepHoursSd.value * u.sleep, 'sleep_h'), 2),
         efficiency: round(clamp(A.sleepEfficiency.value + N.sleepEfficiencySd.value * u.eff, 'efficiency'), 3),
-        rr_bpm: round(clamp(A.rrBpm.value + (ev.rrAddBpm || 0) + N.rrSd.value * u.rr, 'rr_bpm'), 1),
-        hr_bpm: round(clamp(A.hrBpm.value + (ev.hrAddBpm || 0) + N.hrSd.value * u.hr, 'hr_bpm'), 1),
+        rr_bpm: round(clamp(sc.person.rrBpm + (ev.rrAddBpm || 0) + N.rrSd.value * u.rr, 'rr_bpm'), 1),
+        hr_bpm: round(clamp(sc.person.hrBpm + (ev.hrAddBpm || 0) + N.hrSd.value * u.hr, 'hr_bpm'), 1),
         movement: round(clamp(A.movement.value + N.movementSd.value * u.mov, 'movement'), 3)
       };
 

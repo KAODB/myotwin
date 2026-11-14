@@ -6,7 +6,7 @@ const assert = require('node:assert');
 const model = require('../js/model.js');
 const sim = require('../js/sim.js');
 
-const NIGHTS = { S1: 60, S2: 90, S3: 45, S4: 56 };
+const NIGHTS = { S1: 60, S2: 90, S3: 45, S4: 63 };
 const surface = (recs) => recs.filter((r) => r.missionDay >= 0);
 
 function assertNoNaN(v, path) {
@@ -126,4 +126,57 @@ test('exerciseAdherence override changes the truth but not the plan', () => {
   const b = sim.generate('S1', { exerciseAdherence: 0 });
   assert.notDeepStrictEqual(b.records.map((r) => r._truth.muscleChangePct), a.records.map((r) => r._truth.muscleChangePct));
   assert.deepStrictEqual(b.plan, a.plan);
+});
+
+const median = (a) => { const s = a.slice().sort((x, y) => x - y); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+const sd = (a) => { const m = a.reduce((x, y) => x + y, 0) / a.length; return Math.sqrt(a.reduce((x, y) => x + (y - m) ** 2, 0) / (a.length - 1)); };
+const baselineOf = (records, f) => records.filter((r) => r.missionDay < 0).map(f);
+
+test('inherited names are rejected with a clear error', () => {
+  for (const id of ['__proto__', 'constructor', 'toString', 'S9']) {
+    assert.throws(() => sim.generate(id), /Unknown scenario/, id);
+  }
+});
+
+test('each scenario shows a different person', () => {
+  const keys = { baselinePhaseDeg: (r) => r.eim.phase50_deg, hrBpm: (r) => r.radar.hr_bpm, rrBpm: (r) => r.radar.rr_bpm };
+  for (const [k, f] of Object.entries(keys)) {
+    const meds = Object.keys(NIGHTS).map((id) => {
+      const { scenario, records } = sim.generate(id);
+      const m = median(baselineOf(records, f));
+      assert.ok(Math.abs(m - scenario.person[k]) <= 0.03 * scenario.person[k], id + ' ' + k + ' ' + m);
+      return m;
+    });
+    assert.equal(new Set(meds).size, 4, k + ' ' + meds);
+  }
+});
+
+test('default seeds differ per scenario and opts.seed overrides', () => {
+  const seeds = Object.keys(NIGHTS).map((id) => sim.SCENARIOS[id].seed);
+  assert.equal(new Set(seeds).size, 4);
+  const s1 = sim.SCENARIOS.S1.seed;
+  assert.deepStrictEqual(sim.generate('S1'), sim.generate('S1', { seed: s1 }));
+  assert.notDeepStrictEqual(sim.generate('S1').records, sim.generate('S1', { seed: s1 + 1 }).records);
+});
+
+test('S4: 63 nights, at least 6% loss by night 34, recovering at the end, plan 0', () => {
+  const { records, plan } = sim.generate('S4');
+  const surf = surface(records);
+  assert.equal(surf.length, 63);
+  assert.ok(surf[34]._truth.muscleChangePct <= -6, String(surf[34]._truth.muscleChangePct));
+  assert.ok(surf[62]._truth.muscleChangePct > surf[61]._truth.muscleChangePct);
+  assert.ok(surf[62]._truth.muscleChangePct > surf[34]._truth.muscleChangePct);
+  assert.ok(plan.expectedChangePct.every((v) => v === 0));
+});
+
+test('eimNoiseSdFraction widens the baseline phase spread; out-of-range values are ignored', () => {
+  const spread = (o) => sd(baselineOf(sim.generate('S1', o).records, (r) => r.eim.phase50_deg));
+  assert.ok(spread({ eimNoiseSdFraction: 0.06 }) > 2 * spread({}));
+  for (const bad of [-0.1, 0.5, '0.06', NaN]) {
+    assert.deepStrictEqual(sim.generate('S1', { eimNoiseSdFraction: bad }), sim.generate('S1'), String(bad));
+  }
+});
+
+test('transitDays is exposed for the chart', () => {
+  assert.deepStrictEqual(Object.keys(NIGHTS).map((id) => sim.SCENARIOS[id].transitDays), [0, 180, 0, 0]);
 });
