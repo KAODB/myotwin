@@ -280,8 +280,8 @@
     // ---- Cosmic-ray scattering image -----------------------------------------
     {
       id: 'V31', topic: 'imaging', status: 'verified', level: 'reference-table',
-      claim: 'Radiation lengths: water 36.08 cm, skeletal muscle 35.14 cm, adipose tissue 45.36 cm, compact bone 16.48 cm, cortical bone 14.82 cm.',
-      values: { waterCm: 36.08, muscleCm: 35.14, adiposeCm: 45.36, compactBoneCm: 16.48, corticalBoneCm: 14.82 },
+      claim: 'Radiation lengths: water 36.08 cm, skeletal muscle 35.14 cm, adipose tissue 45.36 cm, compact bone 16.48 cm, cortical bone 14.82 cm. Densities: muscle 1.040 g/cm3, compact bone 1.850 g/cm3.',
+      values: { waterCm: 36.08, muscleCm: 35.14, adiposeCm: 45.36, compactBoneCm: 16.48, corticalBoneCm: 14.82, muscleDensityGPerCm3: 1.040, compactBoneDensityGPerCm3: 1.850 },
       quote: null,
       source: 'Particle Data Group, Atomic and Nuclear Properties of Materials (2024)',
       url: 'https://pdg.lbl.gov/2024/AtomicNuclearProperties/'
