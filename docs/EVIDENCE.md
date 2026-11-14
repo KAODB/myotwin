@@ -634,7 +634,7 @@ another citation without opening the original; **fitted** means estimated from e
 | s2TransitAdherence | 0.9 | fraction | assumption |  | Exercise adherence during the transit. |
 | s4LowActivityG | 0.6 | g equivalent | assumption |  | Five weeks of low activity after hospital discharge represented as partial unloading at g = 0.6. Not a sourced equivalence. |
 | s4LowActivityDays | 35 | days | assumption |  | Length of the low-activity period after discharge. |
-| s4SleepMeanH | 7.3 | h | assumption | V25 | S4 mean sleep. The 7 h recommendation (V25) was written for adults in general and may not apply to an older adult, so a permanently amber sleep card would mislead. |
+| s4SleepMeanH | 7.3 | h | assumption | V79 | S4 mean sleep. The 7 h line (V79) is stated for an average adult and may not apply to an older adult, so a permanently amber sleep card would mislead. |
 
 ### Simulator noise (`sim.NOISE`)
 

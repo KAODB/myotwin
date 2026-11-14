@@ -197,6 +197,17 @@ On a grey card `extra` holds whatever is known and null for the rest.
   Program risk the check relates to, read from evidence V44; `note` is one sentence backed by `sourceIds`.
 - `rules.HAZARDS` : five `{ name, coverage: 'covered' | 'partly' | 'not covered', text }` rows,
   in the order and with the names of evidence V43 (NASA's five hazards of human spaceflight).
+  The first four rows also carry `fact: { text, sourceIds }`, one statement from NASA's hazard page;
+  "Distance from Earth" adds `worldFact: { moon, mars }` (NASA's ratings for that mission type, V74 and V75).
+- `rules.MISSIONS` : `{ moon, mars }`, each `{ prefix, label }`: the Human Research Roadmap mission type used
+  for that world (`lunarSurfaceLong`, a long lunar-surface mission; `marsPlanetary`, a Mars planetary mission).
+- `rules.NASA[cardId]` : NASA's material for each check, built from evidence values:
+  `{ risk, riskSourceIds, roadmapId, ratings: { moon, mars } (each { code, disposition, text }), scale, lastPublished,
+  riskPageId, says, canBeDone, standard: [{ text, sourceIds }], gap: { id, text } }`. Ratings are the in-mission
+  (operations) rating, except radiation, which shows the long-term health rating (its operations rating is 1x1).
+  `says` and `canBeDone` are verbatim sentences from the NASA risk page (V48 to V51). Shown in the space scenarios only.
+- `rules.DISCLAIMER` and `rules.DISCLAIMER_REPLAYED` : the line under "What it means"; the second is used for the
+  radiation check in the space scenarios, whose dose is replayed from measurements.
 - `rules.WORDING[mode]` : terms that differ between `'astronaut'` and `'eldercare'`
   (for example who decides).
 - `engine.baseline(records) -> { eim: { median, sd, n }, sleep: {...}, rr: {...}, hr: {...} }`
@@ -235,7 +246,8 @@ shared and captured:
 `#s=S2&d=45&layer=density&view=raw&mode=astronaut&card=muscle`
 
 - `s` scenario id, `d` mission day, `layer` image layer (`density|pressure|impedance`),
-  `view` (`raw|diff`), `mode` (`astronaut|eldercare`), `card` selected trend card.
+  `view` (`raw|diff`), `mode` (`astronaut|eldercare`), `card` selected trend card (set by a card or by its hotspot on the body figure;
+  both give the same state and address).
 - `mode` follows the scenario: `eldercare` exactly when `s=S4`, otherwise `astronaut`. It is
   written to the address for readability; a valid `mode` in an older link is accepted and ignored.
 - Any value in the address that is unknown, rejected or changed to fit (for example a day outside
@@ -277,7 +289,7 @@ itself exceeds the red limit. A slow decline that follows the plan stays green; 
 faster than the plan turns amber; a large decline is red whatever the plan says. An earlier
 draft also turned red after three falling weeks; that rule fired during normal adaptation
 and was removed on 2026-11-14.
-4.2% and 16.8% are evidence V10; 7 h is V25; 6 h is the ISS average in V11 rounded down.
+4.2% and 16.8% are evidence V10; 7 h is the low end of the 7 to 9 hours in a NASA technical brief (V79); 6 h is the ISS average in V11 rounded down.
 
 Green is anything that is neither amber, red nor grey.
 

@@ -46,3 +46,143 @@ test('each HAZARDS row has the literal name and text about its own subject', () 
     assert.match(h.text, HAZARD_SUBJECTS[i], h.name + ' text');
   });
 });
+
+// ---- NASA context per check (rules.NASA) and the sleep line from a NASA brief ----
+const ROADMAP = { muscle: 'V70', sleep: 'V71', cardio: 'V72', radiation: 'V73' };
+const RISK_PAGE = { muscle: 'V48', sleep: 'V49', cardio: 'V50', radiation: 'V51' };
+const PREFIX = { moon: 'lunarSurfaceLong', mars: 'marsPlanetary' };
+const ids = (s) => s.match(/\bV\d+\b/g) || [];
+
+test('every evidence id used by rules.NASA and the hazard facts exists', () => {
+  const used = [];
+  for (const id of CARDS) {
+    const n = rules.NASA[id];
+    used.push(n.roadmapId, n.riskPageId, ...n.riskSourceIds);
+    for (const s of n.standard) used.push(...s.sourceIds);
+  }
+  for (const h of rules.HAZARDS) {
+    if (h.fact) used.push(...h.fact.sourceIds);
+    if (h.worldFact) for (const w of ['moon', 'mars']) used.push(...h.worldFact[w].sourceIds);
+  }
+  assert.ok(used.length > 20);
+  for (const id of used) assert.ok(evidence.get(id), 'unknown evidence id ' + id);
+});
+
+test('each check uses the right Roadmap entry, risk page and gap', () => {
+  assert.deepStrictEqual(Object.keys(rules.NASA), CARDS);
+  for (const id of CARDS) {
+    const n = rules.NASA[id];
+    assert.strictEqual(n.roadmapId, ROADMAP[id]);
+    assert.strictEqual(evidence.value(n.roadmapId, 'card'), id);
+    assert.strictEqual(n.riskPageId, RISK_PAGE[id]);
+    assert.strictEqual(n.risk, evidence.value('V44', id + 'Risk'));
+    assert.strictEqual(n.gap.id, evidence.value(n.roadmapId, 'gapId'));
+    assert.strictEqual(n.gap.text, evidence.value(n.roadmapId, 'gapText'));
+    assert.strictEqual(n.lastPublished, evidence.value(n.roadmapId, 'lastPublished'));
+  }
+});
+
+test('the rating shown follows the mission type: lunarSurfaceLong for the Moon, marsPlanetary for Mars', () => {
+  assert.deepStrictEqual(rules.MISSIONS.moon.prefix, 'lunarSurfaceLong');
+  assert.deepStrictEqual(rules.MISSIONS.mars.prefix, 'marsPlanetary');
+  for (const id of CARDS) {
+    const n = rules.NASA[id], kind = id === 'radiation' ? 'Health' : 'Ops';
+    for (const w of ['moon', 'mars']) {
+      const r = n.ratings[w], key = PREFIX[w] + kind;
+      assert.strictEqual(r.code, evidence.value(n.roadmapId, key), id + ' ' + w + ' code');
+      assert.strictEqual(r.disposition, evidence.value(n.roadmapId, key + 'Disposition'), id + ' ' + w + ' disposition');
+      assert.ok(r.text.includes(r.code + ', ' + r.disposition), id + ' ' + w + ' text');
+      assert.ok(r.text.includes(rules.MISSIONS[w].label), id + ' ' + w + ' mission label');
+    }
+  }
+  // Literal spot checks so that a change in the evidence table is deliberate.
+  assert.strictEqual(rules.NASA.muscle.ratings.mars.code, '5x4');
+  assert.strictEqual(rules.NASA.muscle.ratings.moon.code, '5x3');
+  assert.strictEqual(rules.NASA.radiation.ratings.mars.code, '3x3');
+  assert.match(rules.NASA.radiation.ratings.moon.text, /previous 3x4 matrix/);
+  assert.match(rules.NASA.radiation.ratings.moon.text, /1x1, Accepted/);
+  assert.match(rules.NASA.muscle.scale, /each from 1 to 5/);
+});
+
+test('the quotations are the evidence says/canBeDone strings, unaltered', () => {
+  for (const id of CARDS) {
+    const n = rules.NASA[id];
+    assert.strictEqual(n.says, evidence.value(RISK_PAGE[id], 'says'));
+    assert.strictEqual(n.canBeDone, evidence.value(RISK_PAGE[id], 'canBeDone'));
+  }
+});
+
+test('sleepAmberHours now reads V79 (NASA brief) and equals 7', () => {
+  const t = rules.THRESHOLDS.sleepAmberHours;
+  assert.deepStrictEqual(t.sourceIds, ['V79']);
+  assert.strictEqual(t.value, evidence.value('V79', 'adultSleepHoursLow'));
+  assert.strictEqual(t.value, 7);
+  assert.doesNotMatch(t.note, /V25/);
+});
+
+test('numbers in the NASA standard sentences come from evidence values', () => {
+  const text = (id) => rules.NASA[id].standard.map((s) => s.text).join(' ');
+  const pct = Math.round(evidence.value('V81', 'minStrengthFraction') * 100);
+  assert.strictEqual(evidence.value('V81', 'minStrengthFraction'), 0.8);
+  assert.ok(text('muscle').includes(pct + '% of baseline'));
+  assert.ok(text('muscle').includes('“Currently, no standard in-flight measurement of strength exists.”'));
+  assert.ok(evidence.get('V85').quote.includes('Currently, no standard in-flight measurement of strength exists.'));
+  assert.ok(text('muscle').includes('about ' + evidence.value('V85', 'testDaysAfterLandingAbout') + ' days after landing'));
+
+  assert.strictEqual(evidence.value('V78', 'recommendedSleepPeriodHours'), 8.5);
+  assert.ok(text('sleep').includes(evidence.value('V78', 'recommendedSleepPeriodHours') + '-hour sleep period'));
+  assert.match(text('sleep'), /recommends/);
+  assert.doesNotMatch(text('sleep'), /\brequires\b|\bprotects\b/);
+  assert.ok(text('sleep').includes(evidence.value('V79', 'adultSleepHoursLow') + ' to ' + evidence.value('V79', 'adultSleepHoursHigh') + ' hours'));
+  assert.ok(text('sleep').includes('about ' + evidence.value('V79', 'inSpaceSleepHoursAbout') + ' hours'));
+
+  assert.ok(text('cardio').includes('“Assessing, recording, monitoring, and trending vital signs”'));
+  assert.ok(evidence.get('V77').quote.includes('Assessing, recording, monitoring, and trending vital signs'));
+
+  assert.strictEqual(evidence.value('V83', 'surfaceLimitMSvPerDay'), 0.9);
+  assert.ok(text('radiation').includes('less than ' + evidence.value('V83', 'surfaceLimitMSvPerDay') + ' mSv per day'));
+  assert.match(text('radiation'), /absorbed dose/);
+  assert.match(text('radiation'), /alert the crew/);
+
+  for (const id of CARDS) {
+    for (const s of rules.NASA[id].standard) assert.ok(s.sourceIds.length > 0, id + ' standard sources');
+  }
+  assert.deepStrictEqual(rules.NASA.muscle.standard.map((s) => s.sourceIds[0]), ['V81', 'V85']);
+  assert.deepStrictEqual(rules.NASA.sleep.standard.map((s) => s.sourceIds[0]), ['V78', 'V79']);
+  assert.deepStrictEqual(rules.NASA.cardio.standard.map((s) => s.sourceIds[0]), ['V77']);
+  assert.deepStrictEqual(rules.NASA.radiation.standard.map((s) => s.sourceIds[0]), ['V83', 'V84']);
+});
+
+test('hazard facts: one NASA fact on each of the first four rows, numbers from evidence', () => {
+  const H = rules.HAZARDS;
+  for (let i = 0; i < 4; i++) assert.ok(H[i].fact && H[i].fact.text.length > 20 && H[i].fact.sourceIds.length, H[i].name + ' fact');
+  assert.strictEqual(H[4].fact, undefined);
+  assert.deepStrictEqual(H[0].fact.sourceIds, ['V56']);
+  assert.deepStrictEqual(H[1].fact.sourceIds, ['V55']);
+  assert.deepStrictEqual(H[2].fact.sourceIds, ['V54']);
+  assert.deepStrictEqual(H[3].fact.sourceIds, ['V53']);
+  assert.strictEqual(evidence.value('V54', 'commDelayMinutesOneWay'), 20);
+  assert.ok(H[2].fact.text.includes('up to ' + evidence.value('V54', 'commDelayMinutesOneWay') + ' minutes one way'));
+  assert.ok(H[3].fact.text.includes(evidence.value('V53', 'boneLossPctPerMonthLow') + '% to ' + evidence.value('V53', 'boneLossPctPerMonthHigh') + '%'));
+  assert.match(H[3].text + ' ' + H[3].fact.text, /not track|not tracked/i);
+  for (const w of ['moon', 'mars']) {
+    const f = H[2].worldFact[w], p = PREFIX[w];
+    assert.deepStrictEqual(f.sourceIds, ['V75', 'V74']);
+    assert.ok(f.text.includes(evidence.value('V75', p + 'Ops')), w + ' V75');
+    assert.ok(f.text.includes(evidence.value('V74', p + 'Ops')), w + ' V74');
+    assert.ok(f.text.includes(rules.MISSIONS[w].label), w + ' label');
+  }
+  assert.ok(H[2].worldFact.mars.text.includes('5x5'));
+  assert.ok(H[2].worldFact.moon.text.includes('5x3'));
+  // No status alarm words in any visible NASA text.
+  const all = CARDS.map((id) => JSON.stringify(rules.NASA[id])).join(' ') + JSON.stringify(H);
+  assert.doesNotMatch(all, /\b(red|urgent|alarm)\b/i);
+  assert.deepStrictEqual(ids(all).filter((x) => !evidence.get(x)), []);
+});
+
+test('radiation wording: the solar particle event is on record, and its disclaimer names replayed measurements', () => {
+  assert.match(rules.TEXT.radiation.red.meaning, /a solar particle event is on record for the night/);
+  assert.doesNotMatch(rules.TEXT.radiation.red.meaning, /detector flagged/);
+  assert.match(rules.DISCLAIMER_REPLAYED, /^Screening flag from replayed measurements\./);
+  assert.match(rules.DISCLAIMER, /^Screening flag from simulated data\./);
+});
