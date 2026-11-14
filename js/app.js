@@ -385,14 +385,16 @@
     p.appendChild(document.createTextNode(txt + shieldNote() + ' '));
     p.appendChild(sourceLink(ev));
 
-    var d = $('rad-donki'), first = r.rad.events && r.rad.events[0];
+    // Name the record of the evidence table (V62, protons above 10 MeV) when it is among tonight's records.
+    var evs = r.rad.events || [], v62 = evidence.value('V62', 'id');
+    var d = $('rad-donki'), first = evs.filter(function (e) { return e.id === v62; })[0] || evs[0];
     d.hidden = !first;
     clear(d);
     if (!first) return;
     var t = first.start.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})Z$/);
     d.appendChild(document.createTextNode('NASA\'s DONKI space-weather database lists a solar energetic particle event starting ' +
       longDate(t[1]) + ', ' + t[2] + ' UTC'));
-    if (first.id === evidence.value('V62', 'id')) {
+    if (first.id === v62) {
       d.appendChild(document.createTextNode('. '));
       d.appendChild(sourceLink('V62'));
     } else {

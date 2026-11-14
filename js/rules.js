@@ -177,7 +177,7 @@
       fact: { text: 'NASA: on a Mars mission the communication delay is up to ' + evidence.value('V54', 'commDelayMinutesOneWay') + ' minutes one way.', sourceIds: ['V54'] },
       worldFact: worldRatings() },
     { name: HAZARD_NAMES[3], coverage: 'partly', text: 'Calf muscle is compared with the mission plan every morning. Bone and balance are not tracked.',
-      fact: { text: 'NASA: in spaceflight, weight-bearing bones lose on average ' + evidence.value('V53', 'boneLossPctPerMonthLow') + '% to ' + evidence.value('V53', 'boneLossPctPerMonthHigh') + '% of mineral density a month. This version does not track bone.', sourceIds: ['V53'] } },
+      fact: { text: 'NASA: in spaceflight, weight-bearing bones lose on average ' + evidence.value('V53', 'boneLossPctPerMonthLow') + '% to ' + evidence.value('V53', 'boneLossPctPerMonthHigh') + '% of mineral density a month.', sourceIds: ['V53'] } },
     { name: HAZARD_NAMES[4], coverage: 'not covered', text: "Air, noise, light and microbes are not read. Next step: show the habitat's environmental sensors beside the brief." }
   ];
 
