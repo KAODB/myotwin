@@ -32,7 +32,7 @@
   var ENV_NAMES = { moon: 'Moon', mars: 'Mars', earth: 'Earth' };
   var WHATIF = {
     ex: { min: 0, max: 1, step: 0.05, def: null },   // null = the scenario's own plan
-    gs: { min: 1, max: 4, step: 0.5, def: 1 },
+    gs: { min: 0.25, max: 4, step: 0.25, def: 1 },
     sh: { min: 0.1, max: 1, step: 0.1, def: 1 },
     nz: { min: 0.01, max: 0.08, step: 0.01, def: sim.NOISE.eimPhaseSdFraction.value }
   };
@@ -908,6 +908,36 @@
     $('noise-out').textContent = Math.round(state.nz * 100) + '%' + (state.nz === WHATIF.nz.def ? ' (assumed)' : '');
   }
 
+  // ---- render: gravity check (space scenarios only) --------------------------------
+  // The rat partial-weight-bearing data (NASA OSDR, V90-V91) against the model's share at 0.4 g
+  // for the current what-if shape. All text comes from model.describeGravityCheck.
+  var GCHECK_SHAPES = { grip: 'circle', plantarflexionTorque: 'square', calfGirth: 'triangle' };
+  function renderGravityCheck() {
+    var box = $('gcheck'), pwb = M.data && M.data.osdrPwb;
+    box.hidden = isHome() || !pwb;
+    if (box.hidden) return;
+    var c = model.checkGravityTerm(pwb, state.gs), t = model.describeGravityCheck(c);
+    charts.dotScale($('gcheck-chart'), {
+      rows: t.marks.filter(function (m) { return m.share != null; }).map(function (m) {
+        return { value: m.share, label: m.label, shape: GCHECK_SHAPES[m.measure] };
+      }),
+      max: 1.2, ticks: [0, 0.2, 0.4, 0.6, 0.8, 1, 1.2],
+      ref: { value: c.model, label: 'Model, shape ' + c.shape + ': ' + c.model.toFixed(2) },
+      title: 'Share of the fully unloaded loss that remained at 40% weight bearing',
+      label: 'Share of the fully unloaded loss that remained at 40% weight bearing, six rat measures, with the model at ' + c.model.toFixed(2)
+    });
+    var tx = $('gcheck-text');
+    clear(tx);
+    tx.appendChild(el('p', null, t.sentences.join(' ')));
+    var ul = $('gcheck-caveats');
+    clear(ul);
+    t.caveats.forEach(function (x) { ul.appendChild(el('li', null, x)); });
+    var close = $('gcheck-close');
+    clear(close);
+    withLinks(close, 'Sources:', ['V90', 'V91']);
+    close.appendChild(document.createTextNode('. ' + t.closing));
+  }
+
   // ---- render: evidence drawer (built once) ----------------------------------------
   function fmtAssumptionValue(v) {
     if (Array.isArray(v)) return v.join(' to ');
@@ -1004,6 +1034,7 @@
     renderGuidance();
     renderHazards();
     renderWhatIf();
+    renderGravityCheck();
     return changed;
   }
 
@@ -1121,7 +1152,7 @@
     root.addEventListener('resize', function () {
       if (pending) return;
       pending = true;
-      root.requestAnimationFrame(function () { pending = false; renderTrend(); });
+      root.requestAnimationFrame(function () { pending = false; renderTrend(); renderGravityCheck(); });
     });
     root.addEventListener('hashchange', function () {
       if (location.hash.indexOf('=') < 0) {             // a plain in-page anchor, not a view
@@ -1140,7 +1171,8 @@
     var ul = $('measured-list'), D = M.data || {};
     clear(ul);
     [['mslRad', 'nightly dose on Mars'], ['lroCrater', 'nightly dose on the Moon'],
-      ['donkiSep2017', 'solar-particle-event records'], ['omniProtons', 'proton flux chart']].forEach(function (x) {
+      ['donkiSep2017', 'solar-particle-event records'], ['omniProtons', 'proton flux chart'],
+      ['osdrPwb', 'check of the muscle model\'s gravity term']].forEach(function (x) {
       var d = D[x[0]];
       if (!d) return;
       var li = el('li');

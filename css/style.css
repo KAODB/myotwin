@@ -518,3 +518,26 @@ body.mode-eldercare .mk { stroke: #fff; }
 @media (max-width: 760px) {
   .brief { grid-template-areas: "head" "cards" "radsrc" "image"; }
 }
+
+/* ---- gravity check: rat partial-weight-bearing data against the model (#gcheck) ---- */
+.gcheck h3 { margin-top: 0; }
+.gcheck-fig { margin: 12px 0 0; }
+.dot-chart { display: block; width: 100%; max-width: 100%; min-width: 0; }
+.gcheck, .gcheck-fig { min-width: 0; }
+.dot-chart text { font-family: var(--font); }
+.dot-label { fill: var(--text); font-size: 12.5px; }
+.dot { fill: var(--accent); stroke: var(--surface); stroke-width: 1; }
+.dot-ref { stroke: var(--amber); stroke-width: 2; stroke-dasharray: 6 4; }
+.dot-ref-label { fill: var(--amber); font-size: 12.5px; font-weight: 600; paint-order: stroke; stroke: var(--surface); stroke-width: 4px; stroke-linejoin: round; }
+.key-circle, .key-square, .key-triangle { width: 11px; height: 11px; background: var(--accent); }
+.key-circle { border-radius: 50%; }
+.key-square { border-radius: 0; }
+.key-triangle { border-radius: 0; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.key-ref { width: 0; height: 14px; border-radius: 0; border-left: 2px dashed var(--amber); }
+.gcheck-text p { margin: 14px 0 0; }
+.gcheck-sub { margin: 16px 0 6px; font-size: 1em; }
+.gcheck-caveats { padding-left: 1.2em; display: grid; gap: 6px; margin: 0; }
+.gcheck-close { margin-top: 14px; font-weight: 600; }
+.measured-list li { overflow-wrap: anywhere; }   /* long DOI tokens in the OSDR row */
+.dot-track { stroke: var(--line); stroke-width: 1; stroke-dasharray: 1 4; }
+.dot-label { paint-order: stroke; stroke: var(--surface); stroke-width: 4px; stroke-linejoin: round; }

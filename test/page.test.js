@@ -16,10 +16,31 @@ test('index.html loads every data/*.js before js/sim.js', () => {
   const sim = scripts.indexOf('js/sim.js');
   assert.ok(sim >= 0, 'js/sim.js is not loaded');
   const files = fs.readdirSync(path.join(root, 'data')).filter((f) => f.endsWith('.js'));
-  assert.equal(files.length, 4);
+  assert.equal(files.length, 5);
   for (const f of files) {
     const i = scripts.indexOf('data/' + f);
     assert.ok(i >= 0, 'data/' + f + ' is not loaded');
     assert.ok(i < sim, 'data/' + f + ' is loaded after js/sim.js');
   }
+});
+
+test('index.html loads data/osdr-pwb.js before js/model.js, which writes the gravity check into its note', () => {
+  const i = scripts.indexOf('data/osdr-pwb.js');
+  assert.ok(i >= 0 && i < scripts.indexOf('js/model.js'));
+});
+
+// The what-if shape slider: index.html and the WHATIF table in js/app.js agree, and the
+// address parser's snap() (read from js/app.js) keeps 0.25 and an old value such as 2.5.
+test('shape slider runs 0.25 to 4 in steps of 0.25; old and new address values load unchanged', () => {
+  const input = html.match(/<input type="range" id="shape"[^>]*>/)[0];
+  const attr = (k) => parseFloat(input.match(new RegExp(k + '="([^"]+)"'))[1]);
+  assert.deepStrictEqual([attr('min'), attr('max'), attr('step'), attr('value')], [0.25, 4, 0.25, 1]);
+  const app = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8');
+  const gs = new Function('return ' + app.match(/gs: (\{[^}]+\})/)[1])();
+  assert.deepStrictEqual(gs, { min: 0.25, max: 4, step: 0.25, def: 1 });
+  const snap = new Function('return ' + app.match(/function snap\(v, o\) \{[\s\S]*?\n  \}/)[0])();
+  for (const v of ['0.25', '0.5', '1', '2.5', '4']) assert.equal(snap(v, gs), parseFloat(v), v);
+  assert.equal(snap('0.1', gs), 1);       // outside the range: the default (the page then shows its notice)
+  assert.equal(snap('4.5', gs), 1);
+  assert.equal(snap('nope', gs), 1);
 });

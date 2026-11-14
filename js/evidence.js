@@ -329,6 +329,32 @@
       url: 'https://www.esa.int/Science_Exploration/Human_and_Robotic_Exploration/Columbus/Muscle_Atrophy_Research_and_Exercise_System'
     },
 
+    // ---- NASA OSDR: rat partial weight bearing (checks the model's gravity term) ----
+    // Percent changes are of the group means, day 0 to day 28, intact (sham-operated) rats;
+    // a share is (0.4 g change - 1 g change) / (0 g change - 1 g change). test/gravity-check.test.js
+    // recomputes every number from data/osdr-pwb.js.
+    {
+      id: 'V90', topic: 'muscle', status: 'verified', level: 'dataset-record',
+      claim: 'Rats (Fischer 344, intact), 28 days of partial weight bearing in a harness, an analog of partial gravity, not human data: maximum rear-paw grip force changed from day 0 to day 28 by +0.1% at full weight bearing (1 g), -34.3% at 40% weight bearing (0.4 g, Mars analog) and -52.0% with the hindlimbs unloaded (0 g) in females, and by +34.0%, -50.2% and -56.5% in males (group means, 10 rats per group). After subtracting the 1 g change, the 0.4 g groups lost 0.66 (females) and 0.93 (males) of the 0 g loss.',
+      values: { gripF1gPct: 0.1, gripF04gPct: -34.3, gripF0gPct: -52, gripFShare: 0.66, gripM1gPct: 34, gripM04gPct: -50.2, gripM0gPct: -56.5, gripMShare: 0.93, nMin: 10, nMax: 10 },
+      quote: null,
+      source: 'NASA Open Science Data Repository, OSD-652 (LSDS-76), file LSDS-76_Force Transducer_Grip_Strength_Transformed.csv, column max_grip_Newtons (the second of two with that name); dataset DOI 10.26030/z92y-7b97; paper Rosa-Caldwell ME et al., J Appl Physiol 2023, doi:10.1152/japplphysiol.00023.2023; group means in data/osdr-pwb.js',
+      url: 'https://doi.org/10.26030/z92y-7b97'
+    },
+    {
+      id: 'V91', topic: 'muscle', status: 'verified', level: 'dataset-record',
+      claim: 'Same rats (intact), 28 days of partial weight bearing in a harness, an analog of partial gravity, not human data: maximum nerve-stimulated plantarflexion torque changed from day 0 to day 28 by -1.8% at 1 g, -9.5% at 0.4 g and -18.7% at 0 g in females, and by +13.0%, +8.8% and -4.2% in males; calf girth changed by +2.1%, -5.6% and -5.2% in females and by +1.9%, -2.5% and -7.9% in males (group means, 10 rats per group). After subtracting the 1 g change, the 0.4 g groups lost 0.46 (females) and 0.25 (males) of the 0 g torque loss and 1.05 (females) and 0.44 (males) of the 0 g girth loss.',
+      values: {
+        plantarflexionTorqueF1gPct: -1.8, plantarflexionTorqueF04gPct: -9.5, plantarflexionTorqueF0gPct: -18.7, plantarflexionTorqueFShare: 0.46,
+        plantarflexionTorqueM1gPct: 13, plantarflexionTorqueM04gPct: 8.8, plantarflexionTorqueM0gPct: -4.2, plantarflexionTorqueMShare: 0.25,
+        calfGirthF1gPct: 2.1, calfGirthF04gPct: -5.6, calfGirthF0gPct: -5.2, calfGirthFShare: 1.05,
+        calfGirthM1gPct: 1.9, calfGirthM04gPct: -2.5, calfGirthM0gPct: -7.9, calfGirthMShare: 0.44, nMin: 10, nMax: 10
+      },
+      quote: null,
+      source: 'NASA Open Science Data Repository, OSD-616 (LSDS-61), file LSDS-61_Force Plate_Force_Plate_Transformed_Reusable_Files.csv, columns Girth_FootPlate_Data_Max_Plantar_flexion_Newtons_times_millimeters and Girth_FootPlate_Data_Girth; dataset DOI 10.26030/e0yx-ta10; paper Rosa-Caldwell ME et al., J Appl Physiol 2023, doi:10.1152/japplphysiol.00023.2023; group means in data/osdr-pwb.js',
+      url: 'https://doi.org/10.26030/e0yx-ta10'
+    },
+
     // ---- NASA standards and statements -------------------------------------
     {
       id: 'V1', topic: 'muscle', status: 'verified', level: 'official-document',
