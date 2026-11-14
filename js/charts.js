@@ -175,7 +175,7 @@
     if (x0 < 0) {
       var bx1 = X(Math.min(-0.5, x1));
       el('rect', { x: m.l, y: m.t, width: Math.max(0, bx1 - m.l), height: ph, 'class': 'baseline-period' }, svg);
-      text(svg, (m.l + bx1) / 2, H - m.b + 18, 'Baseline', 'ax-label ax-baseline');
+      if (bx1 - m.l >= 64) text(svg, (m.l + bx1) / 2, H - m.b + 18, 'Baseline', 'ax-label ax-baseline');
     }
 
     // Grid and y axis
@@ -189,7 +189,7 @@
     }
 
     // x axis: day ticks only from day 0 onward
-    var xt = niceTicks(Math.max(0, x0), x1, Math.max(2, Math.floor(pw / 70))).filter(function (d) {
+    var xt = niceTicks(Math.max(0, x0), x1, Math.max(3, Math.floor(pw / 60))).filter(function (d) {
       return d >= 0 && d === Math.round(d);
     });
     el('line', { x1: m.l, x2: W - m.r, y1: m.t + ph, y2: m.t + ph, 'class': 'axis' }, svg);
@@ -204,7 +204,7 @@
       var b = opts.baseline;
       el('rect', { x: m.l, y: Y(b.high), width: pw, height: Math.max(0, Y(b.low) - Y(b.high)), 'class': 'band-baseline' }, svg);
       if (b.median != null) el('line', { x1: m.l, x2: W - m.r, y1: Y(b.median), y2: Y(b.median), 'class': 'line-median' }, svg);
-      text(svg, W - m.r - 4, Y(b.high) - 4, 'Own baseline', 'band-label', 'end');
+      if (pw >= 420) text(svg, W - m.r - 4, Y(b.high) - 4, 'Own baseline', 'band-label', 'end');
     }
 
     // Expected band
@@ -229,7 +229,8 @@
       el('line', { x1: mx, x2: mx, y1: m.t, y2: m.t + ph, 'class': 'event' }, svg);
       if (mk.label) {
         var anchor = mx > m.l + pw * 0.75 ? 'end' : 'start';
-        text(svg, mx + (anchor === 'end' ? -4 : 4), m.t + 12 + (k % 2) * 14, mk.label, 'event-label', anchor);
+        var rows = pw < 420 ? 3 : 2;
+        text(svg, mx + (anchor === 'end' ? -4 : 4), m.t + 12 + (k % rows) * 14, mk.label, 'event-label', anchor);
       }
     });
 
@@ -327,13 +328,17 @@
     var labels = doc.createElement('div');
     labels.className = 'colorbar-labels';
     var unit = scale.unit ? ' ' + scale.unit : '';
-    [fmt(min) + unit, name === 'diverging' ? '0' : fmt((min + max) / 2), fmt(max) + unit].forEach(function (s) {
+    // Label precision follows the range, so near-zero ends read "0.00" rather than "-7.1e-3".
+    var span = Math.abs(max - min) || Math.abs(max) || 1;
+    var dec = Math.max(0, Math.min(4, 2 - Math.floor(Math.log10(span))));
+    var f = function (v) { var s = (Math.abs(v) < Math.pow(10, -dec) / 2 ? 0 : v).toFixed(dec); return s; };
+    [f(min) + unit, name === 'diverging' ? '0' : f((min + max) / 2), f(max) + unit].forEach(function (s) {
       var sp = doc.createElement('span');
       sp.textContent = s;
       labels.appendChild(sp);
     });
     container.appendChild(labels);
-    container.setAttribute('aria-label', 'Colour scale from ' + fmt(min) + ' to ' + fmt(max) + unit);
+    container.setAttribute('aria-label', 'Colour scale from ' + f(min) + ' to ' + f(max) + unit);
   }
 
   // ---- direction rose ----------------------------------------------------------
