@@ -649,7 +649,7 @@
       ctx.appendChild(sourceLink('V47'));
     } else {
       var cx = rules.CONTEXT[state.card];
-      $('g-context-title').textContent = 'NASA risk this check screens for';
+      $('g-context-title').textContent = 'NASA risk this check relates to';
       ctx.appendChild(el('strong', null, cx.risk));
       ctx.appendChild(document.createTextNode('. ' + cx.note));
       cx.sourceIds.forEach(function (id) { ctx.appendChild(document.createTextNode(' ')); ctx.appendChild(sourceLink(id)); });
