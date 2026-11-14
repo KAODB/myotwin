@@ -65,7 +65,7 @@
     s2TransitAdherence: a(0.9, 'fraction', 'Exercise adherence during the transit.'),
     s4LowActivityG: a(0.6, 'g equivalent', 'Five weeks of low activity after hospital discharge represented as partial unloading at g = 0.6. Not a sourced equivalence.'),
     s4LowActivityDays: a(35, 'days', 'Length of the low-activity period after discharge.'),
-    s4SleepMeanH: a(7.3, 'h', 'S4 mean sleep. The 7 h recommendation (V25) was written for adults in general and may not apply to an older adult, so a permanently amber sleep card would mislead.', ['V25'])
+    s4SleepMeanH: a(7.3, 'h', 'S4 mean sleep. The 7 h line (V79) is stated for an average adult and may not apply to an older adult, so a permanently amber sleep card would mislead.', ['V79'])
   };
 
   var NOISE = {
