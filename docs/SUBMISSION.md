@@ -17,7 +17,9 @@ NASA requires crews to keep in-mission muscle strength at or above 80% of baseli
 
 ## Link to Project Demo
 
-DEMO_LINK_TO_ADD
+Seven slides, PDF, opens in the browser: https://kaodb.github.io/myotwin/demo/slides/MyoTwin-demo.pdf
+
+The editable PowerPoint file is in the repository: https://github.com/KAODB/myotwin/blob/main/demo/slides/MyoTwin-demo.pptx
 
 ## Link to Final Project
 
@@ -44,6 +46,10 @@ Simulated muscle follows a first-order loss model with gravity and exercise term
 
 Image layers: density from cosmic-ray scattering, which depends on tissue radiation length (V31, V32), so the hazard is the light source with no added dose; pressure, which gives body mass; calf impedance.
 
+### How it uses the resources on the challenge page
+
+All five resources listed for this challenge are cited (V43 to V47). Each check names the NASA Human Research Program risk it relates to (V44). A panel shows where MyoTwin sits in NASA's five hazards (V43): part of four, and none of hostile/closed environments. The sleep check points to NASA's ARCHeR study on Artemis II (V45). The radiation check says that neutrons, about 30% of total radiation on the ISS, are not measured and names the Canadian Space Agency's CANS spectrometer as the kind of instrument that would add them (V46). The Eldercare mode rests on the Canadian Space Agency's statement that the changes seen in astronauts are similar to accelerated aging (V47).
+
 ### What makes it sound
 
 Every number is either an evidence entry, most with the sentence that carries it (two are secondary citations), or a declared assumption. The simulated nights and the mission plan come from the same model, so the demonstration shows the workflow, not how well a real decline would be detected.
@@ -63,13 +69,21 @@ Every number is either an evidence entry, most with the sentence that carries it
 
 ### Tools and languages
 
-Plain HTML, CSS and JavaScript, running offline; Node.js tests; GitHub Pages; Claude through Claude Code.
+Plain HTML, CSS and JavaScript, running offline; Node.js tests; GitHub Pages; pptxgenjs for the slides; Claude through Claude Code.
 
 ## Use of Super Intelligence (SI)
 
 We used one SI tool: Claude, by Anthropic, through Claude Code. It helped find and check literature, write the code and tests, generate the simulated data, draft the text, and assemble the demo. The concept, the direction and every clinical judgement are the team lead's. Every number in the software is either an entry in js/evidence.js, most with the sentence that carries it (two are secondary citations), or a declared assumption. No SI-generated images of people are used; the images are outputs of the software and are labelled as simulated. The form of the muscle model comes from a private simulator the team wrote on 11-13 November 2026, before the hackathon; it was refitted to published data and rewritten here. Everything else was written during the hackathon. Details: docs/SI_USE.md.
 
 ## NASA Data
+
+Resources listed on the challenge page:
+
+- **NASA Human Research Program, 5 Hazards of Human Spaceflight** (V43). The page shows where MyoTwin sits in the five hazards: part of space radiation, isolation and confinement, distance from Earth and gravity fields, and none of hostile/closed environments. The hazard names are read from the evidence table. https://www.nasa.gov/hrp/hazards/
+- **NASA Human Research Program, Risks of Human Spaceflight** (V44). Each check names the NASA risk it relates to: Risk of Reduced Cardiorespiratory and Musculoskeletal Fitness (muscle), Risk of Inadequate Sleep and Irregular Schedules (sleep), Risk of Cardiovascular Adaptations (heart and breathing) and Risk of Radiation-Induced Cancers (radiation). The code reads the names from the evidence table. https://www.nasa.gov/hrp/risks/
+- **NASA Human Research Program, Ongoing HRP Research in Space** (V45). ARCHeR monitored well-being, activity and sleep on Artemis II, and Standard Measures collects a consistent set of measurements from crew members. Cited on the sleep check. https://www.nasa.gov/hrp/ongoing-hrp-research/
+
+Other NASA data and documents:
 
 - **NASA-STD-3001 muscle strength standard**, as quoted in NASA OCHMO-TB-031, Exercise Overview (2023) (V1). The 80% of baseline standard frames the problem, and the red muscle card asks for a strength test against it. Cited; not used in calculations. https://www.nasa.gov/wp-content/uploads/2023/12/ochmo-tb-031-exercise-overview.pdf
 - **Downs ME (NASA H-3PO), Approach to Astronaut Fitness Standard Recommendations, 2019, NTRS 20190025092** (V2). Source for the 2019 statement that the ability to assess muscle strength in flight did not exist. Cited only. https://ntrs.nasa.gov/citations/20190025092
@@ -83,6 +97,8 @@ We used one SI tool: Claude, by Anthropic, through Claude Code. It helped find a
 
 Space agency partner work:
 
+- **Canadian Space Agency, Monitoring radiation for astronaut health, 2026** (V46), a resource listed on the challenge page. CANS is a compact neutron spectrometer that works continuously and autonomously. MyoTwin's trackers do not measure neutrons, about 30% of total radiation on the ISS; the radiation check says so. https://www.asc-csa.gc.ca/eng/news/articles/2026/2026-02-26-monitoring-radiation-astronaut-health.asp
+- **Canadian Space Agency, Why do we conduct science experiments in space?** (V47), a resource listed on the challenge page. The effects observed in astronauts are similar to accelerated aging and to a sedentary lifestyle; this is the stated reason for the Eldercare mode. https://www.asc-csa.gc.ca/eng/iss/science/why-do-we-conduct-science-experiments-in-space.asp
 - **University of Tsukuba-led study with JAXA, using JAXA's centrifuge on the ISS.** Tsuji R et al., Sci Adv 2026 (V6). In mice, 0.33 g preserved soleus size and 0.67 g was sufficient to maintain muscle function, with grip strength and EIM among the measures. Cited as the reason the gravity term is an adjustable assumption; not used in calculations. https://doi.org/10.1126/sciadv.aed2258
 - **ESA muscle stimulation study (ongoing)** and Hackney KJ et al. 2012 (V41), read only as search summaries (secondary). Neuromuscular electrical stimulation and blood-flow-restricted exercise are proposed for spaceflight, with no published in-flight results found. Cited in the countermeasure list as under study. https://www.axiomspace.com/research/muscle-stimulation
 
