@@ -300,6 +300,8 @@
     $('brief-date').textContent = 'Night of ' + r.night + ' · ' + dayLabel(r);
     var shown = a.cards.filter(function (c) { return visibleCards().indexOf(c.id) >= 0; });
     $('headline').textContent = scrub(isHome() ? homeHeadline(shown) : a.headline);
+    // The accent colour is reserved for attention: the headline carries it only when a shown check is on Watch or Report.
+    $('headline').classList.toggle('headline-attn', shown.some(function (c) { return c.status === 'amber' || c.status === 'red'; }));
     $('scenario-summary').textContent = isHome() ? homeSummary() : data.gen.scenario.summary;
     $('cards').classList.toggle('cards-3', isHome());
     a.cards.forEach(renderCard);
@@ -635,7 +637,7 @@
       o.thresholds = !ok ? [] : [{ value: med * (1 - me.redLimitPct / 100), label: 'Report line: ' + me.redLimitPct.toFixed(1) + '% below baseline', shortLabel: 'Report: −' + me.redLimitPct.toFixed(1) + '%', status: 'red' }];
       o.exercise = recs.filter(function (r) { return r.missionDay >= 0; }).map(function (r) { return { missionDay: r.missionDay, done: !!r.log.exercise_done }; });
       o.unit = 'deg'; o.yLabel = 'Calf phase';
-      legend.push(['line', WINDOW + '-night median'], ['band', 'Own baseline range'], ['plan', w.plan + ' (amber below this band)'],
+      legend.push(['line', WINDOW + '-night median'], ['band', 'Own baseline range'], ['plan', w.plan + ' (Watch below this band)'],
         ['report', 'Report line'], ['event', 'Event'], ['exercise', 'Exercise done (tall) or missed (short)'], ['selected', 'Selected night']);
       note = 'Dots are the nightly calf impedance readings; the line is the ' + WINDOW + '-night median the card uses. ' +
         'The report line applies to the ' + WINDOW + '-night median. It is a measurement-variability limit (the largest test-retest variability reported for this measurement), not a strength threshold.';

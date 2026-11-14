@@ -258,6 +258,18 @@ shared and captured:
   the scenario) falls back as before and shows the notice "This link could not be opened; showing
   the default view." An unknown evidence id (`ev`) shows "That source is not in the evidence list."
 
+Colour scheme (`css/style.css`, palette at the top; `test/palette.test.js` checks it):
+
+- Space (dark): Midnight Black `#02070A`, working colour Electric Blue `#0297DE`, accent Cantaloupe
+  Orange `#FC734D`. Home (`body.mode-eldercare`): White `#FCFFFF`, Sky Blue `#0593C6`, Hot Pink
+  `#D83995`, with darker `*-text` shades for small text so every pair meets WCAG AA.
+- The accent (`--attention`) is reserved for Watch and Report (marks, card bars, status words,
+  chart points and threshold lines) and the headline when a shown check is on Watch or Report
+  (`.headline-attn`). Report is solid with a heavy bar; Watch is an outlined triangle with a dashed
+  bar. Everything neutral (badges, tags, chips, notes) uses neutral outlines or blue.
+- Canvas scales come from `--map-heat` (black, working blue, white) and `--map-diverging` (blue,
+  neutral, accent), read by `js/charts.js`; the density layer stays greyscale.
+
 Measured radiation data on the page (space scenarios only; none of it appears when `s=S4`):
 
 - `index.html` loads `data/msl-rad.js`, `data/lro-crater.js`, `data/donki-sep-2017.js`,
