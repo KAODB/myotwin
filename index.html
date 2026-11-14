@@ -85,9 +85,17 @@
         </div>
       </div>
       <div class="canvas-wrap">
-        <canvas id="body-canvas" width="120" height="360" role="img" aria-label="Whole-body image, not yet drawn"></canvas>
+        <!-- Hotspots sit on the phantom's body parts (js/phantom.js); each selects its check like its card. -->
+        <div class="body-fig" id="body-fig">
+          <canvas id="body-canvas" width="120" height="360" role="img" aria-label="Whole-body image, not yet drawn"></canvas>
+          <button type="button" class="hs hs-sleep st-grey" data-card="sleep" aria-pressed="false" aria-label="Head: sleep check, No data"><span class="hs-dot" aria-hidden="true"></span><span class="hs-lead" aria-hidden="true"></span><span class="hs-label" aria-hidden="true"><span class="hs-name">Sleep</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span></button>
+          <button type="button" class="hs hs-cardio st-grey" data-card="cardio" aria-pressed="false" aria-label="Chest: heart and breathing check, No data"><span class="hs-dot" aria-hidden="true"></span><span class="hs-lead" aria-hidden="true"></span><span class="hs-label" aria-hidden="true"><span class="hs-name">Heart</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span></button>
+          <button type="button" class="hs hs-radiation st-grey" data-card="radiation" aria-pressed="false" aria-label="Whole body: radiation check, No data"><span class="hs-label" aria-hidden="true"><span class="hs-name">Radiation</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span></button>
+          <button type="button" class="hs hs-muscle st-grey" data-card="muscle" aria-pressed="false" aria-label="Calves: muscle check, No data"><span class="hs-dot" aria-hidden="true"></span><span class="hs-lead" aria-hidden="true"></span><span class="hs-label" aria-hidden="true"><span class="hs-name">Muscle</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span></button>
+        </div>
         <p class="canvas-empty" id="canvas-empty">Image not drawn yet</p>
       </div>
+      <p class="hs-hint muted" id="hs-hint">Select a body part to see its check.</p>
       <div class="colorbar" id="colorbar" role="img" aria-label="Colour scale"></div>
       <ul class="img-legend" id="img-legend" hidden>
         <li id="img-legend-mask" hidden><span class="key key-mask" aria-hidden="true"></span>Below noise</li>
@@ -220,7 +228,7 @@
         <dd><ul id="g-actions" class="actions"><li>Shown once a night is assessed.</li></ul></dd>
         <dt>Who decides</dt>
         <dd id="g-decides">Shown once a night is assessed.</dd>
-        <dt id="g-context-title">NASA risk this check relates to</dt>
+        <dt id="g-context-title">NASA context for this check</dt>
         <dd id="g-context">Shown once a night is assessed.</dd>
         <dt>Evidence behind this</dt>
         <dd><ul id="g-sources" class="sources"><li>Listed once a night is assessed.</li></ul></dd>

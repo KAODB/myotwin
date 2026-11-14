@@ -215,6 +215,12 @@
   function clear(n) { while (n.firstChild) n.removeChild(n.firstChild); }
   function capital(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
   function dayLabel(r) { return r.missionDay < 0 ? 'Baseline night' : 'Day ' + r.missionDay; }
+  // The 7-hour line is the low end of the range in a NASA technical brief (V79).
+  function sleepLineNote() {
+    return 'Hours asleep from radar is an assumption; the ' + T.sleepAmberHours.value + '-hour line is the low end of the ' +
+      evidence.value('V79', 'adultSleepHoursLow') + ' to ' + evidence.value('V79', 'adultSleepHoursHigh') + ' hours ' +
+      (isHome() ? '' : 'a NASA brief says ') + 'an average adult needs.';
+  }
 
   // Muscle limits come from the engine (card.extra); any assessed night carries them.
   function muscleExtra() {
@@ -478,6 +484,7 @@
     $('img-legend-mask').hidden = true;
     $('img-legend-outline').hidden = true;
 
+    $('body-fig').hidden = r.missionDay < 0;
     if (r.missionDay < 0) {
       canvas.hidden = true;
       empty.hidden = false;
@@ -544,6 +551,28 @@
     charts.colorbar(bar, { min: shown.min, max: shown.max, unit: unit, colormap: cmap });
     $('cap-label').textContent = scrub(label) + '.';
     $('cap-extra').textContent = extra.join(' ');
+  }
+
+  // ---- render: hotspots on the body figure ----------------------------------------
+  var HOTSPOT_PART = { sleep: 'Head', cardio: 'Chest', muscle: 'Calves', radiation: 'Whole body' };
+  function renderHotspots() {
+    var noImage = rec().missionDay < 0;
+    $('hs-hint').hidden = noImage;
+    Array.prototype.forEach.call(document.querySelectorAll('.hs'), function (b) {
+      var id = b.dataset.card, c = card(id), word = charts.STATUS[c.status].word;
+      b.hidden = visibleCards().indexOf(id) < 0;      // no radiation hotspot at home
+      b.className = 'hs hs-' + id + ' st-' + c.status;
+      b.setAttribute('aria-pressed', String(state.card === id));
+      b.setAttribute('aria-label', HOTSPOT_PART[id] + ': ' + CARD_NAMES[id].toLowerCase() + ' check, ' + word);
+      b.querySelector('.st-icon use').setAttribute('href', charts.statusIcon(c.status));
+      b.querySelector('.status-word').textContent = word;
+    });
+  }
+
+  // A hotspot also brings the explanation into view (the focus stays on the hotspot).
+  function revealGuidance() {
+    var g = $('guidance'), top = g.getBoundingClientRect().top;
+    if (top < 0 || top > root.innerHeight * 0.5) g.scrollIntoView({ block: 'start', behavior: reducedMotion ? 'auto' : 'smooth' });
   }
 
   // ---- render: timeline ------------------------------------------------------------
@@ -617,7 +646,7 @@
       o.unit = 'h'; o.yLabel = 'Sleep';
       legend.push(['line', WINDOW + '-night mean'], ['watch', 'Watch line'], ['report', 'Report line'], ['event', 'Event'], ['selected', 'Selected night']);
       note = 'Dots are the hours asleep each night; the line is the ' + WINDOW + '-night mean the card uses. ' +
-        'Hours asleep from radar is an assumption; the 7-hour line is the recommendation for adults aged 18 to 60.';
+        sleepLineNote();
     } else if (cardId === 'cardio') {
       o.raw = engine.series(recs, 'hr');
       o.baseline = band(b.hr);
@@ -729,6 +758,45 @@
     try { return evidence.get(id).claim; } catch (e) { return ''; }
   }
 
+  // Text followed by its evidence links.
+  function withLinks(parent, text, ids) {
+    if (text) parent.appendChild(document.createTextNode(text));
+    ids.forEach(function (id) { parent.appendChild(document.createTextNode(' ')); parent.appendChild(sourceLink(id)); });
+    return parent;
+  }
+  function nasaRow(dl, label, dd) { dl.appendChild(el('dt', null, label)); dl.appendChild(dd); }
+
+  // NASA's material for one check (js/rules.js NASA), for the mission type of this world.
+  // The standard and the research gap fold into a <details>, open on wide screens.
+  var nasaMoreOpen = !root.matchMedia || root.matchMedia('(min-width: 761px)').matches;
+  function nasaBlock(nx, world) {
+    var box = el('div', 'nasa');
+    var dl = el('dl', 'nasa-rows');
+    var risk = el('dd');
+    risk.appendChild(el('strong', null, nx.risk));
+    nasaRow(dl, 'NASA risk', withLinks(risk, '', nx.riskSourceIds));
+    var rt = nx.ratings[world];
+    nasaRow(dl, "NASA's rating for this mission", withLinks(el('dd'), rt.text + ' ' + nx.scale + ' Rating page last published ' + nx.lastPublished + '.', [nx.roadmapId]));
+    var says = el('dd');
+    says.appendChild(el('q', 'nasa-quote', nx.says));
+    says.appendChild(el('q', 'nasa-quote', nx.canBeDone));
+    nasaRow(dl, 'What NASA says', withLinks(says, '', [nx.riskPageId]));
+    box.appendChild(dl);
+
+    var more = el('details', 'nasa-more');
+    more.appendChild(el('summary', null, 'NASA standard and open research gap'));
+    var dl2 = el('dl', 'nasa-rows');
+    var std = el('dd');
+    nx.standard.forEach(function (s) { std.appendChild(withLinks(el('p'), s.text, s.sourceIds)); });
+    nasaRow(dl2, 'NASA standard', std);
+    nasaRow(dl2, 'Open NASA research gap', withLinks(el('dd'), nx.gap.id + ': ' + nx.gap.text, [nx.roadmapId]));
+    more.appendChild(dl2);
+    more.open = nasaMoreOpen;
+    more.addEventListener('toggle', function () { nasaMoreOpen = more.open; });
+    box.appendChild(more);
+    return box;
+  }
+
   function renderGuidance() {
     var c = card(state.card);
     var wd = rules.WORDING[state.mode];
@@ -741,7 +809,7 @@
     st.appendChild(wrap);
     st.appendChild(el('span', 'g-reason', ' ' + scrub(c.reason)));
     var meaning = scrub(c.meaning);
-    if (state.card === 'sleep') meaning += ' Hours asleep from radar is an assumption; the 7-hour line is the recommendation for adults aged 18 to 60.';
+    if (state.card === 'sleep') meaning += ' ' + sleepLineNote();
     $('g-meaning').textContent = meaning;
     var ul = $('g-actions');
     clear(ul);
@@ -756,11 +824,8 @@
       ctx.appendChild(document.createTextNode('The Canadian Space Agency describes the changes seen in astronauts as similar to accelerated ageing and to a sedentary lifestyle. '));
       ctx.appendChild(sourceLink('V47'));
     } else {
-      var cx = rules.CONTEXT[state.card];
-      $('g-context-title').textContent = 'NASA risk this check relates to';
-      ctx.appendChild(el('strong', null, cx.risk));
-      ctx.appendChild(document.createTextNode('. ' + cx.note));
-      cx.sourceIds.forEach(function (id) { ctx.appendChild(document.createTextNode(' ')); ctx.appendChild(sourceLink(id)); });
+      $('g-context-title').textContent = 'NASA context for this check';
+      ctx.appendChild(nasaBlock(rules.NASA[state.card], data.gen.scenario.env));
     }
 
     var src = $('g-sources');
@@ -792,7 +857,8 @@
         cm.appendChild(li);
       });
     }
-    $('g-disclaimer').textContent = rules.DISCLAIMER.replace(/\{(\w+)\}/g, function (_, k) { return wd[k] || k; });
+    var disclaimer = state.card === 'radiation' && !isHome() ? rules.DISCLAIMER_REPLAYED : rules.DISCLAIMER;
+    $('g-disclaimer').textContent = disclaimer.replace(/\{(\w+)\}/g, function (_, k) { return wd[k] || k; });
   }
 
   // ---- render: five hazards (astronaut mode only) --------------------------------------
@@ -812,6 +878,12 @@
       chip.appendChild(document.createTextNode(h.coverage));
       li.appendChild(chip);
       li.appendChild(el('span', 'cm-note', h.text));
+      if (h.fact) {
+        var f = withLinks(el('span', 'cm-note hz-fact'), h.fact.text, h.fact.sourceIds);
+        var wf = h.worldFact && h.worldFact[data.gen.scenario.env];
+        if (wf) withLinks(f, ' ' + wf.text, wf.sourceIds);
+        li.appendChild(f);
+      }
       ul.appendChild(li);
     });
     var src = $('hazard-source');
@@ -924,6 +996,7 @@
     renderTopbar();
     renderBrief();
     renderImage();
+    renderHotspots();
     renderTimeline();
     renderTrend();
     renderGuidance();
@@ -1006,7 +1079,10 @@
       }
       else if (b.dataset.layer) update({ layer: b.dataset.layer });
       else if (b.dataset.view) update({ view: b.dataset.view });
-      else if (b.dataset.card) update({ card: b.dataset.card });
+      else if (b.dataset.card) {
+        update({ card: b.dataset.card });
+        if (b.classList.contains('hs')) revealGuidance();
+      }
       else if (b.id === 'play') setPlaying(!playTimer);
       else if (b.id === 'whatif-reset') update({ ex: WHATIF.ex.def, gs: WHATIF.gs.def, sh: WHATIF.sh.def, nz: WHATIF.nz.def });
     });
