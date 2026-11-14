@@ -203,13 +203,27 @@ main { max-width: 1400px; margin: 0 auto; padding: var(--gap); display: grid; ga
 .card-delta { font-size: 0.9em; }
 .card-reason { color: var(--muted); font-size: 0.9em; }
 
-/* ---- timeline --------------------------------------------------------------- */
-.timeline-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 18px; }
+/* ---- timeline: a compact bar fixed to the bottom of the viewport ------------ */
+/* --bar-h is the room kept free under the page so the bar never covers content. */
+:root { --bar-h: 100px; }
+body { padding-bottom: var(--bar-h); }
+html { scroll-padding-bottom: var(--bar-h); }
+.timeline {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+  border: 0; border-top: 2px solid var(--accent); border-radius: 0;
+  box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.28);
+  padding: 8px max(var(--gap), calc((100% - 1400px) / 2 + var(--gap)));
+}
+.timeline .section-title {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; margin: 0;
+}
+.timeline-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 4px 18px; }
 .slider { display: block; }
 input[type="range"] { width: 100%; accent-color: var(--accent); min-height: 32px; margin: 0; }
 .day-readout { white-space: nowrap; font-weight: 600; }
 .day-readout .muted { font-weight: 400; margin-left: 6px; }
-.timeline-legend { font-size: 0.84em; margin-top: 8px; }
+.timeline-legend { font-size: 0.8em; margin-top: 2px; }
 
 /* ---- trend chart ------------------------------------------------------------ */
 .chart { display: block; width: 100%; height: 280px; }
@@ -307,7 +321,6 @@ input[type="range"] { width: 100%; accent-color: var(--accent); min-height: 32px
 
 /* ---- phase 2: app-filled content ------------------------------------------- */
 .scenario-summary { margin-top: 8px; max-width: 80ch; font-size: 0.92em; }
-.card-reason { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .cap-tags { display: inline-flex; gap: 6px; flex-wrap: wrap; vertical-align: middle; }
 .caption > span { margin-right: 4px; }
 .tag { display: inline-block; font-size: 0.82em; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--muted); white-space: nowrap; }
@@ -364,6 +377,13 @@ input[type="range"] { width: 100%; accent-color: var(--accent); min-height: 32px
 .key-exercise { width: 10px; height: 8px; border-left: 2px solid var(--accent); border-right: 2px solid var(--muted); border-radius: 0; }
 .key-break { width: 14px; height: 10px; background: linear-gradient(115deg, transparent 35%, var(--text) 35% 45%, transparent 45% 60%, var(--text) 60% 70%, transparent 70%); }
 
+/* Words that differ between the space scenarios and the home presentation (body.mode-eldercare). */
+body.mode-eldercare .space-only, body:not(.mode-eldercare) .home-only { display: none; }
+/* Evidence id links: a tap target of at least 24 x 24 px. */
+.ev-link { display: inline-block; min-width: 24px; min-height: 24px; line-height: 24px; text-align: center; }
+#brief-title:focus { outline: none; }
+#brief-title:focus-visible { outline: 3px solid var(--accent); }
+
 /* ---- footer ----------------------------------------------------------------- */
 .footer { max-width: 1400px; margin: 0 auto; padding: 8px var(--gap) 40px; color: var(--muted); font-size: 0.86em; display: grid; gap: 6px; }
 .footer strong { color: var(--text); }
@@ -409,8 +429,11 @@ body.mode-eldercare .mk { stroke: #fff; }
   .card-value { font-size: 1.75em; }
   .card-reason { font-size: 0.82em; }
   #body-canvas { height: min(52vh, 380px); }
-  .timeline-row { grid-template-columns: auto minmax(0, 1fr); }
+  :root { --bar-h: 132px; }
+  .timeline { padding: 6px 16px; }
+  .timeline-row { grid-template-columns: auto minmax(0, 1fr); gap: 2px 12px; }
   .day-readout { grid-column: 1 / -1; }
+  .timeline-legend { margin-top: 0; }
   .rose-fig { grid-template-columns: minmax(0, 1fr); justify-items: center; }
   .evidence-list > li { grid-template-columns: 3.2em minmax(0, 1fr); }
   .ev-status { grid-column: 2; justify-self: start; }

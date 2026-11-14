@@ -226,6 +226,11 @@ shared and captured:
 
 - `s` scenario id, `d` mission day, `layer` image layer (`density|pressure|impedance`),
   `view` (`raw|diff`), `mode` (`astronaut|eldercare`), `card` selected trend card.
+- `mode` follows the scenario: `eldercare` exactly when `s=S4`, otherwise `astronaut`. It is
+  written to the address for readability; a valid `mode` in an older link is accepted and ignored.
+- Any value in the address that is unknown, rejected or changed to fit (for example a day outside
+  the scenario) falls back as before and shows the notice "This link could not be opened; showing
+  the default view." An unknown evidence id (`ev`) shows "That source is not in the evidence list."
 
 ## Status rules (interim, unvalidated; a flight surgeon decides)
 

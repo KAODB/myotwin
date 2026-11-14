@@ -101,6 +101,11 @@
     return t;
   }
   function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+  // Rendered width of an SVG text node; about 6.5 px per character where it cannot be measured.
+  function widthOf(t) {
+    var w = t.getComputedTextLength ? t.getComputedTextLength() : 0;
+    return w > 0 ? w : t.textContent.length * 6.5;
+  }
   function sizeOf(node, w, h) {
     var r = node.getBoundingClientRect ? node.getBoundingClientRect() : { width: 0, height: 0 };
     return { w: Math.round(r.width) || w, h: Math.round(r.height) || h };
@@ -131,7 +136,7 @@
    * Draw a time series into an <svg>.
    * opts: { series: [{missionDay, value|null}], raw: [{missionDay, value|null}]|null,
    *   baseline: {median, low, high}|null, expected: [{missionDay, low, high}]|null,
-   *   thresholds: [{value, label, status}], markers: [{missionDay, label, shortLabel?}],
+   *   thresholds: [{value, label, shortLabel?, status}], markers: [{missionDay, label, shortLabel?}],
    *   exercise: [{missionDay, done}]|null, statusAt: (missionDay) => status,
    *   selectedDay, unit, yLabel, xTitle = 'Mission day', axisBreak: missionDay|null }
    * `series` is the line the status is judged on (status-shaped markers); `raw` are the
@@ -145,6 +150,10 @@
     var W = size.w, H = size.h;
     var hasEx = opts.exercise && opts.exercise.length;
     var m = { l: 62, r: 16, t: 14, b: hasEx ? 50 : 38 };
+    // Event labels sit in a strip above the plot, so no data point or selected-night line runs under them.
+    var nLab = (opts.markers || []).filter(function (mk) { return mk.label; }).length;
+    var rows = Math.min(nLab, W - m.l - m.r < 420 ? 3 : 2);
+    if (rows) m.t = 6 + 14 * rows;
     clear(svg);
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
     svg.setAttribute('role', 'img');
@@ -177,6 +186,7 @@
 
     var pw = W - m.l - m.r, ph = H - m.t - m.b;
     function X(d) { return m.l + (d - x0) / (x1 - x0) * pw; }
+    var labels = [];
     function Y(v) { return m.t + (1 - (v - y0) / (y1 - y0)) * ph; }
 
     // Baseline period shading (mission days below 0)
@@ -221,7 +231,7 @@
       var b = opts.baseline;
       el('rect', { x: m.l, y: Y(b.high), width: pw, height: Math.max(0, Y(b.low) - Y(b.high)), 'class': 'band-baseline' }, svg);
       if (b.median != null) el('line', { x1: m.l, x2: W - m.r, y1: Y(b.median), y2: Y(b.median), 'class': 'line-median' }, svg);
-      if (pw >= 420) text(svg, W - m.r - 4, Y(b.high) - 4, 'Own baseline', 'band-label', 'end');
+      if (pw >= 420) labels.push(function () { text(svg, W - m.r - 4, Y(b.high) - 4, 'Own baseline', 'band-label', 'end'); });
     }
 
     // Expected band
@@ -232,30 +242,33 @@
       el('path', { d: d + 'Z', 'class': 'band-expected' }, svg);
     }
 
-    // Thresholds
+    // Thresholds (labels are drawn last, see below)
     (opts.thresholds || []).forEach(function (t) {
       if (t.value == null || t.value < y0 || t.value > y1) return;
       el('line', { x1: m.l, x2: W - m.r, y1: Y(t.value), y2: Y(t.value), 'class': 'threshold st-' + statusKey(t.status) }, svg);
-      if (t.label) text(svg, m.l + 6, Y(t.value) - 4, t.label, 'threshold-label st-' + statusKey(t.status), 'start');
+      if (t.label) {
+        labels.push(function () {
+          // A threshold may carry a shortLabel for plots too narrow for the full one.
+          var n = text(svg, m.l + 6, Y(t.value) - 4, t.label, 'threshold-label st-' + statusKey(t.status), 'start');
+          if (t.shortLabel && (pw < 420 || widthOf(n) > pw - 12)) n.textContent = t.shortLabel;
+        });
+      }
     });
 
-    // Event markers: all lines first, then the labels on top so no line crosses a label.
-    (opts.markers || []).forEach(function (mk) {
-      if (mk.missionDay < x0 || mk.missionDay > x1) return;
-      el('line', { x1: X(mk.missionDay), x2: X(mk.missionDay), y1: m.t, y2: m.t + ph, 'class': 'event' }, svg);
-    });
+    // Event markers (labels are drawn last, see below)
     (opts.markers || []).forEach(function (mk, k) {
       if (mk.missionDay < x0 || mk.missionDay > x1) return;
       var mx = X(mk.missionDay);
-      if (mk.label) {
-        // Keep the label inside the plot: estimated width about 6 px per character.
-        // A marker may carry a shortLabel for plots too narrow for the full one.
-        var lab = mk.shortLabel && mk.label.length * 6 > pw - 4 ? mk.shortLabel : mk.label;
-        var est = lab.length * 6, rows = pw < 420 ? 3 : 2;
-        var lx = mx > m.l + pw * 0.75 ? mx - 4 - est : mx + 4;
-        lx = Math.max(m.l + 2, Math.min(lx, W - m.r - est));
-        text(svg, lx, m.t + 12 + (k % rows) * 14, lab, 'event-label', 'start');
-      }
+      el('line', { x1: mx, x2: mx, y1: 4, y2: m.t + ph, 'class': 'event' }, svg);
+      if (!mk.label) return;
+      labels.push(function () {
+        var n = text(svg, mx + 4, 16 + (k % rows) * 14, mk.label, 'event-label', 'start');
+        if (mk.shortLabel && widthOf(n) > pw - 8) n.textContent = mk.shortLabel;
+        // Beside its own line: to the right if it fits, else to the left, else kept inside the plot.
+        var w = widthOf(n);
+        var lx = mx + 4 + w <= W - m.r ? mx + 4 : mx - 4 - w >= m.l ? mx - 4 - w : Math.max(m.l + 2, W - m.r - w);
+        n.setAttribute('x', lx);
+      });
     });
 
     // Selected day
@@ -298,6 +311,9 @@
       });
       text(svg, m.l - 8, ey, 'Exercise', 'ax-label', 'end');
     }
+
+    // Labels last, over every line and mark; their halo (CSS paint-order) keeps them readable.
+    labels.forEach(function (draw) { draw(); });
     return { x: X, y: Y };
   }
 
@@ -394,16 +410,20 @@
    * (up); sectors run clockwise. Wedge radius is proportional to sqrt(count / max),
    * so wedge area is proportional to count. opts: { highlightMax: true }
    */
+  // Sector names in drawing order (0 = toward the head, clockwise as drawn).
+  var ROSE_DIRECTIONS = ['head', 'head-right', 'right', 'feet-right', 'feet', 'feet-left', 'left', 'head-left'];
+
   function rose(svg, counts, opts) {
     opts = opts || {};
     counts = (counts || []).slice(0, 8);
     while (counts.length < 8) counts.push(0);
-    var S = 220, c = S / 2, R = 72;
+    var S = 220, c = S / 2, R = 66;
     clear(svg);
     svg.setAttribute('viewBox', '0 0 ' + S + ' ' + S);
     svg.setAttribute('role', 'img');
     var max = Math.max.apply(null, counts), imax = counts.indexOf(max);
-    var lab = 'Particle arrival directions in 8 sectors, sector 0 toward the head. Counts: ' + counts.join(', ');
+    var lab = 'Share of particle tracks by arrival direction. Counts: ' +
+      counts.map(function (n, k) { return ROSE_DIRECTIONS[k] + ' ' + n; }).join(', ');
     svg.setAttribute('aria-label', lab);
     el('title', null, svg).textContent = lab;
     [0.5, 1].forEach(function (f) { el('circle', { cx: c, cy: c, r: R * f, 'class': 'rose-ring' }, svg); });
@@ -421,11 +441,14 @@
     });
     text(svg, c, 18, 'Head', 'rose-label');
     text(svg, c, S - 8, 'Feet', 'rose-label');
+    text(svg, c - R - 6, c + 4, 'Left', 'rose-label', 'end');
+    text(svg, c + R + 6, c + 4, 'Right', 'rose-label', 'start');
     return imax;
   }
 
   var api = {
     STATUS: STATUS,
+    ROSE_DIRECTIONS: ROSE_DIRECTIONS,
     statusIcon: statusIcon,
     statusIconEl: statusIconEl,
     niceTicks: niceTicks,

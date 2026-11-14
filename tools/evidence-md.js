@@ -17,6 +17,7 @@ const js = (name) => require(path.join(__dirname, '..', 'js', name));
 const TOPIC_TITLES = {
   'challenge resources': 'Resources listed on the challenge page (NASA Human Research Program, Canadian Space Agency)',
   'linked from the challenge resources': 'NASA pages linked from the challenge resources (hazard, risk and research pages)',
+  'nasa ratings and requirements': 'NASA Human Research Roadmap ratings, NASA-STD-3001 requirements and technical briefs',
   muscle: 'Muscle',
   mission: 'Mission facts',
   eim: 'Electrical impedance myography (EIM)',

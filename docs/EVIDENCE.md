@@ -126,7 +126,123 @@ another citation without opening the original; **fitted** means estimated from e
 - Quote: "It will similarly collect a standardized set of measurements spanning multiple physiological systems to provide a comprehensive snapshot of how spaceflight affects the human body. ... The Spaceflight Standard Measures experiment, which began in 2018, has collected a comprehensive suite of data from more than 30 astronauts completing missions in low Earth orbit aboard the space station."
 - Values: `astronautsMoreThan` = 30; `startYear` = 2018
 
+### NASA Human Research Roadmap ratings, NASA-STD-3001 requirements and technical briefs
+
+**V70**. NASA's Human Research Roadmap rates the risk "Muscle and aerobic fitness" 5x3 for operations on a long lunar-surface mission (Requires Mitigation) and 5x4 on a Mars planetary mission (Requires Mitigation). Likelihood by consequence; read from the rating table.
+
+- Status: verified (official-database)
+- Source: NASA Human Research Roadmap, Risk of Mission Performance Decrements and Adverse Health Outcomes Resulting from Reduced Cardiorespiratory and Musculoskeletal Fitness (risk page 180). <https://humanresearchroadmap.nasa.gov/Risks/?i=180>
+- Quote: "The HSRB's LxC and risk dispositions for the two standalone risks are identical and are represented above for reference (approved by HSRB in 4/2024). ... Determine the required exercise countermeasure or countermeasures (i.e., modality or modalities, prescription, monitoring) to protect mission-specific task performance and crew health outcomes. ... Characterize the effects of the spaceflight environment, including reduced gravity (i.e., weightlessness, partial gravity), countermeasures, and individual variability, on physiological and functional measures of muscular and cardio-respiratory fitness and performance."
+- Values: `card` = muscle; `risk` = Risk of Mission Performance Decrements and Adverse Health Outcomes Resulting from Reduced Cardiorespiratory and Musculoskeletal Fitness; `lunarSurfaceLongOps` = 5x3; `lunarSurfaceLongOpsDisposition` = Requires Mitigation; `lunarSurfaceLongHealth` = 5x2; `lunarSurfaceLongHealthDisposition` = Requires Characterization; `marsPlanetaryOps` = 5x4; `marsPlanetaryOpsDisposition` = Requires Mitigation; `marsPlanetaryHealth` = 5x3; `marsPlanetaryHealthDisposition` = Requires Mitigation; `lastPublished` = 05/13/25; `gapId` = MA-201; `gapText` = Determine the required exercise countermeasure or countermeasures (i.e., modality or modalities, prescription, monitoring) to protect mission-specific task performance and crew health outcomes.; `gap2Id` = MA-101; `gap2Text` = Characterize the effects of the spaceflight environment, including reduced gravity (i.e., weightlessness, partial gravity), countermeasures, and individual variability, on physiological and functional measures of muscular and cardio-respiratory fitness and performance.
+
+**V71**. NASA's Human Research Roadmap rates the risk "Sleep loss, circadian desynchronization and work overload" 5x2 for operations on a long lunar-surface mission (Requires Characterization) and 5x2 on a Mars planetary mission (Requires Mitigation). Likelihood by consequence; read from the rating table.
+
+- Status: verified (official-database)
+- Source: NASA Human Research Roadmap, Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload (risk page 100). <https://humanresearchroadmap.nasa.gov/Risks/?i=100>
+- Quote: "The information above was last approved by the Human System Risk Board in 3/2022. ... We need to identify and develop an integrated, individualized suite of scheduling tools that predict the effects of sleep-wake cycles and light on performance, with validated countermeasures and on-board systems to monitor, prevent and/or treat chronic partial sleep loss, work overload, and/or circadian shifting in spaceflight."
+- Values: `card` = sleep; `risk` = Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload; `lunarSurfaceLongOps` = 5x2; `lunarSurfaceLongOpsDisposition` = Requires Characterization; `lunarSurfaceLongHealth` = 3x1; `lunarSurfaceLongHealthDisposition` = Accepted with Monitoring; `marsPlanetaryOps` = 5x2; `marsPlanetaryOpsDisposition` = Requires Mitigation; `marsPlanetaryHealth` = 4x2; `marsPlanetaryHealthDisposition` = Requires Mitigation; `lastPublished` = 05/13/25; `gapId` = Sleep-102; `gapText` = We need to identify and develop an integrated, individualized suite of scheduling tools that predict the effects of sleep-wake cycles and light on performance, with validated countermeasures and on-board systems to monitor, prevent and/or treat chronic partial sleep loss, work overload, and/or circadian shifting in spaceflight.
+
+**V72**. NASA's Human Research Roadmap rates the risk "Cardiovascular adaptations" 4x3 for operations on a long lunar-surface mission (Requires Characterization) and 4x4 on a Mars planetary mission (Requires Mitigation/Standard Refinement). Likelihood by consequence; read from the rating table.
+
+- Status: verified (official-database)
+- Source: NASA Human Research Roadmap, Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (risk page 179). <https://humanresearchroadmap.nasa.gov/Risks/?i=179>
+- Quote: "The information above was last approved by the Human System Risk Board in 5/2024. ... Evaluate candidate countermeasures in astronauts, including monitoring strategies, that prevent or mitigate spaceflight- and/or radiation-induced cardiovascular structural and functional adaptations in a spaceflight environment that contribute to an increased risk of a cardiovascular event and/or disease."
+- Values: `card` = cardio; `risk` = Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes; `lunarSurfaceLongOps` = 4x3; `lunarSurfaceLongOpsDisposition` = Requires Characterization; `lunarSurfaceLongHealth` = 1x2; `lunarSurfaceLongHealthDisposition` = Accepted with Monitoring; `marsPlanetaryOps` = 4x4; `marsPlanetaryOpsDisposition` = Requires Mitigation/Standard Refinement; `marsPlanetaryHealth` = 2x4; `marsPlanetaryHealthDisposition` = Requires Mitigation/Standard Refinement; `lastPublished` = 05/13/25; `gapId` = CV-203; `gapText` = Evaluate candidate countermeasures in astronauts, including monitoring strategies, that prevent or mitigate spaceflight- and/or radiation-induced cardiovascular structural and functional adaptations in a spaceflight environment that contribute to an increased risk of a cardiovascular event and/or disease.
+
+**V73**. NASA's Human Research Roadmap rates the long-term health risk "Radiation carcinogenesis" 3x2 for a long lunar-surface mission (Requires Characterization) and 3x3 for a Mars planetary mission (Requires Mitigation); the in-mission operations rating is 1x1 (Accepted). Likelihood by consequence under the previous 3x4 matrix; read from the rating table.
+
+- Status: verified (official-database)
+- Source: NASA Human Research Roadmap, Risk of Radiation Carcinogenesis (risk page 96). <https://humanresearchroadmap.nasa.gov/Risks/?i=96>
+- Quote: "The information above was last approved by the Human System Risk Board (HSRB) under the previous 3x4 LxC matrix. ... Identify and/or develop monitoring tools to support spaceflight research, long-term health surveillance, and countermeasure implementation."
+- Values: `card` = radiation; `risk` = Risk of Radiation Carcinogenesis; `lunarSurfaceLongOps` = 1x1; `lunarSurfaceLongOpsDisposition` = Accepted; `lunarSurfaceLongHealth` = 3x2; `lunarSurfaceLongHealthDisposition` = Requires Characterization; `marsPlanetaryOps` = 1x1; `marsPlanetaryOpsDisposition` = Accepted; `marsPlanetaryHealth` = 3x3; `marsPlanetaryHealthDisposition` = Requires Mitigation; `lastPublished` = 08/17/26; `gapId` = Cancer-402; `gapText` = Identify and/or develop monitoring tools to support spaceflight research, long-term health surveillance, and countermeasure implementation.
+
+**V74**. NASA's Human Research Roadmap rates the risk "Medical conditions that occur in mission" 5x4 for operations on a long lunar-surface mission (Requires Mitigation) and 5x4 on a Mars planetary mission (Requires Mitigation). Likelihood by consequence; read from the rating table.
+
+- Status: verified (official-database)
+- Source: NASA Human Research Roadmap, Risk of Adverse Health Outcomes and Decrements in Performance Due to Medical Conditions that occur in Mission, as well as Long Term Health Outcomes Due to Mission Exposures (risk page 95). <https://humanresearchroadmap.nasa.gov/Risks/?i=95>
+- Quote: "The information above was last approved by the Human System Risk Board in 5/2021. ... We need to increase inflight medical capabilities and identify new capabilities that (a) maximize benefit and/or (b) reduce “costs” on human system/mission/vehicle resources."
+- Values: `card` = medical; `risk` = Risk of Adverse Health Outcomes and Decrements in Performance Due to Medical Conditions that occur in Mission, as well as Long Term Health Outcomes Due to Mission Exposures; `lunarSurfaceLongOps` = 5x4; `lunarSurfaceLongOpsDisposition` = Requires Mitigation; `lunarSurfaceLongHealth` = 4x4; `lunarSurfaceLongHealthDisposition` = Requires Characterization; `marsPlanetaryOps` = 5x4; `marsPlanetaryOpsDisposition` = Requires Mitigation; `marsPlanetaryHealth` = 5x4; `marsPlanetaryHealthDisposition` = Requires Characterization; `lastPublished` = 05/13/25; `gapId` = Medical-701; `gapText` = We need to increase inflight medical capabilities and identify new capabilities that (a) maximize benefit and/or (b) reduce “costs” on human system/mission/vehicle resources.
+
+**V75**. NASA's Human Research Roadmap rates the risk "Earth-independent human-systems operations" 5x3 for operations on a long lunar-surface mission (Requires Mitigation) and 5x5 on a Mars planetary mission (Requires Mitigation). Likelihood by consequence; read from the rating table.
+
+- Status: verified (official-database)
+- Source: NASA Human Research Roadmap, Risk of Adverse Mission Outcomes Due to Earth Independent Human-Systems Operations (risk page 175). <https://humanresearchroadmap.nasa.gov/Risks/?i=175>
+- Quote: "The information above was last approved by the Human System Risk Board in 2/2023. ... We need to determine the on-board, intelligent systems that will support crew health and performance, and we need to establish the thresholds that will define how these systems should be implemented (including in-mission and at landing). ... We need to determine how human-automation-robotic systems can be optimized for effective enhancement and monitoring of crew capabilities, health, and performance, during increasingly earth-independent, future exploration missions (including in-mission and at landing)."
+- Values: `card` = autonomy; `risk` = Risk of Adverse Mission Outcomes Due to Earth Independent Human-Systems Operations; `lunarSurfaceLongOps` = 5x3; `lunarSurfaceLongOpsDisposition` = Requires Mitigation; `lunarSurfaceLongHealth` = Not Applicable; `lunarSurfaceLongHealthDisposition` = Not Applicable; `marsPlanetaryOps` = 5x5; `marsPlanetaryOpsDisposition` = Requires Mitigation; `marsPlanetaryHealth` = Not Applicable; `marsPlanetaryHealthDisposition` = Not Applicable; `lastPublished` = 05/13/25; `gapId` = EIHSO-301; `gapText` = We need to determine the on-board, intelligent systems that will support crew health and performance, and we need to establish the thresholds that will define how these systems should be implemented (including in-mission and at landing).; `gap2Id` = EIHSO-701; `gap2Text` = We need to determine how human-automation-robotic systems can be optimized for effective enhancement and monitoring of crew capabilities, health, and performance, during increasingly earth-independent, future exploration missions (including in-mission and at landing).
+
+**V76**. NASA-STD-3001 requires every programme to provide in-mission capabilities to monitor physiological and psychosocial well-being, including periodic monitoring of general health status.
+
+- Status: verified (official-document)
+- Source: NASA-STD-3001 Volume 1, Revision C, requirement [V1 3003] In-Mission Preventive Health Care. <https://www.nasa.gov/wp-content/uploads/2023/11/nasa-std-3001-vol-1-rev-c-with-signature.pdf>
+- Quote: "All programs shall provide training, in-mission capabilities, and resources to monitor physiological and psychosocial well-being and enable delivery of in-mission preventive health care ... Periodic monitoring of general health status."
+
+**V77**. NASA-STD-3001 lists, among the in-mission medical capabilities to provide, assessing, recording, monitoring and trending vital signs and other physiological and behavioural health signs, and a means of autonomous medical care.
+
+- Status: verified (official-document)
+- Source: NASA-STD-3001 Volume 1, Revision C, requirement [V1 3004] In-Mission Medical Care. <https://www.nasa.gov/wp-content/uploads/2023/11/nasa-std-3001-vol-1-rev-c-with-signature.pdf>
+- Quote: "Assessing, recording, monitoring, and trending vital signs and additional physiological and behavioral health signs. ... Means of providing autonomous medical care and advanced life support."
+
+**V78**. The rationale of NASA-STD-3001 [V1 6001] recommends an 8.5-hour sleep period. It is a recommendation in a rationale, not a required sleep duration.
+
+- Status: verified (official-document)
+- Source: NASA-STD-3001 Volume 1, Revision C, rationale of [V1 6001] Circadian Shifting Operations and Fatigue Management. <https://www.nasa.gov/wp-content/uploads/2023/11/nasa-std-3001-vol-1-rev-c-with-signature.pdf>
+- Quote: "Recommended 8.5 hr. sleep period (need to also include pre sleep of 2 hrs./post sleep of 1.5 hrs.)"
+- Values: `recommendedSleepPeriodHours` = 8.5
+
+**V79**. A NASA technical brief states that an average adult needs 7 to 9 hours of sleep and that astronauts sleep about six hours on average in space.
+
+- Status: verified (official-document)
+- Source: NASA OCHMO-TB-041, Sleep Accommodations (2023). <https://www.nasa.gov/wp-content/uploads/2023/12/ochmo-tb-041-sleep-accommodations.pdf>
+- Quote: "According to the National Sleep Foundation and American Academy of Sleep Medicine, an average adult needs 7-9 hours of sleep for optimal daytime functioning. ... These studies have shown that astronauts sleep an average of about six hours while in space, irrespective of the spaceflight mission examined or methodology used to quantify sleep."
+- Values: `adultSleepHoursLow` = 7; `adultSleepHoursHigh` = 9; `inSpaceSleepHoursAbout` = 6
+
+**V80**. NASA-STD-3001 requires horizontal sleep surfaces in partial gravity, naming lunar (1/6) and Mars (1/3) gravity.
+
+- Status: verified (official-document)
+- Source: NASA-STD-3001 Volume 2, Revision F, requirement [V2 7073] Partial-g Sleeping. <https://www.nasa.gov/wp-content/uploads/2025/05/nasa-std-3001-vol-2.pdf>
+- Quote: "The system shall provide for horizontal sleep surface areas for partial-g and 1-g environments. ... Partial-g, i.e., lunar (1/6) and Mars (1/3) gravity, defines the orientation of the volume."
+
+**V81**. NASA-STD-3001 [V1 4024] sets the 80% in-mission strength line because losses of up to 20% did not impair mission objectives and could be reconditioned after flight.
+
+- Status: verified (official-document)
+- Source: NASA-STD-3001 Volume 1, Revision C, requirement [V1 4024] In-Mission Skeletal Muscle Strength, with its rationale. <https://www.nasa.gov/wp-content/uploads/2023/11/nasa-std-3001-vol-1-rev-c-with-signature.pdf>
+- Quote: "Countermeasures shall maintain in-mission skeletal muscle strength at or above 80% of baseline values. ... The 80% minimum was determined using historical (including ISS) study data showing decrements up to 20% do not impair mission objectives and can be reconditioned to pre-flight muscular strength during post-flight reconditioning"
+- Values: `minStrengthFraction` = 0.8
+
+**V82**. A 2026 NASA bulletin says ISS crew strength is measured with an isometric mid-thigh pull and an isometric bench press, exercises that are location specific and need specialized equipment.
+
+- Status: verified (official-document)
+- Source: NASA OCHMO Technical Bulletin, NASA-STD-3001 Guidance for Strength and Human Performance for Extraterrestrial EVA Standard (2026). <https://www.nasa.gov/wp-content/uploads/2026/07/guidance-for-strength-and-human-performance-on-extraterrestrial-surface-eva-07222026.pdf>
+- Quote: "For ISS crewmembers, isometric mid-thigh pull (IMTP) and isometric bench press (IBP) are the lower and upper body exercise protocols used to measure crewmember strength across their mission, but these exercises are location specific requiring specialized equipment."
+
+**V83**. For habitats used longer than 60 days, NASA-STD-3001 limits the effective dose rate from galactic cosmic rays to less than 0.9 mSv per day on planetary surfaces and 1.3 mSv per day in free space.
+
+- Status: verified (official-document)
+- Source: NASA-STD-3001 Volume 1, Revision C, requirement [V1 4033] Crew Radiation Limits from Galactic Cosmic Radiation. <https://www.nasa.gov/wp-content/uploads/2023/11/nasa-std-3001-vol-1-rev-c-with-signature.pdf>
+- Quote: "rate of 1.3 mSv/day for systems in free space and to less than 0.9 mSv/day for systems on planetary surfaces."
+- Values: `surfaceLimitMSvPerDay` = 0.9; `freeSpaceLimitMSvPerDay` = 1.3
+
+**V84**. NASA-STD-3001 requires radiation monitoring in habitable volumes that reports dose, intensity and angles of incidence, and an alert to the crew when exposure rates exceed thresholds, even without ground communication.
+
+- Status: verified (official-document)
+- Source: NASA-STD-3001 Volume 2, Revision F, requirements [V2 6161] Intravehicular Area Monitoring and [V2 6164] Alerting. <https://www.nasa.gov/wp-content/uploads/2025/05/nasa-std-3001-vol-2.pdf>
+- Quote: "Appropriate dose monitoring provides data on the radiation type, linear energy transfer (LET), intensity, and angles of incidence. ... Timepix-based instruments have been used by past programs to characterize the ionizing radiation inside crewed vehicles and to measure the dose and dose rates. ... The radiation monitoring system shall alert the crew and operations teams when radiation exposure rates exceed predefined thresholds. ... The crew must be alerted even if ground communication is disrupted or is unviable."
+
 ### Muscle
+
+**V85**. NASA's evidence report on muscle and aerobic capacity states that no standard in-flight measurement of strength exists and that the strength requirement is tested about a week after landing. With ISS countermeasures, knee strength falls about 15% on average and about 31% of crew lose more than 20%.
+
+- Status: verified (official-document)
+- Source: NASA Human Research Program Evidence Report, Risk of Impaired Performance due to Reduced Muscle Mass, Strength and Endurance and Risk of Reduced Physical Performance Capabilities due to Reduced Aerobic Capacity (approved for public release 22 January 2023). <https://humanresearchroadmap.nasa.gov/evidence/reports/Evidence%20report%20aerobic%20and%20muscle_FINAL%204-3-2024.pdf>
+- Quote: "It is also important to keep in mind that the medical requirements testing is conducted approximately 1 week after landing ... Isokinetic knee strength is reduced on average about 15% from pre to postflight with ISS countermeasures provided to crew ... About 31% of crew lose greater than 20% knee muscle strength ... Currently, no standard in-flight measurement of strength exists."
+- Values: `avgKneeStrengthLossPct` = 15; `crewLosingOver20Pct` = 31; `testDaysAfterLandingAbout` = 7
+
+**V89**. ESA's MARES dynamometer on the ISS weighs 200 kg and is described by ESA as too complex for everyday exercise.
+
+- Status: verified (agency-web-page)
+- Source: European Space Agency, Muscle Atrophy Research and Exercise System (MARES). <https://www.esa.int/Science_Exploration/Human_and_Robotic_Exploration/Columbus/Muscle_Atrophy_Research_and_Exercise_System>
+- Quote: "The machine is too complex for everyday exercise ... Mass: 200 kg"
+- Values: `massKg` = 200
 
 **V1**. NASA requires in-mission skeletal muscle strength to stay at or above 80% of baseline.
 
@@ -174,6 +290,103 @@ another citation without opening the original; **fitted** means estimated from e
 - Status: verified (dataset-record)
 - Source: NASA Open Science Data Repository, OSD-714 (study title); Hayashi T et al. Commun Biol 2023, doi 10.1038/s42003-023-04769-3. <https://osdr.nasa.gov/bio/repo/data/studies/OSD-714>
 - Quote: "Lunar gravity prevents skeletal muscle atrophy but not myofiber type shift in mice"
+
+### Sleep
+
+**V86**. NASA's evidence report on sleep states that astronauts sleep about six hours on average in space, and that about three-quarters of Shuttle and ISS astronauts reported using sleep medication.
+
+- Status: verified (official-document)
+- Source: NASA Human Research Program Evidence Report, Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload (2016). <https://humanresearchroadmap.nasa.gov/evidence/reports/Sleep.pdf>
+- Quote: "These studies show that astronauts sleep an average of about six hours while in space, irrespective of the spaceflight mission examined or methodology used to quantify sleep. ... about three-quarters of both Shuttle and ISS astronauts reported using sleep medications during their missions"
+- Values: `inSpaceSleepHoursAbout` = 6
+
+**V11**. ISS crew slept 6.09 h per night on average during missions, measured by wrist actigraphy in 21 astronauts; 12 of 16 reported using sleep-promoting drugs.
+
+- Status: verified (abstract)
+- Source: Barger LK et al. Lancet Neurol 2014;13:904-912. PMID 25127232. <https://doi.org/10.1016/S1474-4422(14)70122-X>
+- Quote: "Crew members on ISS missions obtained significantly less sleep during spaceflight (6.09 h [0.67]) ... 12 (75%) of 16 ISS crew members reported using sleep-promoting drugs."
+- Values: `issSleepHours` = 6.09; `issSleepSd` = 0.67; `hypnoticUsers` = 12; `hypnoticOf` = 16
+
+**V18**. Barger et al. report that NASA regulations mandate 8.5 hours of protected time for sleep each night, citing the ISS Generic Groundrules, Requirements and Constraints. The NASA rule document itself was not opened.
+
+- Status: verified (full-text)
+- Source: Barger LK et al. Lancet Neurol 2014;13:904-912, full text. PMCID PMC4188436. <https://pmc.ncbi.nlm.nih.gov/articles/PMC4188436/>
+- Quote: "sleep deficiency is pervasive among crewmembers despite NASA regulations that mandate 8.5 hours of protected time for sleep each night"
+- Values: `protectedSleepHours` = 8.5
+
+**V42**. On the ISS the sleeping bag restrains the crew member to the wall of the crew quarters, so the body does not rest on a surface.
+
+- Status: verified (official-document)
+- Source: NASA, Improvements to On-Orbit Sleeping Accommodations, NTRS 20190027189 (2019). <https://ntrs.nasa.gov/citations/20190027189>
+- Quote: "The sleeping bags provide a soft and warm environment and also serve to safely restrain the crew member to the wall of their CQ."
+
+**V25**. Adults aged 18 to 60 should sleep 7 or more hours per night.
+
+- Status: verified (consensus-statement)
+- Source: Watson NF et al. Sleep 2015;38:843-844 (AASM and Sleep Research Society consensus). PMCID PMC4434546. <https://pmc.ncbi.nlm.nih.gov/articles/PMC4434546/>
+- Quote: "Adults should sleep 7 or more hours per night on a regular basis to promote optimal health."
+- Values: `minSleepHours` = 7; `ageMin` = 18; `ageMax` = 60
+
+### Electrical impedance myography (EIM)
+
+**V87**. A NASA-funded study of astronauts (2019 to 2034) performs non-invasive electrical impedance myography before and after flight.
+
+- Status: verified (official-database)
+- Source: NASA Task Book, Time Course of Spaceflight-Induced Adaptations in Bone Morphology, Bone Strength and Muscle Quality (principal investigator M. Bouxsein). <https://taskbook.nasaprs.com/tbp/index.cfm?action=public_query_taskbook_content&TASKID=07387AE7B0ED65293EFA45E8203BB732>
+- Quote: "In addition, we will perform in vivo, non-invasive electrical impedance myography pre- and post-flight to supplement function assessments of muscle being conducted as part of the standard measures in the integrated One-Year Mission Project."
+
+**V88**. A NASA-funded study of partial weight bearing in rats (2019 to 2022) assessed muscle weekly with limb girth, electrical impedance myography, nerve conduction and grip force.
+
+- Status: verified (official-database)
+- Source: NASA Task Book, Approaching Gravity As a Continuum: Musculoskeletal Effects of Fractional Reloading (principal investigator S. Rutkove). <https://taskbook.nasaprs.com/tbp/index.cfm?action=public_query_taskbook_content&TASKID=38338644ADB4036AF95D603F056A97FA>
+- Quote: "Muscle health and function were assessed weekly using limb girth, intra-muscular electrical impedance myography (EIM), nerve conduction studies, and grip force."
+
+**V8**. Human disuse: after 10-59 days in a cast, 50 kHz EIM phase of the tibialis anterior (shin) was 6.64 deg in the casted leg versus 9.46 deg in the other leg (28.4% lower), and rose to 9.37 deg after the cast came off (n = 10). A comparison between legs, not before and after.
+
+- Status: verified (full-text)
+- Source: Tarulli AW et al. Arch Phys Med Rehabil 2009;90:1806-1810. PMCID PMC2829834. <https://doi.org/10.1016/j.apmr.2009.04.007>
+- Quote: "The mean theta in the casted legs was 6.64 while the mean theta in the uncasted legs was 9.46, a mean side-to-side difference of 28.4% (p<0.01)."
+- Values: `n` = 10; `castedPhaseDeg` = 6.64; `uncastedPhaseDeg` = 9.46; `differencePct` = -28.4; `recoveredPhaseDeg` = 9.37; `castDaysMin` = 10; `castDaysMax` = 59
+
+**V9**. EIM phase declines with age in 100 healthy people aged 18-90, more steeply after 60. The authors call EIM an effort-independent test of muscle health in the elderly.
+
+- Status: verified (abstract)
+- Source: Aaron R et al. Physiol Meas 2006;27:953-959. PMID 16951455. <https://doi.org/10.1088/0967-3334/27/10/002>
+- Quote: "The principal EIM parameter, the spatially averaged phase theta(avg), shows a roughly quadratic reduction with increasing age, declining more steeply beyond 60 years."
+- Values: `n` = 100; `ageMin` = 18; `ageMax` = 90
+
+**V10**. Operator-applied 50 kHz EIM in 30 people, measured on biceps, quadriceps and tibialis anterior and repeated within 250 days: test-retest ICC 0.938-0.971; variability 4.2% on average, 16.8% at most. Not measured on the calf, and not night to night.
+
+- Status: verified (abstract)
+- Source: Rutkove SB et al. Clin Neurophysiol 2006;117:1244-1248. PMID 16644269. <https://doi.org/10.1016/j.clinph.2005.12.029>
+- Quote: "Variability between measurements was on average 4.2% for all muscle combined, with an upper limit of 16.8%."
+- Values: `n` = 30; `iccMin` = 0.938; `iccMax` = 0.971; `meanVariabilityPct` = 4.2; `maxVariabilityPct` = 16.8
+
+**V7**. Rats in a hindlimb-suspension analogue: EIM phase-slope fell from 14.60 to 11.03 to 10.13 deg/MHz at days 0, 7 and 14. The authors propose EIM as a biomarker under micro- and partial gravity.
+
+- Status: verified (abstract)
+- Source: Semple C et al. Front Physiol 2020;11:557796. PMID 33041858. <https://doi.org/10.3389/fphys.2020.557796>
+- Quote: "EIM has the potential to serve as biomarker of muscle deconditioning during exposure to both micro- and partial- gravity during future human space exploration."
+- Values: `phaseSlopeDay0` = 14.6; `phaseSlopeDay7` = 11.03; `phaseSlopeDay14` = 10.13
+
+**V28**. Bioimpedance of the legs keeps drifting after lying down: no steady state within 30 minutes; time constant about 36 minutes for extracellular volume. (Measured with BIA, not EIM.)
+
+- Status: verified (abstract)
+- Source: Scharfetter H et al. Kidney Int 1997;51:1078; Zhu F et al. J Appl Physiol 1998;85:497. PMIDs 9083273, 9688726. <https://pubmed.ncbi.nlm.nih.gov/9688726/>
+- Quote: "The ECV and ICV data changed significantly during all three periods, that is, a steady state could not be reached within 30 minutes."
+- Values: `legEcvChangePct` = -10.96; `ecvTimeConstantMin` = 36.4; `noSteadyStateWithinMin` = 30
+
+**V30**. Textile electrodes strapped to the leg matched gel electrodes for multi-frequency bioimpedance. A capacitive bioimpedance mattress prototype exists but is motion-sensitive. We found no study of dry-electrode or bed-integrated EIM, and no human EIM data from space or bed rest.
+
+- Status: verified (abstract)
+- Source: Nichols CJ et al. IEEE Trans Biomed Eng 2023;70:2679 (PMID 37027282); Castro ID et al. IEEE EMBC 2019:5621 (PMID 31947128). <https://pubmed.ncbi.nlm.nih.gov/37027282/>
+- Quote: "wearable textile electrodes can be a viable substitute for gel electrodes when monitoring leg MFBIA in dynamic, uncontrolled settings."
+
+**V26**. Bioimpedance device instructions list electronic implants such as pacemakers as a contraindication. Clinical studies of clinical-grade devices found no interference; consumer devices interfered on the bench.
+
+- Status: verified (manufacturer-document)
+- Source: seca mBCA 525 instructions for use (2024); Chabin X et al. Clin Nutr 2019;38:806; Ha et al. Heart Rhythm 2023;20:561. <https://www.seca.com/fileadmin/documents/manual/seca_man_mBCA_Go_525c_en.pdf>
+- Quote: "Bioimpedance measurements may not be performed on individuals exhibiting the following characteristics: Electronic implants, e.g. cardiac pacemakers"
 
 ### Radiation environment
 
@@ -268,84 +481,6 @@ another citation without opening the original; **fitted** means estimated from e
 - Source: NASA NSSDC Moon Fact Sheet and Mars Fact Sheet. <https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html>
 - Quote: "Surface gravity (m/s2) 1.62 9.80 0.165 (Moon); Surface gravity (mean) (m/s2) 3.73 9.82 0.380 (Mars)"
 - Values: `moonMs2` = 1.62; `moonRatio` = 0.165; `marsMs2` = 3.73; `marsRatio` = 0.38
-
-### Electrical impedance myography (EIM)
-
-**V8**. Human disuse: after 10-59 days in a cast, 50 kHz EIM phase of the tibialis anterior (shin) was 6.64 deg in the casted leg versus 9.46 deg in the other leg (28.4% lower), and rose to 9.37 deg after the cast came off (n = 10). A comparison between legs, not before and after.
-
-- Status: verified (full-text)
-- Source: Tarulli AW et al. Arch Phys Med Rehabil 2009;90:1806-1810. PMCID PMC2829834. <https://doi.org/10.1016/j.apmr.2009.04.007>
-- Quote: "The mean theta in the casted legs was 6.64 while the mean theta in the uncasted legs was 9.46, a mean side-to-side difference of 28.4% (p<0.01)."
-- Values: `n` = 10; `castedPhaseDeg` = 6.64; `uncastedPhaseDeg` = 9.46; `differencePct` = -28.4; `recoveredPhaseDeg` = 9.37; `castDaysMin` = 10; `castDaysMax` = 59
-
-**V9**. EIM phase declines with age in 100 healthy people aged 18-90, more steeply after 60. The authors call EIM an effort-independent test of muscle health in the elderly.
-
-- Status: verified (abstract)
-- Source: Aaron R et al. Physiol Meas 2006;27:953-959. PMID 16951455. <https://doi.org/10.1088/0967-3334/27/10/002>
-- Quote: "The principal EIM parameter, the spatially averaged phase theta(avg), shows a roughly quadratic reduction with increasing age, declining more steeply beyond 60 years."
-- Values: `n` = 100; `ageMin` = 18; `ageMax` = 90
-
-**V10**. Operator-applied 50 kHz EIM in 30 people, measured on biceps, quadriceps and tibialis anterior and repeated within 250 days: test-retest ICC 0.938-0.971; variability 4.2% on average, 16.8% at most. Not measured on the calf, and not night to night.
-
-- Status: verified (abstract)
-- Source: Rutkove SB et al. Clin Neurophysiol 2006;117:1244-1248. PMID 16644269. <https://doi.org/10.1016/j.clinph.2005.12.029>
-- Quote: "Variability between measurements was on average 4.2% for all muscle combined, with an upper limit of 16.8%."
-- Values: `n` = 30; `iccMin` = 0.938; `iccMax` = 0.971; `meanVariabilityPct` = 4.2; `maxVariabilityPct` = 16.8
-
-**V7**. Rats in a hindlimb-suspension analogue: EIM phase-slope fell from 14.60 to 11.03 to 10.13 deg/MHz at days 0, 7 and 14. The authors propose EIM as a biomarker under micro- and partial gravity.
-
-- Status: verified (abstract)
-- Source: Semple C et al. Front Physiol 2020;11:557796. PMID 33041858. <https://doi.org/10.3389/fphys.2020.557796>
-- Quote: "EIM has the potential to serve as biomarker of muscle deconditioning during exposure to both micro- and partial- gravity during future human space exploration."
-- Values: `phaseSlopeDay0` = 14.6; `phaseSlopeDay7` = 11.03; `phaseSlopeDay14` = 10.13
-
-**V28**. Bioimpedance of the legs keeps drifting after lying down: no steady state within 30 minutes; time constant about 36 minutes for extracellular volume. (Measured with BIA, not EIM.)
-
-- Status: verified (abstract)
-- Source: Scharfetter H et al. Kidney Int 1997;51:1078; Zhu F et al. J Appl Physiol 1998;85:497. PMIDs 9083273, 9688726. <https://pubmed.ncbi.nlm.nih.gov/9688726/>
-- Quote: "The ECV and ICV data changed significantly during all three periods, that is, a steady state could not be reached within 30 minutes."
-- Values: `legEcvChangePct` = -10.96; `ecvTimeConstantMin` = 36.4; `noSteadyStateWithinMin` = 30
-
-**V30**. Textile electrodes strapped to the leg matched gel electrodes for multi-frequency bioimpedance. A capacitive bioimpedance mattress prototype exists but is motion-sensitive. We found no study of dry-electrode or bed-integrated EIM, and no human EIM data from space or bed rest.
-
-- Status: verified (abstract)
-- Source: Nichols CJ et al. IEEE Trans Biomed Eng 2023;70:2679 (PMID 37027282); Castro ID et al. IEEE EMBC 2019:5621 (PMID 31947128). <https://pubmed.ncbi.nlm.nih.gov/37027282/>
-- Quote: "wearable textile electrodes can be a viable substitute for gel electrodes when monitoring leg MFBIA in dynamic, uncontrolled settings."
-
-**V26**. Bioimpedance device instructions list electronic implants such as pacemakers as a contraindication. Clinical studies of clinical-grade devices found no interference; consumer devices interfered on the bench.
-
-- Status: verified (manufacturer-document)
-- Source: seca mBCA 525 instructions for use (2024); Chabin X et al. Clin Nutr 2019;38:806; Ha et al. Heart Rhythm 2023;20:561. <https://www.seca.com/fileadmin/documents/manual/seca_man_mBCA_Go_525c_en.pdf>
-- Quote: "Bioimpedance measurements may not be performed on individuals exhibiting the following characteristics: Electronic implants, e.g. cardiac pacemakers"
-
-### Sleep
-
-**V11**. ISS crew slept 6.09 h per night on average during missions, measured by wrist actigraphy in 21 astronauts; 12 of 16 reported using sleep-promoting drugs.
-
-- Status: verified (abstract)
-- Source: Barger LK et al. Lancet Neurol 2014;13:904-912. PMID 25127232. <https://doi.org/10.1016/S1474-4422(14)70122-X>
-- Quote: "Crew members on ISS missions obtained significantly less sleep during spaceflight (6.09 h [0.67]) ... 12 (75%) of 16 ISS crew members reported using sleep-promoting drugs."
-- Values: `issSleepHours` = 6.09; `issSleepSd` = 0.67; `hypnoticUsers` = 12; `hypnoticOf` = 16
-
-**V18**. Barger et al. report that NASA regulations mandate 8.5 hours of protected time for sleep each night, citing the ISS Generic Groundrules, Requirements and Constraints. The NASA rule document itself was not opened.
-
-- Status: verified (full-text)
-- Source: Barger LK et al. Lancet Neurol 2014;13:904-912, full text. PMCID PMC4188436. <https://pmc.ncbi.nlm.nih.gov/articles/PMC4188436/>
-- Quote: "sleep deficiency is pervasive among crewmembers despite NASA regulations that mandate 8.5 hours of protected time for sleep each night"
-- Values: `protectedSleepHours` = 8.5
-
-**V42**. On the ISS the sleeping bag restrains the crew member to the wall of the crew quarters, so the body does not rest on a surface.
-
-- Status: verified (official-document)
-- Source: NASA, Improvements to On-Orbit Sleeping Accommodations, NTRS 20190027189 (2019). <https://ntrs.nasa.gov/citations/20190027189>
-- Quote: "The sleeping bags provide a soft and warm environment and also serve to safely restrain the crew member to the wall of their CQ."
-
-**V25**. Adults aged 18 to 60 should sleep 7 or more hours per night.
-
-- Status: verified (consensus-statement)
-- Source: Watson NF et al. Sleep 2015;38:843-844 (AASM and Sleep Research Society consensus). PMCID PMC4434546. <https://pmc.ncbi.nlm.nih.gov/articles/PMC4434546/>
-- Quote: "Adults should sleep 7 or more hours per night on a regular basis to promote optimal health."
-- Values: `minSleepHours` = 7; `ageMin` = 18; `ageMax` = 60
 
 ### Radar
 
