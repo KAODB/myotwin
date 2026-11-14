@@ -239,11 +239,14 @@
       if (t.label) text(svg, m.l + 6, Y(t.value) - 4, t.label, 'threshold-label st-' + statusKey(t.status), 'start');
     });
 
-    // Event markers
+    // Event markers: all lines first, then the labels on top so no line crosses a label.
+    (opts.markers || []).forEach(function (mk) {
+      if (mk.missionDay < x0 || mk.missionDay > x1) return;
+      el('line', { x1: X(mk.missionDay), x2: X(mk.missionDay), y1: m.t, y2: m.t + ph, 'class': 'event' }, svg);
+    });
     (opts.markers || []).forEach(function (mk, k) {
       if (mk.missionDay < x0 || mk.missionDay > x1) return;
       var mx = X(mk.missionDay);
-      el('line', { x1: mx, x2: mx, y1: m.t, y2: m.t + ph, 'class': 'event' }, svg);
       if (mk.label) {
         // Keep the label inside the plot: estimated width about 6 px per character.
         var est = mk.label.length * 6, rows = pw < 420 ? 3 : 2;

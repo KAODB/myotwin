@@ -177,6 +177,10 @@ On a grey card `extra` holds whatever is known and null for the rest.
 
 - `rules.THRESHOLDS` : thresholds as data, each with `sourceIds`.
 - `rules.TEXT[cardId][status]` : `{ meaning, actions: [...] }`.
+- `rules.CONTEXT[cardId]` : `{ risk, note, sourceIds }`. `risk` is the NASA Human Research
+  Program risk the check screens for, read from evidence V44; `note` is one sentence backed by `sourceIds`.
+- `rules.HAZARDS` : five `{ name, coverage: 'covered' | 'partly' | 'not covered', text }` rows,
+  in the order and with the names of evidence V43 (NASA's five hazards of human spaceflight).
 - `rules.WORDING[mode]` : terms that differ between `'astronaut'` and `'eldercare'`
   (for example who decides).
 - `engine.baseline(records) -> { eim: { median, sd, n }, sleep: {...}, rr: {...}, hr: {...} }`
