@@ -11,7 +11,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src data:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src data:; base-uri 'none'; form-action 'none'; require-trusted-types-for 'script'">
 <meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="dark light">
 <meta name="description" content="MyoTwin: a morning health brief built from passive sleep-station sensing on the Moon and Mars. Concept software with simulated data.">
@@ -46,14 +46,14 @@
         <option value="">Loading scenarios</option>
       </select>
     </label>
-    <p class="env-badge" id="env-badge"><span class="field-label">Habitat</span> <span id="env-name">Not loaded</span></p>
+    <p class="env-badge" id="env-badge"><span class="field-label" id="env-label">Habitat</span> <span id="env-name">Not loaded</span></p>
     <div class="segmented" role="group" aria-label="Display mode">
       <button type="button" class="seg" data-mode="astronaut" aria-pressed="true">Astronaut</button>
       <button type="button" class="seg" data-mode="eldercare" aria-pressed="false">Eldercare</button>
     </div>
   </div>
   <ul class="badges" aria-label="About this page">
-    <li class="badge badge-sim"><svg aria-hidden="true" focusable="false" viewBox="0 0 16 16"><path d="M8 1.5l6.5 3.7v5.6L8 14.5l-6.5-3.7V5.2z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v6M5 8h6" stroke="currentColor" stroke-width="1.5"/></svg>Simulated data — concept demonstration</li>
+    <li class="badge badge-sim"><svg aria-hidden="true" focusable="false" viewBox="0 0 16 16"><path d="M8 1.5l6.5 3.7v5.6L8 14.5l-6.5-3.7V5.2z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v6M5 8h6" stroke="currentColor" stroke-width="1.5"/></svg>Simulated data · Not a medical device</li>
     <li class="badge badge-offline"><svg aria-hidden="true" focusable="false" viewBox="0 0 16 16"><path d="M3 9.5a5 5 0 0 1 10 0" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 9.5v4M6 12l2 1.8 2-1.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Works offline</li>
   </ul>
 </header>
@@ -65,6 +65,8 @@
     <div class="brief-head">
       <h1 id="brief-title" class="eyebrow">Morning brief <span id="brief-date" class="muted">no night selected</span></h1>
       <p id="headline" class="headline" aria-live="polite">The brief appears here once the simulated mission loads.</p>
+      <p id="data-source" class="data-source">Measured by a sensor panel in the sleep station while the crew sleep. Nothing is worn and it takes no crew time.</p>
+      <p id="notice" class="notice" role="status" hidden>This link could not be opened; showing the default view.</p>
       <p id="scenario-summary" class="scenario-summary muted"></p>
       <noscript><p class="notice">MyoTwin needs JavaScript to build the brief. Nothing is sent anywhere; it runs entirely in this page.</p></noscript>
     </div>
@@ -78,7 +80,7 @@
         </div>
         <div class="segmented" role="group" aria-label="Image view">
           <button type="button" class="seg" data-view="raw" aria-pressed="true">Raw</button>
-          <button type="button" class="seg" data-view="diff" aria-pressed="false">Change vs baseline</button>
+          <button type="button" class="seg" data-view="diff" aria-pressed="false" id="view-diff">Change since arrival</button>
         </div>
       </div>
       <div class="canvas-wrap">
@@ -86,6 +88,10 @@
         <p class="canvas-empty" id="canvas-empty">Image not drawn yet</p>
       </div>
       <div class="colorbar" id="colorbar" role="img" aria-label="Colour scale"></div>
+      <ul class="img-legend" id="img-legend" hidden>
+        <li id="img-legend-mask" hidden><span class="key key-mask" aria-hidden="true"></span>Below noise</li>
+        <li id="img-legend-outline" hidden><span class="key key-outline" aria-hidden="true"></span>Not measured</li>
+      </ul>
       <figcaption id="image-caption" class="caption">
         <span id="cap-label">Simplified supine body seen from above, head at the top.</span>
         <span id="cap-extra"></span>
@@ -96,26 +102,30 @@
     <div class="cards" id="cards">
       <button type="button" class="card st-grey" data-card="muscle" aria-pressed="true">
         <span class="card-top"><span class="card-name">Muscle</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span>
-        <span class="card-value"><span class="num">—</span> <span class="unit">deg</span></span>
+        <span class="card-value"><span class="num">—</span> <span class="unit">vs your own baseline</span></span>
         <span class="card-delta">Change vs baseline: —</span>
+        <span class="card-extra"></span>
         <span class="card-reason">Calf impedance phase, 7-night median.</span>
       </button>
       <button type="button" class="card st-grey" data-card="sleep" aria-pressed="false">
         <span class="card-top"><span class="card-name">Sleep</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span>
         <span class="card-value"><span class="num">—</span> <span class="unit">h</span></span>
         <span class="card-delta">Change vs baseline: —</span>
+        <span class="card-extra"></span>
         <span class="card-reason">Hours asleep, 7-night mean, from radar.</span>
       </button>
       <button type="button" class="card st-grey" data-card="cardio" aria-pressed="false">
         <span class="card-top"><span class="card-name">Heart and breathing</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span>
         <span class="card-value"><span class="num">—</span> <span class="unit">bpm</span></span>
         <span class="card-delta">Change vs baseline: —</span>
+        <span class="card-extra"></span>
         <span class="card-reason">Night heart and breathing rate, 3-night medians.</span>
       </button>
       <button type="button" class="card st-grey" data-card="radiation" aria-pressed="false">
         <span class="card-top"><span class="card-name">Radiation</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span>
         <span class="card-value"><span class="num">—</span> <span class="unit">µGy</span></span>
         <span class="card-delta">Change vs recent nights: —</span>
+        <span class="card-extra"></span>
         <span class="card-reason">Dose over the sleep period, in silicon.</span>
       </button>
     </div>
@@ -130,32 +140,58 @@
         <span class="btn-text">Play</span>
       </button>
       <label class="slider">
-        <span class="visually-hidden">Mission day</span>
+        <span class="visually-hidden" id="day-label">Mission day</span>
         <input type="range" id="day" min="0" max="1" step="1" value="0" disabled>
       </label>
       <p class="day-readout"><output id="day-out" for="day">Day —</output> <span id="date-out" class="muted">no date</span></p>
     </div>
-    <p class="timeline-legend muted">Days below 0 are the 14 pre-departure baseline nights.</p>
+    <p class="timeline-legend muted" id="timeline-legend">Days below 0 are the 14 pre-departure baseline nights.</p>
   </section>
 
   <div class="split">
-    <!-- 4. Trend -->
-    <section id="trend" class="panel trend" aria-labelledby="trend-title">
-      <h2 id="trend-title" class="section-title">Trend <span id="trend-card" class="muted">Muscle</span></h2>
-      <svg id="trend-chart" class="chart" role="img" aria-label="Trend chart, not yet drawn"></svg>
-      <ul class="legend" aria-label="Chart legend">
-        <li><span class="key key-baseline" aria-hidden="true"></span>Own baseline range</li>
-        <li><span class="key key-expected" aria-hidden="true"></span>Mission plan (muscle)</li>
-        <li><span class="key key-threshold" aria-hidden="true"></span>Threshold</li>
-        <li><span class="key key-selected" aria-hidden="true"></span>Selected night</li>
-      </ul>
-      <p id="trend-note" class="trend-note muted"></p>
-      <p id="projection" class="projection" hidden></p>
-      <figure id="rose-fig" class="rose-fig" hidden>
-        <svg id="rose" class="rose" role="img" aria-label="Direction rose, not yet drawn"></svg>
-        <figcaption class="caption"><span id="rose-reading"></span> <span id="rose-span"></span> The sector at the top points toward the head; sectors run clockwise.</figcaption>
-      </figure>
-    </section>
+    <div class="col-main">
+      <!-- 4. Trend -->
+      <section id="trend" class="panel trend" aria-labelledby="trend-title">
+        <h2 id="trend-title" class="section-title">Trend <span id="trend-card" class="muted">Muscle</span></h2>
+        <svg id="trend-chart" class="chart" role="img" aria-label="Trend chart, not yet drawn"></svg>
+        <ul class="legend" id="trend-legend" aria-label="Chart legend"></ul>
+        <p id="trend-note" class="trend-note muted"></p>
+        <p id="projection" class="projection" hidden></p>
+        <figure id="rose-fig" class="rose-fig" hidden>
+          <svg id="rose" class="rose" role="img" aria-label="Direction rose, not yet drawn"></svg>
+          <figcaption class="caption"><span id="rose-reading"></span> In this simulated scenario one side of the sleep station is less shielded. Counts summed over the mission so far<span id="rose-span"></span>. The sector at the top points toward the head; sectors run clockwise.</figcaption>
+        </figure>
+      </section>
+
+      <!-- 6. What-if -->
+      <section id="whatif" class="panel whatif" aria-labelledby="whatif-title">
+        <h2 id="whatif-title" class="section-title">What if</h2>
+        <p class="muted section-lede">Change an assumption and the simulated nights are regenerated.</p>
+        <div class="whatif-grid">
+          <label class="knob">
+            <span class="knob-label">Exercise adherence <output id="adherence-out" for="adherence">As planned</output></span>
+            <input type="range" id="adherence" min="0" max="1" step="0.05" value="1" disabled>
+            <span class="knob-hint">Share of planned countermeasure sessions done.</span>
+          </label>
+          <label class="knob" id="knob-shape">
+            <span class="knob-label">Partial-gravity shape <output id="shape-out" for="shape">1 (linear)</output></span>
+            <input type="range" id="shape" min="1" max="4" step="0.5" value="1" disabled>
+            <span class="knob-hint">Higher values mean partial gravity protects muscle more. 1 means loss scales linearly with missing gravity; an assumption.</span>
+          </label>
+          <label class="knob" id="knob-shield">
+            <span class="knob-label">Habitat shielding <output id="shield-out" for="shield">1.0</output></span>
+            <input type="range" id="shield" min="0.1" max="1" step="0.1" value="1" disabled>
+            <span class="knob-hint">Share of particles that reach the sleep station; 1 is as measured on the surface, lower is more shielding.</span>
+          </label>
+          <label class="knob">
+            <span class="knob-label">Sensor noise <output id="noise-out" for="noise">2% (assumed)</output></span>
+            <input type="range" id="noise" min="0.01" max="0.08" step="0.01" value="0.02" disabled>
+            <span class="knob-hint">How much the nightly impedance reading varies. A bed-integrated sensor may be noisier than assumed.</span>
+          </label>
+        </div>
+        <button type="button" id="whatif-reset" class="btn" disabled>Reset to scenario defaults</button>
+      </section>
+    </div>
 
     <!-- 5. Guidance -->
     <section id="guidance" class="panel guidance" aria-labelledby="guidance-title">
@@ -178,34 +214,10 @@
     </section>
   </div>
 
-  <!-- 6. What-if -->
-  <section id="whatif" class="panel whatif" aria-labelledby="whatif-title">
-    <h2 id="whatif-title" class="section-title">What if</h2>
-    <p class="muted section-lede">Change an assumption and the simulated mission is regenerated.</p>
-    <div class="whatif-grid">
-      <label class="knob">
-        <span class="knob-label">Exercise adherence <output id="adherence-out" for="adherence">Scenario</output></span>
-        <input type="range" id="adherence" min="0" max="1" step="0.05" value="1" disabled>
-        <span class="knob-hint">Share of planned countermeasure sessions done.</span>
-      </label>
-      <label class="knob">
-        <span class="knob-label">Partial-gravity shape <output id="shape-out" for="shape">1 (linear)</output></span>
-        <input type="range" id="shape" min="1" max="4" step="0.5" value="1" disabled>
-        <span class="knob-hint">Higher values mean partial gravity protects muscle more. 1 means loss scales linearly with missing gravity; an assumption.</span>
-      </label>
-      <label class="knob">
-        <span class="knob-label">Habitat shielding <output id="shield-out" for="shield">1.0</output></span>
-        <input type="range" id="shield" min="0.1" max="1" step="0.1" value="1" disabled>
-        <span class="knob-hint">Share of particles that reach the sleep station; 1 is as measured on the surface, lower is more shielding.</span>
-      </label>
-    </div>
-    <button type="button" id="whatif-reset" class="btn" disabled>Reset to scenario defaults</button>
-  </section>
-
   <!-- 7. How it works -->
   <section id="how" class="how" aria-labelledby="how-title">
     <h2 id="how-title" class="section-title">How it works</h2>
-    <p class="section-lede muted">An assumed sensor panel in the sleep station. Nothing is worn, nothing to remember.</p>
+    <p class="section-lede muted">An assumed sensor panel in the sleep station. Nothing is worn. The one requirement is bare calves on the sensor strip.</p>
     <div class="how-grid">
       <article class="panel sensor">
         <svg class="sensor-art" viewBox="0 0 160 80" aria-hidden="true" focusable="false">
@@ -214,7 +226,7 @@
           <path class="art-accent" d="M72 52v-6M88 52v-6M104 52v-6M120 52v-6"/>
         </svg>
         <h3>Impedance strip under the calves</h3>
-        <p>Dry electrodes in the mattress pass a tiny 50 kHz current through the calf. In people, this reading fell after weeks in a cast and came back with recovery (measured on the shin). Nobody has measured it in space or through a mattress yet: that is what this panel is for.</p>
+        <p>Dry electrodes in the mattress pass a tiny 50 kHz current through the calf. In people with a leg in a cast, this reading was 28% lower than in the other leg and recovered after the cast came off (measured on the shin). We found no published measurement in space or through a mattress: that is what this panel is for.</p>
       </article>
       <article class="panel sensor">
         <svg class="sensor-art" viewBox="0 0 160 80" aria-hidden="true" focusable="false">
@@ -223,9 +235,9 @@
           <path class="art-body" d="M80 52c20-6 44-6 68-2v10c-24-4-48-4-68 2z"/>
         </svg>
         <h3>60 GHz radar above the bunk</h3>
-        <p>A low-power radar reads chest movement from a distance: breathing rate, heart rate, sleep time. No contact, no camera. Radar vital signs work on Earth; they have not been tested in space.</p>
+        <p>A low-power radar reads chest movement from a distance: breathing rate and heart rate. Sleep time is estimated from movement and breathing, which is an assumption here. No contact, no camera. Radar reads breathing and heart rate on Earth; we found no test in space.</p>
       </article>
-      <article class="panel sensor">
+      <article class="panel sensor" id="sensor-trackers">
         <svg class="sensor-art" viewBox="0 0 160 80" aria-hidden="true" focusable="false">
           <path class="art-plane" d="M14 12h132M14 18h132M14 62h132M14 68h132"/>
           <path class="art-body" d="M24 36c30-6 80-6 112 0v8c-32 6-82 6-112 0z"/>
@@ -238,13 +250,15 @@
     <article class="panel limits" id="limits" tabindex="-1">
       <h3>What this version does not account for, and the next step</h3>
       <ol class="limits-list">
-        <li><p><strong>Not accounted for:</strong> The momentum of each particle. Deflection depends on momentum as much as on thickness, and momenta differ several-fold.</p><p><strong>Next step:</strong> Measure a block of known thickness beside the sleeper every night and use the ratio; then assess a momentum-measuring layer.</p></li>
-        <li><p><strong>Not accounted for:</strong> Movement during the night and the long tails from nuclear interactions. The statistics support trends over large regions and several weeks, not small features.</p><p><strong>Next step:</strong> Sort tracks by posture using the pressure image, start with calf, thigh and trunk, and run a particle-transport simulation.</p></li>
-        <li><p><strong>Not accounted for:</strong> Habitat shielding. Shielding removes low-energy particles and adds secondaries, so the best-protected sleep stations give the weakest image.</p><p><strong>Next step:</strong> Simulate the usable tracks behind different shielding and find the habitats where the method works.</p></li>
+        <li><p><strong>Not accounted for:</strong> The momentum of each particle. Deflection depends on momentum as much as on thickness, and momenta span orders of magnitude.</p><p><strong>Next step:</strong> Measure a block of known thickness beside the sleeper every night and use the ratio; then assess a momentum-measuring layer.</p></li>
+        <li><p><strong>Not accounted for:</strong> Movement during the night and the long tails from nuclear interactions. We expect that the statistics support trends over large regions and several weeks, not small features (expected, not computed).</p><p><strong>Next step:</strong> Sort tracks by posture using the pressure image, start with calf, thigh and trunk, and run a particle-transport simulation.</p></li>
+        <li><p><strong>Not accounted for:</strong> Habitat shielding. Shielding removes low-energy particles and adds secondaries. We expect that the best-protected sleep stations give the weakest image (expected, not computed).</p><p><strong>Next step:</strong> Simulate the usable tracks behind different shielding and find the habitats where the method works.</p></li>
         <li><p><strong>Not accounted for:</strong> Any real measurement of the density image.</p><p><strong>Next step:</strong> Repeat the published ground test with sea-level muons and a body phantom before proposing a flight experiment.</p></li>
         <li><p><strong>Not accounted for:</strong> Human impedance data in space, in bed rest, or at the back of the calf, and any test of bed-integrated dry electrodes.</p><p><strong>Next step:</strong> Run the panel beside standard strength tests and MRI in a bed-rest study and set the thresholds from the measured night-to-night noise.</p></li>
         <li><p><strong>Not accounted for:</strong> Fluid shifts in partial gravity, which move the impedance reading.</p><p><strong>Next step:</strong> Fix the measurement to the last hour before waking and characterise the arrival step.</p></li>
         <li><p><strong>Not accounted for:</strong> Radar vital signs in space.</p><p><strong>Next step:</strong> Test in a mock sleep station and in an analogue.</p></li>
+        <li><p><strong>Not accounted for:</strong> Detection accuracy. The simulated nights and the plan come from the same model, so this page shows the workflow, not how well a real decline would be caught.</p><p><strong>Next step:</strong> Test the rules on recorded bed-rest data.</p></li>
+        <li><p><strong>Not accounted for:</strong> The transit. In weightlessness the sleeper does not rest on the panel, so MyoTwin starts at arrival.</p><p><strong>Next step:</strong> Pair it with a worn sensor for the transit.</p></li>
         <li><p><strong>Not accounted for:</strong> Effective dose. The radiation card shows absorbed dose in silicon.</p><p><strong>Next step:</strong> Add the conversion with a validated transport model.</p></li>
       </ol>
       <p class="limits-close">All data here are simulated, the sensor panel has not been built, and the status rules are interim and unvalidated.</p>
