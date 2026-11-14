@@ -29,9 +29,9 @@ Demo, seven slides: [PDF](https://kaodb.github.io/myotwin/demo/slides/MyoTwin-de
 
 Screenshots:
 
-![Morning brief on Mars, day 45: the muscle card reports a decline beside the whole-body image and the sleep, heart and breathing, and radiation cards](demo/screenshots/brief-mars-day45.png)
+![Morning brief on Mars, night 45. The headline reports muscle. The sleeper is drawn as a stipple of dots inside a square and a circle, with the four checks as notes in the margin and the nights as a ruler along the bottom](demo/screenshots/brief-mars-day45.png)
 
-![Whole-body image panel, density layer, change since arrival on Mars day 45](demo/screenshots/wholebody-density-diff.png)
+![The plate on Mars, night 45: change in density since arrival, with blue dots where the legs have lost](demo/screenshots/wholebody-density-diff.png)
 
 ## Run it
 
