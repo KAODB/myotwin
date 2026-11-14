@@ -19,7 +19,13 @@ engine follows an older adult at home. Ids such as (V1) are entries in
 
 Live page: https://kaodb.github.io/myotwin/
 
-Screenshots: to be added
+Screenshots (simulated data):
+
+![Morning brief on Mars, day 45: the muscle card reports a decline beside the whole-body image and the sleep, heart and breathing, and radiation cards](demo/screenshots/brief-mars-day45.png)
+
+![Whole-body image panel, density layer, change since arrival on Mars day 45](demo/screenshots/wholebody-density-diff.png)
+
+![Eldercare wording for an older adult at home, day 34: the muscle card is on watch](demo/screenshots/eldercare-day34.png)
 
 ## Run it
 
