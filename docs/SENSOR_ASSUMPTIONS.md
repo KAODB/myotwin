@@ -2,14 +2,16 @@
 
 MyoTwin is software. The sensor panel it reads from is assumed and has not
 been built. This file states, for each assumed sensor, what MyoTwin expects it
-to output, what evidence supports the measurement principle, what has never
-been shown, and the safety notes that have a source. Ids such as (V8) are
+to output, what evidence supports the measurement principle, what we found
+no published work on, and the safety notes that have a source. Ids such as (V8) are
 entries in [EVIDENCE.md](EVIDENCE.md). Field names are from the NightRecord in
 [CONTRACT.md](CONTRACT.md).
 
 The panel sits in the sleep station of a lunar or Mars surface habitat. On a
 surface, gravity presses the sleeper onto the bed. On the ISS, by contrast, the
-sleeping bag restrains the crew member to the crew-quarters wall (V18).
+sleeping bag restrains the crew member to the wall of the crew quarters, so
+the body does not rest on a surface (V42). For this reason MyoTwin starts at
+arrival; during a transit the panel would not measure.
 
 ## 1. Impedance (EIM) electrode strip under the calves
 
@@ -25,28 +27,35 @@ sleeping bag restrains the crew member to the crew-quarters wall (V18).
 **Evidence that the principle works**
 
 - Human disuse: after 10-59 days in a cast, the 50 kHz phase of the tibialis
-  anterior was 6.64 deg versus 9.46 deg in the other leg (-28.4%), and returned
-  to 9.37 deg after remobilisation (n = 10) (V8).
+  anterior (shin) was 6.64 deg in the casted leg versus 9.46 deg in the other
+  leg (28.4% lower), and rose to 9.37 deg after the cast came off (n = 10). It
+  is a comparison between legs, not before and after (V8).
 - Rats in hindlimb suspension: the EIM phase-slope fell from 14.60 to 11.03 to
   10.13 deg/MHz at days 0, 7 and 14. The authors propose EIM as a biomarker
   under micro- and partial gravity (V7).
-- Mice on the ISS centrifuge (JAXA): EIM was one of the functional measures
-  that showed 0.67 g was needed to maintain muscle performance (V6).
+- Mice on JAXA's centrifuge aboard the ISS, in a University of Tsukuba-led
+  study with JAXA: EIM was one of the functional measures by which 0.67 g was
+  sufficient to maintain muscle function (V6).
 - EIM phase declines with age in 100 healthy people aged 18-90, more steeply
   after 60; the authors call EIM effort-independent (V9).
-- Operator-applied 50 kHz EIM: test-retest ICC 0.938-0.971; variability 4.2% on
-  average and 16.8% at most (V10). MyoTwin uses these two numbers as its muscle
-  thresholds.
+- Operator-applied 50 kHz EIM in 30 people, on biceps, quadriceps and tibialis
+  anterior, repeated within 250 days: test-retest ICC 0.938-0.971; variability
+  4.2% on average and 16.8% at most (V10). MyoTwin uses these two numbers as
+  its muscle limits: amber when the 7-night median is more than 4.2% worse than
+  the mission plan, red when it is more than 16.8% below baseline (or 2 and 3
+  times the expected noise, if larger). The red line is a reporting line, not a
+  strength threshold. These figures were not measured on the calf, night to
+  night, or with electrodes in a mattress; using them there is an assumption.
 - Textile electrodes strapped to the leg matched gel electrodes for
   multi-frequency bioimpedance, and a capacitive bioimpedance mattress
   prototype exists, though it is motion-sensitive (V30).
 
-**What has never been shown**
+**What we found no published work on**
 
-- EIM in humans in space, in bed rest, or at the back of the calf. V8 measured
-  the shin.
-- EIM with dry electrodes or electrodes built into a bed. No such study was
-  found (V30).
+- Human EIM data from space or bed rest, or EIM at the back of the calf. V8
+  measured the shin (V30, V8).
+- EIM with dry electrodes or electrodes built into a bed (V30). V30 does report
+  a capacitive bioimpedance mattress prototype, which is motion-sensitive.
 - The size of the link between muscle change and phase change. MyoTwin assumes
   one-to-one; V8 has no paired muscle-size measurement.
 - A stable reading after lying down. Leg bioimpedance had not reached a steady
@@ -71,22 +80,26 @@ sleeping bag restrains the crew member to the crew-quarters wall (V18).
 | `hr_bpm` | Heart rate, beats per minute, night median |
 | `movement` | Movement index, 0 to 1 |
 
+Breathing rate and heart rate have published evidence. Hours asleep, sleep
+efficiency and movement from the radar are assumptions in this version.
+
 **Evidence that the principle works**
 
 - A systematic review of radar vital-sign monitoring: with a 10% tolerated
   deviation, 85% (respiration) and 87% (heart rate) of studies qualified; with
   5%, 37% and 48% (V23).
 - A 60 GHz FMCW radar used during polysomnography (n = 44) agreed with the
-  apnea-hypopnea index at ICC 0.776-0.929 (V24; values read from the full text,
-  no sentence copied).
+  apnea-hypopnea index at ICC 0.776-0.812 on its own, and 0.916-0.929 only when
+  the sleep status came from polysomnography. The authors state that the radar
+  alone cannot distinguish the sleep status (V24).
 
-**What has never been shown**
+**What we found no published work on**
 
 - Radar vital-sign monitoring in space. The closest work found is a design
-  study of UWB radar for the ISS crew quarters, validated by simulation and
-  ground tests (V39).
-- The evidence table has no entry on radar measurement of hours asleep, sleep
-  efficiency or movement. V24 covers the apnea-hypopnea index only.
+  study of UWB radar for sensing breathing in the ISS crew quarters, validated
+  by simulation and ground tests (V39).
+- Radar measurement of hours asleep, sleep efficiency or movement in the
+  evidence table. In V24 the radar alone could not tell sleep from wake.
 
 **Safety notes with a source**
 
@@ -106,7 +119,7 @@ mass.
 **Evidence that the principle works.** The evidence table has no entry on
 pressure mats.
 
-**What has never been shown.** A pressure mat used to measure body mass in
+**What we found no published work on.** A pressure mat used to measure body mass in
 partial gravity. The image also assumes no load transfer between cells.
 
 **Safety notes with a source.** None in the evidence table.
@@ -123,9 +136,9 @@ partial gravity. The image also assumes no load transfer between cells.
 
 The density image also needs the number of usable tracks per cm2 in the night.
 In this version the simulator supplies it (`_truth.tracksPerCm2`, which the
-assessment engine never reads). With the assumed vertical intensity of 0.2 per
-cm2 per s per sr, a 20 deg acceptance cone and 8 hours, it is 2,183 tracks per
-cm2.
+assessment engine never reads): 2,183 incident GCR protons per cm2 in an 8-hour
+night within a 20-degree cone (assumed free-space intensity of 0.2 per cm2 per
+s per sr; no habitat shielding; the Mars atmosphere is ignored).
 
 **Evidence that the principle works**
 
@@ -146,9 +159,9 @@ cm2.
   24-hour exposure with signal to background of about 1:1 (V35).
 - Surface dose rates used by the simulator: 13.2 uGy/h in silicon on the Moon,
   from the LND instrument on the Chang'E-4 lander (V12), and 8.60 uGy/h in
-  silicon on Mars, from one MSL/RAD observation on sol 90 (V16).
+  silicon on Mars, from the first of 45 MSL/RAD observations on sol 90 (V16).
 
-**What has never been shown**
+**What we found no published work on**
 
 - A density image of a person made from cosmic rays in space.
 - A 2026 study with an accelerator muon beam and a thorax phantom argues that
@@ -170,12 +183,22 @@ assumed to be passive detectors; they add no radiation source.
    regions, and run a particle-transport simulation.
 3. **Habitat shielding** changes which particles reach the trackers (V37).
    Next step: simulate usable tracks behind different shielding.
-4. **The density image has never been measured this way.** Next step: repeat
-   the published ground test with sea-level muons and a body phantom (V35).
-5. **No human EIM data in space, in bed rest or at the back of the calf** (V8
-   measured the shin), and bed-integrated dry electrodes are untested (V30).
-   Next step: run the panel beside strength tests and MRI in a bed-rest study.
+4. **We found no published density image of a body made this way.** A 2026
+   study argues the natural muon flux on Earth is too low for medical imaging
+   (V38). Next step: repeat the published ground test with sea-level muons and
+   a body phantom (V35).
+5. **We found no published human EIM data from space, bed rest or the back of
+   the calf** (V8 measured the shin), and no study of bed-integrated
+   dry-electrode EIM (V30). Next step: run the panel beside strength tests and
+   MRI in a bed-rest study.
 6. **Fluid shifts move the impedance reading** (V28). Next step: measure in the
    last hour before waking.
-7. **Radar vital signs are untested in space** (V39).
+7. **We found no published test of radar vital signs in space** (V39). Next
+   step: test in a mock sleep station and an analogue.
 8. **The radiation card shows absorbed dose in silicon, not effective dose.**
+   Next step: add the conversion with a validated transport model.
+9. **Detection accuracy:** the simulated nights and the plan share one model.
+   Next step: test the rules on recorded bed-rest data.
+10. **The transit:** in weightlessness the sleeper does not rest on the panel,
+    so MyoTwin starts at arrival. Next step: pair it with a worn sensor for the
+    transit.

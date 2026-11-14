@@ -30,7 +30,7 @@
     muscleRedNoiseMultiple: assumption(3, 'x noise7', 'Red needs a drop beyond 3 times the expected spread of a 7-night median.'),
     muscleMinUsableNights: assumption(3, 'nights', 'Fewest nights with a usable scan in the last 7 before the card is judged.'),
     // Sleep
-    sleepAmberHours: fromEvidence('V25', 'minSleepHours', 'h', 'Adult recommendation of 7 h or more.'),
+    sleepAmberHours: fromEvidence('V25', 'minSleepHours', 'h', 'Recommendation of 7 h or more for adults aged 18 to 60 (V25). Applied to the older adult in scenario S4 as an assumption.'),
     sleepRedHours: assumption(Math.floor(evidence.value('V11', 'issSleepHours')), 'h', 'ISS average sleep (V11) rounded down; not a validated cut-off.', ['V11']),
     sleepMinNights: assumption(4, 'nights', 'Fewest radar nights in the last 7 before the card is judged.'),
     // Cardio

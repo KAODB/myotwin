@@ -18,7 +18,8 @@
         'the model then gives V4 control 60 d -28.9% (published -29%), V4 exercise 60 d -8.1% (published -8%), ' +
         'V5 ISS 180 d with exercise -10.5% (published -13 +/- 2%). V5 used a different, less effective exercise programme, ' +
         'so it is underestimated; matching all three exactly would need a plateau above 50%, so the smaller plateau was kept. ' +
-        'The plateau is an extrapolation: there are no human data without countermeasures beyond a few months.'
+        'The plateau is an extrapolation: there are no human data without countermeasures beyond a few months. ' +
+        'Two equivalences are assumed in the fit: 6-degree head-down bed rest (V4) is treated as g = 0, and the ISS crews (V5) as full exercise adherence.'
     },
     timeConstantDays: {
       value: 42, unit: 'days', status: 'fitted', anchors: ['V4', 'V5'],
