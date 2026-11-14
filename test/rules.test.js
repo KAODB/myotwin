@@ -147,7 +147,8 @@ test('numbers in the NASA standard sentences come from evidence values', () => {
   for (const id of CARDS) {
     for (const s of rules.NASA[id].standard) assert.ok(s.sourceIds.length > 0, id + ' standard sources');
   }
-  assert.deepStrictEqual(rules.NASA.muscle.standard.map((s) => s.sourceIds[0]), ['V81', 'V85']);
+  assert.deepStrictEqual(rules.NASA.muscle.standard.map((s) => s.sourceIds[0]), ['V81', 'V85', 'V82']);
+  assert.match(text('muscle'), /2023 evidence report/);   // the quote carries its year, beside the 2026 bulletin
   assert.deepStrictEqual(rules.NASA.sleep.standard.map((s) => s.sourceIds[0]), ['V78', 'V79']);
   assert.deepStrictEqual(rules.NASA.cardio.standard.map((s) => s.sourceIds[0]), ['V77']);
   assert.deepStrictEqual(rules.NASA.radiation.standard.map((s) => s.sourceIds[0]), ['V83', 'V84']);
