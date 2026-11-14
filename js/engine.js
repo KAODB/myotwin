@@ -140,7 +140,7 @@
       threshold = 'muscleRedDropPct';
     } else if (drop - expectedDrop > amberLimit) {
       status = 'amber';
-      if (plan) reason += ' That is ' + f(drop - expectedDrop, 1) + '% worse than the plan.';
+      if (plan) reason += ' That is ' + f(drop - expectedDrop, 1) + ' percentage points worse than the plan.';
     }
     return makeCard('muscle', status, words, { value: value, unit: unit, deltaPct: deltaPct, threshold: threshold, reason: reason, extra: extra, expectedDeltaPct: plan ? 0 - expectedDrop : null });
   }
