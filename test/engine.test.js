@@ -77,7 +77,7 @@ test('muscle: a steady 1.2%/week decline that matches the plan stays green', () 
   const perDay = 1.2 / 7;
   const recs = build({ shape: (d) => ({ eim: { phase50_deg: 9 * (1 - perDay * d / 100) } }) });
   const plan = planOf((d) => -perDay * d);
-  for (let i = at(0); i < recs.length; i++) {
+  for (let i = at(2); i < recs.length; i++) {   // nights 0-1 are grey: too few nights since arrival
     assert.equal(card(engine.assess(recs, i, { expectedChangePct: plan }), 'muscle').status, 'green', 'index ' + i);
   }
   // Same data without the plan does turn amber by the end, so the plan is what keeps it green.
@@ -127,8 +127,17 @@ test('cardio amber with only heart rate high', () => {
   assert.equal(c.unit, 'bpm');
   assert.match(c.reason, /breathing rate 14\.3/);
 });
-test('cardio red with both high on each of the last 3 nights', () => {
-  assert.equal(card(assessDay(() => ({ radar: { hr_bpm: 58, rr_bpm: 15 } })), 'cardio').status, 'red');
+test('cardio is never red: both high for 3 nights stays amber and is marked sustained', () => {
+  const c = card(assessDay(() => ({ radar: { hr_bpm: 58, rr_bpm: 15 } })), 'cardio');
+  assert.equal(c.status, 'amber');
+  assert.equal(c.extra.sustained, true);
+  assert.match(c.meaning, /early sign of illness/);
+  assert.ok(c.actions.includes('Tell the crew medical officer today.'));
+  assert.equal(card(assessDay(() => ({ radar: { hr_bpm: 58 } })), 'cardio').extra.sustained, false);
+  assert.equal(rules.TEXT.cardio.red, undefined);
+  for (let d = 0; d < 30; d++) {
+    assert.notEqual(card(assessDay(() => ({ radar: { hr_bpm: 90, rr_bpm: 30 } }), d), 'cardio').status, 'red');
+  }
 });
 test('cardio grey with 1 radar night in the last 3', () => {
   assert.equal(card(assessDay((d) => (d >= 19 ? { radar: null } : {})), 'cardio').status, 'grey');
@@ -144,8 +153,16 @@ test('radiation 1.9x is green', () => {
 test('radiation 2.1x is amber', () => {
   assert.equal(card(assessDay(tonightRad({ dose_uGy: 210 })), 'radiation').status, 'amber');
 });
-test('radiation 10.5x is red', () => {
-  assert.equal(card(assessDay(tonightRad({ dose_uGy: 1050 })), 'radiation').status, 'red');
+test('radiation 10.5x is red and carries ratio and cumulative dose', () => {
+  const c = card(assessDay(tonightRad({ dose_uGy: 1050 })), 'radiation');
+  assert.equal(c.status, 'red');
+  close(c.extra.ratio, 10.5);
+  assert.equal(c.extra.usualUGy, 100);
+  assert.equal(c.extra.cumulativeUGy, 10 * 98 + 10 * 102 + 1050);   // mission nights 0-20 only
+  assert.match(c.reason, /10\.5x the usual level/);
+  assert.match(c.reason, /\u00b5Gy/);
+  assert.ok(!/uGy/.test(c.reason));
+  assert.match(c.meaning, /record of what happened overnight/);
 });
 test('radiation solar particle event flag is red', () => {
   assert.equal(card(assessDay(tonightRad({ spe: true })), 'radiation').status, 'red');
@@ -178,13 +195,52 @@ test('overall and headline: all green', () => {
 test('overall and headline: one amber', () => {
   const a = assessDay(() => ({ radar: { sleep_h: 6.5 } }));
   assert.equal(a.overall, 'amber');
-  assert.equal(a.headline, '1 check needs attention: sleep.');
+  assert.equal(a.headline, '1 check to watch: sleep.');
 });
 
 test('overall and headline: red', () => {
   const a = assessDay(tonightRad({ spe: true }));
   assert.equal(a.overall, 'red');
-  assert.equal(a.headline, 'Urgent: radiation. Follow the actions below.');
+  assert.equal(a.headline, 'Report to the flight surgeon today: radiation.');
+});
+
+test('headline: two ambers, red plus amber, the heart and breathing name, never Urgent', () => {
+  assert.equal(assessDay(() => ({ eim: { phase50_deg: 8.6 }, radar: { sleep_h: 6.5 } })).headline, '2 checks to watch: muscle, sleep.');
+  assert.equal(assessDay((d) => (d === 20 ? { radar: { sleep_h: 6.5 }, rad: { spe: true } } : { radar: { sleep_h: 6.5 } })).headline,
+    'Report to the flight surgeon today: radiation. 1 check to watch: sleep.');
+  assert.equal(assessDay(() => ({ radar: { hr_bpm: 58 } })).headline, '1 check to watch: heart and breathing.');
+  assert.equal(assessDay(tonightRad({ spe: true }), 20, { mode: 'eldercare' }).headline, 'Report to the physician today: radiation.');
+});
+
+// ---- phases never mix -------------------------------------------------------
+// The fixture places surface night 0 right after the last baseline night, as S2 does after its transit.
+test('muscle on surface nights 0-1 is grey "since arrival"; night 2 uses surface nights only', () => {
+  const recs = build({ shape: () => ({ eim: { phase50_deg: 8.0 } }) });
+  for (const d of [0, 1]) {
+    const c = card(engine.assess(recs, at(d)), 'muscle');
+    assert.equal(c.status, 'grey');
+    assert.equal(c.reason, 'Only ' + (d + 1) + ' nights since arrival (need 3).');
+    assert.equal(c.extra.dropPct, null);
+    close(c.extra.redLimitPct, 16.8);
+  }
+  const c2 = card(engine.assess(recs, at(2)), 'muscle');
+  assert.equal(c2.value, 8.0);
+  close(c2.deltaPct, -100 / 9);
+  close(c2.extra.dropPct, 100 / 9);
+  const s0 = card(engine.assess(recs, at(0)), 'sleep');
+  assert.equal(s0.status, 'grey');
+  assert.match(s0.reason, /since arrival/);
+  assert.equal(card(engine.assess(recs, at(0)), 'cardio').status, 'grey');
+});
+
+test('windows on baseline nights use baseline nights only and do not say "since arrival"', () => {
+  const recs = build({ shape: () => ({ radar: { sleep_h: 3 } }) });
+  const s = card(engine.assess(recs, at(-1)), 'sleep');
+  assert.equal(s.extra.nights, 7);
+  close(s.value, 7.4 - 0.1 / 7);    // 4 short and 3 long baseline nights, no surface nights
+  const m = card(engine.assess(build({ shape: () => ({}) }), 1), 'muscle');
+  assert.equal(m.status, 'grey');
+  assert.ok(!/arrival/.test(m.reason));
 });
 
 test('eldercare mode swaps the wording', () => {
@@ -218,6 +274,20 @@ test('project returns a positive daysToRed for a steady decline', () => {
   close(p.daysToRed, 144, 1);
 });
 
+test('project needs 3 complete surface weeks and never returns under 1 day', () => {
+  const recs = build({ shape: (d) => ({ eim: { phase50_deg: 9 * (1 - 0.001 * d) } }) });
+  for (let d = -14; d < 20; d++) assert.equal(engine.project(recs, at(d)), null, 'day ' + d);
+  assert.ok(engine.project(recs, at(20)) !== null);
+  for (let i = 0; i < recs.length; i++) {
+    const p = engine.project(recs, i);
+    assert.ok(p === null || p.daysToRed >= 1);
+  }
+  // Steep weekly steps ending just short of the red line: the line crosses in under a day -> null.
+  const steep = build({ shape: (d) => ({ eim: { phase50_deg: 9 * (1 - (d < 7 ? 0.065 : d < 14 ? 0.115 : 0.165)) } }) });
+  assert.notEqual(card(engine.assess(steep, at(20)), 'muscle').status, 'red');
+  assert.equal(engine.project(steep, at(20)), null);
+});
+
 test('project returns null for a flat series', () => {
   assert.equal(engine.project(build({ shape: () => ({ eim: { phase50_deg: 9 } }) }), at(27)), null);
 });
@@ -237,4 +307,16 @@ test('series returns one point per night with null when missing', () => {
   assert.equal(s.length, 44);
   assert.deepStrictEqual(s[at(0)], { missionDay: 0, value: null });
   assert.equal(s[at(1)].value, 98);
+});
+
+// ---- regression on the real simulator -------------------------------------
+test('S2 after the transit: no projection on days 2-20, muscle follows the plan on day 3', () => {
+  const sim = require('../js/sim.js');
+  const g = sim.generate('S2', { seed: 1 });
+  const idx = (d) => g.records.findIndex((r) => r.missionDay === d);
+  for (let d = 2; d <= 20; d++) assert.equal(engine.project(g.records, idx(d)), null, 'day ' + d);
+  const i3 = idx(3);
+  const c = card(engine.assess(g.records, i3, { expectedChangePct: g.plan.expectedChangePct }), 'muscle');
+  assert.notEqual(c.status, 'grey');
+  assert.ok(Math.abs(c.deltaPct - g.plan.expectedChangePct[i3]) <= 3, c.deltaPct + ' vs plan ' + g.plan.expectedChangePct[i3]);
 });
