@@ -46,7 +46,7 @@
   --gutter: 56px;
   --top-h: 64px;
   --bar-h: 92px;
-  --hero-h: max(470px, calc(100vh - var(--top-h) - var(--bar-h)));
+  --hero-h: clamp(470px, calc(100vh - var(--top-h) - var(--bar-h)), 960px);
   color-scheme: dark;
 }
 
@@ -419,12 +419,13 @@ input[type="range"]::-moz-range-thumb { width: 2px; height: 18px; background: va
 .gcheck-close { margin-top: 16px; font-style: italic; }
 
 .hazard-list li { grid-template-columns: minmax(0, 1fr) auto; }
+.hazard-list .nasa-quote { display: inline; padding: 0; border: 0; font-size: 21px; }
 .hazard-source { margin-top: 12px; font-size: 16px; }
 
 .limits:focus { outline: none; }
 .limits:focus-visible { outline: 2px solid var(--blue); }
 .limits-list { list-style: none; padding: 0; counter-reset: lim; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 64px; }
-.limits-list li { counter-increment: lim; display: grid; grid-template-columns: 2.2em minmax(0, 1fr); padding: 16px 0; border-top: 1px solid var(--rule); font-size: 17px; }
+.limits-list li { counter-increment: lim; display: grid; align-content: start; grid-template-columns: 2.2em minmax(0, 1fr); padding: 16px 0; border-top: 1px solid var(--rule); font-size: 17px; }
 .limits-list li::before { content: counter(lim); grid-row: 1 / span 2; font-family: var(--font-display); font-weight: 500; font-size: 34px; line-height: 1; color: var(--quiet); }
 .limits-list li p { color: var(--quiet); grid-column: 2; }
 .limits-list li p + p { margin-top: 6px; }
