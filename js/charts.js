@@ -673,7 +673,7 @@
    */
   function stippleDot(v, min, max, mode, code, cell) {
     if (code === 2) return { r: cell * 0.2, tone: 'hollow', alpha: 0.8 };
-    if (code === 1) return { r: cell * 0.11, tone: 'quiet', alpha: 0.75 };
+    if (code === 1) return { r: cell * 0.15, tone: 'quiet', alpha: 0.7 };
     if (v == null || !isFinite(v)) return null;
     var t, tone = 'ink';
     if (mode === 'diff') {
@@ -683,6 +683,8 @@
     } else {
       t = max > min ? clamp01((v - min) / (max - min)) : 0.5;
     }
+    // A change is drawn with a higher floor than a raw value, so the body stays readable when the change is small.
+    if (mode === 'diff') return { r: cell * (0.2 + 0.3 * Math.sqrt(t)), tone: tone, alpha: 0.5 + 0.5 * t };
     return { r: cell * (0.16 + 0.34 * Math.sqrt(t)), tone: tone, alpha: 0.22 + 0.72 * t };
   }
 
