@@ -15,6 +15,7 @@ const path = require('path');
 const js = (name) => require(path.join(__dirname, '..', 'js', name));
 
 const TOPIC_TITLES = {
+  'challenge resources': 'Resources listed on the challenge page (NASA Human Research Program, Canadian Space Agency)',
   muscle: 'Muscle',
   mission: 'Mission facts',
   eim: 'Electrical impedance myography (EIM)',

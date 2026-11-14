@@ -15,6 +15,56 @@
   var ns = (root.MyoTwin = root.MyoTwin || {});
 
   var ITEMS = [
+    // ---- Resources listed on the challenge page ------------------------------
+    // The five resources NASA lists under "Resources" for the challenge "Create
+    // Health Monitoring Software for Astronauts on Space Missions". Quotes are in
+    // page order; " ... " marks text left out between two sentences.
+    {
+      id: 'V43', topic: 'challenge resources', status: 'verified', level: 'agency-web-page',
+      claim: 'NASA groups the stressors of spaceflight into five hazards: space radiation, isolation and confinement, distance from Earth, gravity fields, and hostile/closed environments.',
+      values: { hazards: ['Space Radiation', 'Isolation and Confinement', 'Distance from Earth', 'Gravity Fields', 'Hostile/Closed Environments'] },
+      quote: "Astronauts' entire bodies – muscles, bones, inner ear, and organs – must adjust to the new gravities encountered on the space station or their spacecraft, as well as on the Moon, Mars, and Earth once they return home. ... Planning and self-sufficiency will be key to successful deep space missions.",
+      source: 'NASA Human Research Program, 5 Hazards of Human Spaceflight',
+      url: 'https://www.nasa.gov/hrp/hazards/'
+    },
+    {
+      id: 'V44', topic: 'challenge resources', status: 'verified', level: 'agency-web-page',
+      claim: 'NASA lists, among the risks of human spaceflight, reduced cardiorespiratory and musculoskeletal fitness, inadequate sleep and irregular schedules, cardiovascular adaptations, and radiation-induced cancers. Each MyoTwin check is mapped to one of them.',
+      values: {
+        muscleRisk: 'Risk of Reduced Cardiorespiratory and Musculoskeletal Fitness',
+        sleepRisk: 'Risk of Inadequate Sleep and Irregular Schedules',
+        cardioRisk: 'Risk of Cardiovascular Adaptations',
+        radiationRisk: 'Risk of Radiation-Induced Cancers'
+      },
+      quote: 'Weightlessness alters blood circulation and how the heart and blood vessels function, potentially increasing the risk of cardiovascular events. ... All astronauts perform exercise during their mission to counteract losses in bone density, muscle strength, and heart and blood vessel performance. ... Stressors include chronic sleep loss, constant work demands, and irregularities in their internal biological clocks. ... Crews exposed to radiation from space may be more likely to develop cancer.',
+      source: 'NASA Human Research Program, Risks of Human Spaceflight',
+      url: 'https://www.nasa.gov/hrp/risks/'
+    },
+    {
+      id: 'V45', topic: 'challenge resources', status: 'verified', level: 'agency-web-page',
+      claim: 'Current NASA studies monitor crew well-being, activity and sleep in deep space (ARCHeR, on Artemis II) and collect a consistent set of physiological and psychological measurements from crew members (Standard Measures).',
+      values: {},
+      quote: "A study on Artemis II monitored astronauts' well-being, activity, and sleep patterns to learn more about human health and performance in deep space. ... Collecting a consistent set of physiological and psychological measurements to better understand how spaceflight affects the bodies and minds of crew members",
+      source: 'NASA Human Research Program, Ongoing HRP Research in Space (entries ARCHeR and Standard Measures)',
+      url: 'https://www.nasa.gov/hrp/ongoing-hrp-research/'
+    },
+    {
+      id: 'V46', topic: 'challenge resources', status: 'verified', level: 'agency-web-page',
+      claim: 'The Canadian Space Agency is funding CANS, a compact neutron spectrometer that works continuously and autonomously, as plans advance for missions to the Moon and Mars. Neutrons contribute about 30% of the radiation on the ISS.',
+      values: { neutronSharePct: 30 },
+      quote: 'Neutron radiation, which contributes to about 30% of total radiation on the ISS, is especially harmful because it can cause serious biological damage and require specialized protective measures. ... CANS improves upon previous radiation detection methods with the unique combined capabilities of working continuously and autonomously.',
+      source: 'Canadian Space Agency, Monitoring radiation for astronaut health (2026-02-26)',
+      url: 'https://www.asc-csa.gc.ca/eng/news/articles/2026/2026-02-26-monitoring-radiation-astronaut-health.asp'
+    },
+    {
+      id: 'V47', topic: 'challenge resources', status: 'verified', level: 'agency-web-page',
+      claim: 'The Canadian Space Agency describes the changes seen in astronauts as similar to accelerated ageing and to the effects of a sedentary lifestyle, and says studying them helps with issues that affect older adults on Earth.',
+      values: {},
+      quote: 'Studying the way our body changes in space help us understand the impacts of reduced levels of physical activity and issues that affect older adult populations on Earth. ... The effects observed in astronauts are similar to accelerated aging and health problems caused by a sedentary lifestyle.',
+      source: 'Canadian Space Agency, Why do we conduct science experiments in space? (page modified 2025-10-28)',
+      url: 'https://www.asc-csa.gc.ca/eng/iss/science/why-do-we-conduct-science-experiments-in-space.asp'
+    },
+
     // ---- NASA standards and statements -------------------------------------
     {
       id: 'V1', topic: 'muscle', status: 'verified', level: 'official-document',

@@ -155,7 +155,7 @@
 
   // Engine and rules text is written for the mission; at home the same facts read in care words.
   function scrub(s) {
-    s = String(s).replace(/\buGy\b/g, 'µGy');
+    s = String(s).replace(/\buGy\b/g, 'µGy').replace(/expects about -?0\.0% at this point/g, 'expects no change at this point');
     if (!isHome()) return s;
     return s.replace(/\bmission plan\b/gi, 'care plan').replace(/\bsince arrival\b/gi, 'since the start')
       .replace(/\bmission\b/gi, 'period');
@@ -230,6 +230,8 @@
     $('timeline-legend').textContent = w.baselineLegend;
     $('view-diff').textContent = w.diff;
     $('sensor-trackers').hidden = isHome();
+    $('hrp-line').hidden = state.mode === 'eldercare';
+    $('hrp-link').href = evidenceHref('V44');
     $('knob-shape').hidden = isHome();
     $('knob-shield').hidden = isHome();
   }
@@ -274,7 +276,8 @@
     var grey = c.status === 'grey', x = c.extra || {};
     if (c.id === 'muscle') {
       var med = grey ? '—' : fmtValue(c.value, 'deg') + ' deg';
-      var plan = c.expectedDeltaPct != null ? ' · ' + (isHome() ? 'care plan' : 'plan') + ' expects ' + fmtPct(c.expectedDeltaPct) : '';
+      var exp = c.expectedDeltaPct;
+      var plan = exp != null ? ' · ' + (isHome() ? 'care plan' : 'plan') + ' expects ' + (Math.round(exp * 10) === 0 ? 'no change' : fmtPct(exp)) : '';
       return { num: grey ? '—' : fmtPct(c.deltaPct), unit: 'vs your own baseline', delta: WINDOW + '-night median ' + med + plan, extra: '' };
     }
     if (c.id === 'radiation') {
@@ -581,7 +584,8 @@
     var p = cardId === 'muscle' ? engine.project(data.gen.records, idx()) : null;
     var proj = $('projection');
     proj.hidden = !p;
-    proj.textContent = p ? 'At this rate the muscle card turns red in about ' + p.daysToRed + ' days (trend ' + fmtPct(p.slopePctPerWeek) + ' per week).' : '';
+    proj.textContent = p ? 'Weekly trend: ' + fmtPct(p.slopePctPerWeek) + ' per week. At this rate the weekly median reaches the Report line ' +
+      (p.daysToRed <= 7 ? 'within about a week' : 'in about ' + p.daysToRed + ' days') + '; the nightly check can change sooner.' : '';
 
     var r = rec(), roseFig = $('rose-fig');
     var showRose = cardId === 'radiation' && r.rad && r.rad.dir;
@@ -636,6 +640,21 @@
     c.actions.forEach(function (x) { ul.appendChild(el('li', null, scrub(x))); });
     $('g-decides').textContent = capital(c.decides);
 
+    // NASA risk for this check; at home, the one deliberate mention of spaceflight (V47), not scrubbed.
+    var ctx = $('g-context');
+    clear(ctx);
+    if (isHome()) {
+      $('g-context-title').textContent = 'Why a spaceflight tool applies at home';
+      ctx.appendChild(document.createTextNode('The Canadian Space Agency describes the changes seen in astronauts as similar to accelerated ageing and to a sedentary lifestyle. '));
+      ctx.appendChild(sourceLink('V47'));
+    } else {
+      var cx = rules.CONTEXT[state.card];
+      $('g-context-title').textContent = 'NASA risk this check relates to';
+      ctx.appendChild(el('strong', null, cx.risk));
+      ctx.appendChild(document.createTextNode('. ' + cx.note));
+      cx.sourceIds.forEach(function (id) { ctx.appendChild(document.createTextNode(' ')); ctx.appendChild(sourceLink(id)); });
+    }
+
     var src = $('g-sources');
     clear(src);
     if (!c.sourceIds.length) src.appendChild(el('li', 'muted', 'Interim assumption; see the assumptions list in the evidence drawer.'));
@@ -666,6 +685,31 @@
       });
     }
     $('g-disclaimer').textContent = rules.DISCLAIMER.replace(/\{(\w+)\}/g, function (_, k) { return wd[k] || k; });
+  }
+
+  // ---- render: five hazards (astronaut mode only) --------------------------------------
+  var COVERAGE_MARK = { covered: '\u25CF', partly: '\u25D0', 'not covered': '\u25CB' };
+  var COVERAGE_CHIP = { covered: 'chip chip-supported', partly: 'chip chip-under-study', 'not covered': 'chip' };
+  function renderHazards() {
+    $('hazards').hidden = state.mode === 'eldercare';
+    var ul = $('hazard-list');
+    clear(ul);
+    rules.HAZARDS.forEach(function (h) {
+      var li = el('li');
+      li.appendChild(el('span', 'cm-name', h.name));
+      var chip = el('span', COVERAGE_CHIP[h.coverage]);
+      var mark = el('span', null, COVERAGE_MARK[h.coverage] + ' ');
+      mark.setAttribute('aria-hidden', 'true');
+      chip.appendChild(mark);
+      chip.appendChild(document.createTextNode(h.coverage));
+      li.appendChild(chip);
+      li.appendChild(el('span', 'cm-note', h.text));
+      ul.appendChild(li);
+    });
+    var src = $('hazard-source');
+    clear(src);
+    src.appendChild(document.createTextNode('Source: '));
+    src.appendChild(sourceLink('V43'));
   }
 
   // ---- render: what-if -------------------------------------------------------------
@@ -769,6 +813,7 @@
     renderTimeline();
     renderTrend();
     renderGuidance();
+    renderHazards();
     renderWhatIf();
   }
 

@@ -1,6 +1,7 @@
 /*
  * MyoTwin status rules as data: thresholds (with sources), card text,
- * wording per mode, countermeasures and the disclaimer. No logic lives here;
+ * wording per mode, countermeasures, the disclaimer and the NASA risk and
+ * hazard context for each check. No logic lives here;
  * js/engine.js applies these. Interim screening flags, not diagnoses.
  *
  * Written with an SI tool (Claude) and reviewed by the team.
@@ -88,7 +89,29 @@
 
   var DISCLAIMER = 'Screening flag from simulated data. Not a diagnosis. The {clinician} decides.';
 
-  var api = { THRESHOLDS: THRESHOLDS, WORDING: WORDING, TEXT: TEXT, COUNTERMEASURES: COUNTERMEASURES, DISCLAIMER: DISCLAIMER };
+  // The NASA Human Research Program risk each check relates to (V44), with one line of context.
+  var CONTEXT = {
+    muscle: { risk: evidence.value('V44', 'muscleRisk'), note: "NASA's hazard list says muscles and bones must adjust to the gravity of the Moon and Mars.", sourceIds: ['V44', 'V43'] },
+    sleep: { risk: evidence.value('V44', 'sleepRisk'), note: "NASA's ARCHeR study monitored sleep and activity on Artemis II.", sourceIds: ['V44', 'V45'] },
+    cardio: { risk: evidence.value('V44', 'cardioRisk'), note: 'NASA says weightlessness alters how the heart and blood vessels function.', sourceIds: ['V44'] },
+    radiation: {
+      risk: evidence.value('V44', 'radiationRisk'),
+      note: 'This version does not measure neutrons, about ' + evidence.value('V46', 'neutronSharePct') + "% of total radiation on the ISS. The Canadian Space Agency's CANS spectrometer is built to measure them continuously.",
+      sourceIds: ['V44', 'V46']
+    }
+  };
+
+  // Where MyoTwin sits in NASA's five hazards of human spaceflight (V43), in NASA's order.
+  var HAZARD_NAMES = evidence.value('V43', 'hazards');
+  var HAZARDS = [
+    { name: HAZARD_NAMES[0], coverage: 'partly', text: 'Nightly dose and arrival direction at the bunk, from charged particles. Neutrons are not measured in this version.' },
+    { name: HAZARD_NAMES[1], coverage: 'partly', text: 'Sleep is tracked every night. Mood and team factors are not.' },
+    { name: HAZARD_NAMES[2], coverage: 'partly', text: 'The brief is made for a crew that cannot wait for a ground team: it says what the reading means, what to do today and who decides. It does not diagnose or treat.' },
+    { name: HAZARD_NAMES[3], coverage: 'partly', text: 'Calf muscle is compared with the mission plan for the Moon or Mars every morning. Bone and balance are not tracked.' },
+    { name: HAZARD_NAMES[4], coverage: 'not covered', text: "Air, noise, light and microbes are not read. Next step: show the habitat's environmental sensors beside the brief." }
+  ];
+
+  var api = { THRESHOLDS: THRESHOLDS, WORDING: WORDING, TEXT: TEXT, COUNTERMEASURES: COUNTERMEASURES, DISCLAIMER: DISCLAIMER, CONTEXT: CONTEXT, HAZARDS: HAZARDS };
 
   ns.rules = api;
   if (inNode) module.exports = api;
