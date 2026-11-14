@@ -1,0 +1,72 @@
+<!doctype html>
+<!--
+  Visual test page for js/charts.js. Every drawing helper is exercised with
+  small hand-made sample data. Not part of the product.
+  Written with an SI tool (Claude) and reviewed by the team.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src data:; base-uri 'none'; form-action 'none'">
+<link rel="icon" href="data:,">
+<title>MyoTwin chart gallery</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="mode-astronaut">
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <symbol id="st-green" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="currentColor"/><path d="M4.8 8.2l2.2 2.2 4.2-4.6" fill="none" class="ink-s" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="st-amber" viewBox="0 0 16 16"><path d="M8 1.3l7 12.9H1z" fill="currentColor"/><path d="M8 6v3.8" class="ink-s" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="12" r="1" class="ink-f"/></symbol>
+  <symbol id="st-red" viewBox="0 0 16 16"><path d="M5.3 1h5.4L15 5.3v5.4L10.7 15H5.3L1 10.7V5.3z" fill="currentColor"/><path d="M8 4.2v4.6" class="ink-s" stroke-width="1.9" stroke-linecap="round"/><circle cx="8" cy="11.5" r="1.1" class="ink-f"/></symbol>
+  <symbol id="st-grey" viewBox="0 0 16 16"><rect x="2" y="6.6" width="12" height="2.8" rx="1.4" fill="currentColor"/></symbol>
+</svg>
+<main>
+  <section class="panel">
+    <h1 class="eyebrow">MyoTwin chart gallery</h1>
+    <p class="headline">Sample data for visual testing. None of these numbers come from the model.</p>
+    <p class="muted">Theme: <button type="button" id="theme" class="btn" aria-pressed="false">Switch to Eldercare theme</button></p>
+  </section>
+
+  <section class="panel">
+    <h2 class="section-title">statusIcon / statusIconEl</h2>
+    <ul class="status-row" id="statuses"></ul>
+  </section>
+
+  <section class="panel">
+    <h2 class="section-title">line: baseline band, expected band, thresholds, markers, exercise ticks, gaps, selected day</h2>
+    <svg id="line-full" class="chart"></svg>
+  </section>
+
+  <div class="gallery-grid">
+    <section class="panel">
+      <h2 class="section-title">line: minimal (no baseline, no thresholds)</h2>
+      <svg id="line-min" class="chart"></svg>
+    </section>
+    <section class="panel">
+      <h2 class="section-title">rose: 8 sectors, sector 0 toward the head</h2>
+      <svg id="rose" class="rose"></svg>
+    </section>
+  </div>
+
+  <div class="gallery-grid">
+    <section class="panel">
+      <h2 class="section-title">image: gray</h2>
+      <canvas id="img-gray" class="sample"></canvas>
+      <div id="cb-gray" class="colorbar"></div>
+    </section>
+    <section class="panel">
+      <h2 class="section-title">image: heat (NaN cells transparent)</h2>
+      <canvas id="img-heat" class="sample"></canvas>
+      <div id="cb-heat" class="colorbar"></div>
+    </section>
+    <section class="panel">
+      <h2 class="section-title">image: diverging, centred on 0</h2>
+      <canvas id="img-div" class="sample"></canvas>
+      <div id="cb-div" class="colorbar"></div>
+    </section>
+  </div>
+</main>
+<script src="../js/charts.js"></script>
+<script src="gallery.js"></script>
+</body>
+</html>
