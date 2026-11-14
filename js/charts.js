@@ -2,7 +2,8 @@
  * MyoTwin drawing primitives: time-series line chart (SVG), image and colour
  * scale (canvas), radiation direction rose (SVG) and status icon references.
  * Pure helpers with no app state. Colours of SVG marks come from CSS classes
- * (so the theme can change them); canvas colormaps are computed here.
+ * (so the theme can change them); canvas colormaps are computed here from the
+ * stylesheet's --map-* stops.
  * Loads in Node without touching the DOM; only the drawing calls need one.
  *
  * Written with an SI tool (Claude) and reviewed by the team.
@@ -87,16 +88,37 @@
     return [Math.round(lerp(a[0], b[0], f)), Math.round(lerp(a[1], b[1], f)), Math.round(lerp(a[2], b[2], f))];
   }
 
-  // Perceptually ordered ramps, hand-picked; 'diverging' is blue - neutral - orange
-  // (safe for red-green colour blindness), centred on 0 by the caller.
+  // Perceptually ordered ramps built from the palette in css/style.css: 'heat' is a single-hue
+  // ramp black - working blue - white; 'diverging' is blue - neutral - accent (safe for red-green
+  // colour blindness), centred on 0 by the caller; 'gray' stays neutral. In a browser the stops
+  // are read from --map-heat and --map-diverging on <body>, so the home presentation gets its own
+  // blue and pink; these copies of the dark (space) values are used in Node and as a fallback.
   var MAPS = {
     gray: [[12, 16, 24], [235, 239, 245]],
-    heat: [[10, 14, 40], [72, 22, 110], [170, 50, 90], [236, 110, 50], [252, 205, 90], [252, 250, 210]],
-    diverging: [[33, 102, 172], [120, 170, 214], [226, 230, 236], [244, 165, 96], [178, 70, 24]]
+    heat: [[2, 7, 10], [1, 79, 117], [2, 151, 222], [166, 221, 245], [252, 255, 255]],
+    diverging: [[1, 79, 117], [2, 151, 222], [220, 228, 234], [252, 115, 77], [178, 63, 31]]
   };
 
-  /** Colour for t in [0, 1] on a named colormap, as [r, g, b]. */
-  function colormap(name, t) { return ramp(MAPS[name] || MAPS.gray, t); }
+  /** Hex stops ("#rrggbb #rrggbb ...") as [[r, g, b], ...], or null when there are fewer than two. */
+  function parseStops(str) {
+    var hex = String(str || '').match(/#[0-9a-f]{6}\b/gi) || [];
+    return hex.length < 2 ? null : hex.map(function (h) { return [1, 3, 5].map(function (i) { return parseInt(h.slice(i, i + 2), 16); }); });
+  }
+
+  /** The colormaps for the current presentation (read once per drawing call). */
+  function themeMaps() {
+    var doc = root.document;
+    if (!doc || !doc.body || !root.getComputedStyle) return MAPS;
+    var cs = root.getComputedStyle(doc.body);
+    return {
+      gray: MAPS.gray,
+      heat: parseStops(cs.getPropertyValue('--map-heat')) || MAPS.heat,
+      diverging: parseStops(cs.getPropertyValue('--map-diverging')) || MAPS.diverging
+    };
+  }
+
+  /** Colour for t in [0, 1] on a named colormap, as [r, g, b]; `maps` defaults to the built-in copies. */
+  function colormap(name, t, maps) { maps = maps || MAPS; return ramp(maps[name] || maps.gray, t); }
 
   /** Map a value to [0, 1]; diverging maps are centred on 0. */
   function normalise(v, min, max, name) {
@@ -362,7 +384,7 @@
     var nan = opts.nanColor || [0, 0, 0, 0];
     var w = img.w, h = img.h, v = img.values;
     var min = img.min, max = img.max;
-    var doc = root.document;
+    var doc = root.document, maps = themeMaps();
     var src = doc.createElement('canvas');
     src.width = w; src.height = h;
     var sctx = src.getContext('2d');
@@ -381,7 +403,7 @@
         data.data[o + 3] = nan.length > 3 ? nan[3] : 255;
         continue;
       }
-      var c = colormap(name, normalise(val, min, max, name));
+      var c = colormap(name, normalise(val, min, max, name), maps);
       data.data[o] = c[0]; data.data[o + 1] = c[1]; data.data[o + 2] = c[2]; data.data[o + 3] = 255;
     }
     sctx.putImageData(data, 0, 0);
@@ -397,7 +419,7 @@
    * scale: { min, max, unit, colormap }
    */
   function colorbar(container, scale) {
-    var doc = root.document, name = scale.colormap || 'gray';
+    var doc = root.document, name = scale.colormap || 'gray', maps = themeMaps();
     while (container.firstChild) container.removeChild(container.firstChild);
     var min = scale.min, max = scale.max;
     if (name === 'diverging') { var m = Math.max(Math.abs(min), Math.abs(max)) || 1; min = -m; max = m; }
@@ -407,7 +429,7 @@
     cv.setAttribute('aria-hidden', 'true');
     var ctx = cv.getContext('2d'), id = ctx.createImageData(256, 1);
     for (var i = 0; i < 256; i++) {
-      var c = colormap(name, i / 255);
+      var c = colormap(name, i / 255, maps);
       id.data[i * 4] = c[0]; id.data[i * 4 + 1] = c[1]; id.data[i * 4 + 2] = c[2]; id.data[i * 4 + 3] = 255;
     }
     ctx.putImageData(id, 0, 0);
@@ -585,6 +607,7 @@
     doseTick: doseTick,
     useLogScale: useLogScale,
     colormap: colormap,
+    parseStops: parseStops,
     normalise: normalise,
     line: line,
     logSeries: logSeries,
