@@ -90,7 +90,7 @@ One record per night. Pre-departure baseline nights have a negative `missionDay`
     movement: 0.21                // movement index 0..1
   },
   rad: {                          // null when no data
-    dose_uGy: 104.5,              // dose over the sleep period, replayed from a measurement x shielding factor
+    dose_uGy: 104.5,              // dose over the sleep period, replayed from a measurement (the shielding factor does not apply)
                                   // (Mars: Curiosity RAD, silicon; Moon: LRO CRaTER, water-corrected)
     dir: [n0, n1, ..., n7],       // particle counts in 8 azimuth sectors, sector 0 = toward the head (simulated)
     spe: false,                   // solar particle event flag (S3: from DONKI records of GOES instruments, see sim.ASSUMPTIONS.speRule)
@@ -103,7 +103,10 @@ One record per night. Pre-departure baseline nights have a negative `missionDay`
   log: { exercise_done: true, note: '' },   // countermeasure log for the day before
   _truth: {                       // simulator only; the engine must never read this
     muscleChangePct: -3.1,        // true calf muscle change vs baseline, percent (negative = loss)
-    tracksPerCm2: 2100            // usable cosmic-ray tracks that night for the density image
+    tracksPerCm2: 2100,           // cosmic-ray tracks that night (x shielding factor); null when rad is null
+    tracksUsable: true            // false on solar-event or raised-dose nights (sim.ASSUMPTIONS.trackQuietMaxRatio):
+                                  // tracksPerCm2 then stays at the usual level and the density image leaves the night out;
+                                  // null when rad is null
   }
 }
 ```
@@ -180,6 +183,7 @@ On a grey card `extra` holds whatever is known and null for the rest.
 - `sim.SCENARIOS` : `{ S1, S2, S3, S4 }`, each `{ id, title, env, summary, baselineNights, phases, events }`, plus `rad` (which real dataset and window the radiation replays; absent for S4).
 - `sim.generate(scenarioId, opts) -> { scenario, records, plan }`
   `opts = { seed = 1, exerciseAdherence?, gravityShape?, sleepOpportunityH?, shieldingFactor? }`.
+  `shieldingFactor` scales `_truth.tracksPerCm2` only, never `rad.dose_uGy`.
   Deterministic for a given seed. `records` is a `NightRecord[]` sorted by night.
   `plan = { expectedChangePct: number[] }` has one value per record: the muscle change the
   mission plan expects that night (0 on baseline nights). The plan is the scenario flown as
@@ -251,7 +255,13 @@ shared and captured:
   `view` (`raw|diff`), `mode` (`astronaut|eldercare`), `card` selected trend card (set by a card or by its hotspot on the body figure;
   both give the same state and address).
 - What-if values in the address: `ex` 0 to 1 (step 0.05), `gs` 0.25 to 4 (step 0.25, default 1;
-  older links with 1 to 4 in steps of 0.5 still load), `sh` 0.1 to 1 (step 0.1), `nz` 0.01 to 0.08.
+  older links with 1 to 4 in steps of 0.5 still load), `sh` 0.6 to 1 (step 0.1; the share of
+  cosmic-ray tracks behind habitat shielding, the dose is unchanged; an older link below 0.6 is out
+  of range and shows the notice), `nz` 0.01 to 0.08.
+- The density image (raw and change views) uses only nights with `_truth.tracksUsable !== false`.
+  A left-out night shows the body outline only, with a sentence saying why; the change view
+  accumulates only the usable nights of its window and of the first week, and its label says
+  how many nights were left out.
 - `mode` follows the scenario: `eldercare` exactly when `s=S4`, otherwise `astronaut`. It is
   written to the address for readability; a valid `mode` in an older link is accepted and ignored.
 - Any value in the address that is unknown, rejected or changed to fit (for example a day outside

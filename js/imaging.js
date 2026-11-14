@@ -15,7 +15,7 @@
   var evidence = inNode ? require('./evidence.js') : ns.evidence;
 
   var ASSUMPTIONS = [
-    { name: 'momentumSpreadFactor', value: 3, unit: '', status: 'assumption', note: 'Stands for the unknown momentum of each particle: the trackers measure the angle but not the momentum, so each track is a noisier estimate of x/X0. Multiplies the counting noise.' },
+    { name: 'momentumSpreadFactor', value: 5, unit: '', status: 'assumption', note: 'Stands for the unknown momentum of each particle: the trackers measure the angle but not the momentum, so each track is a noisier estimate of x/X0. Our Gaussian-core estimate is 3 to 6 over the solar cycle for 7 to 22 cm of tissue; single-scattering tails make it larger. Both projections of each track are used. Multiplies the counting noise.' },
     { name: 'coneHalfAngleDeg', value: 20, unit: 'deg', status: 'assumption', note: 'Default acceptance cone around the vertical for usable tracks.' },
     { name: 'noLoadTransfer', value: true, unit: '', status: 'assumption', note: 'Pressure: each column of tissue rests on the mat cell directly below it, with no load transfer between cells.' },
     { name: 'outsideNoiseRefCm', value: 2, unit: 'cm', status: 'assumption', note: 'Density: cells outside the body get the absolute noise of a body cell this thick in muscle, around 0.' },
@@ -57,7 +57,7 @@
     if (layer === 'density') {
       var x0s = evidence.value('V31', 'muscleCm'), x0b = evidence.value('V31', 'compactBoneCm');
       var k = o.momentumSpreadFactor === undefined ? A('momentumSpreadFactor') : o.momentumSpreadFactor;
-      var rel = k * Math.sqrt(2 / (o.tracksPerCm2 * p.cellCm * p.cellCm));
+      var rel = k * Math.sqrt(1 / (o.tracksPerCm2 * p.cellCm * p.cellCm));
       var outside = rel * A('outsideNoiseRefCm') / x0s;
       var rand = mulberry32(o.seed === undefined ? 1 : o.seed);
       for (i = 0; i < n; i++) {

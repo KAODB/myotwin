@@ -33,7 +33,7 @@
   var WHATIF = {
     ex: { min: 0, max: 1, step: 0.05, def: null },   // null = the scenario's own plan
     gs: { min: 0.25, max: 4, step: 0.25, def: 1 },
-    sh: { min: 0.1, max: 1, step: 0.1, def: 1 },
+    sh: { min: 0.6, max: 1, step: 0.1, def: 1 },
     nz: { min: 0.01, max: 0.08, step: 0.01, def: sim.NOISE.eimPhaseSdFraction.value }
   };
   var WINDOW = T.windowNights.value;               // arrival week and accumulation window
@@ -353,15 +353,12 @@
 
   // ---- radiation card: where tonight's number comes from (data/*.js, replayed) --------
   var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  // Shielding in front of each LRO CRaTER detector pair, from the instrument paper (see data/README.md).
-  var CRATER_SHIELD = { 'D5&6': 'behind about 8 cm of plastic' };
   function longDate(iso) {
     var p = iso.split('-');
     return Number(p[2]) + ' ' + MONTHS[Number(p[1]) - 1] + ' ' + p[0];
   }
   function measuredDataset() { return data.gen.scenario.rad ? data.gen.scenario.rad.dataset : null; }
   function doseMedium() { return measuredDataset() === 'msl-rad' ? 'in silicon' : 'water-corrected'; }
-  function shieldNote() { return state.sh !== WHATIF.sh.def ? ' Tonight\'s number is multiplied by the what-if shielding factor ' + state.sh + '.' : ''; }
 
   function renderRadSource() {
     var r = rec(), m = r.rad && r.rad.measured, box = $('rad-source');
@@ -378,13 +375,13 @@
         'It is dose in silicon on the open surface of Mars, not inside a habitat; using a 2012 sol for this night is an assumption.';
       ev = 'V60';
     } else {
-      if (!has(CRATER_SHIELD, m.pair)) throw new Error('No shielding description for CRaTER pair ' + m.pair);
-      txt = 'Measured in lunar orbit by LRO CRaTER on the night of ' + longDate(m.date) + ', ' + CRATER_SHIELD[m.pair] +
-        ' (detector pair ' + m.pair + '), scaled to the surface by the instrument team, and replayed for this night. ' +
-        'It is not a habitat measurement; using a 2017 night for this night is an assumption.';
+      txt = 'Measured in lunar orbit by LRO CRaTER (detector pair ' + m.pair + ') on the night of ' + longDate(m.date) +
+        ', scaled to the surface by the instrument team, and replayed for this night. It is a detector on an orbiter, ' +
+        'not a habitat: behind thick habitat shielding a crew would receive much less from a solar particle event. ' +
+        'Using a 2017 night for this night is an assumption.';
       ev = 'V61';
     }
-    p.appendChild(document.createTextNode(txt + shieldNote() + ' '));
+    p.appendChild(document.createTextNode(txt + ' '));
     p.appendChild(sourceLink(ev));
 
     // Name the record of the evidence table (V62, protons above 10 MeV) when it is among tonight's records.
@@ -435,20 +432,24 @@
     return { img: img, ph: ph, tracks: tracks };
   }
 
+  // Density images use only nights whose tracks are usable (no solar protons on record).
+  function usable(nights) { return nights.filter(function (r) { return r._truth.tracksUsable !== false; }); }
+
   function referenceImage(layer) {
-    if (!data.ref[layer]) data.ref[layer] = accumulated(layer, arrivalWeek(), REF_SEED).img;
+    if (!data.ref[layer]) data.ref[layer] = accumulated(layer, layer === 'density' ? usable(arrivalWeek()) : arrivalWeek(), REF_SEED);
     return data.ref[layer];
   }
 
   function isCalf(ph, i) { var n = ph.REGIONS[ph.region[i]]; return n === 'calf_L' || n === 'calf_R'; }
 
-  // Impedance: only the calves are measured. Other body cells: outline on the edge, empty inside.
-  function impedanceOverlay(img, ph) {
+  // Body cells for which keep(ph, i) is false: outline on the edge, empty inside.
+  // Impedance keeps the calves (the only cells measured); a density image without usable tracks keeps none.
+  function outlineOverlay(img, ph, keep) {
     var ov = new Uint8Array(ph.w * ph.h);
     for (var y = 0; y < ph.h; y++) {
       for (var x = 0; x < ph.w; x++) {
         var i = y * ph.w + x;
-        if (!ph.region[i] || isCalf(ph, i)) continue;
+        if (!ph.region[i] || keep(ph, i)) continue;
         img.values[i] = NaN;
         var edge = x === 0 || y === 0 || x === ph.w - 1 || y === ph.h - 1 ||
           !ph.region[i - 1] || !ph.region[i + 1] || !ph.region[i - ph.w] || !ph.region[i + ph.w];
@@ -459,14 +460,15 @@
   }
 
   // Density change: grey out regions whose change is below NOISE_MULTIPLE x the expected
-  // noise of a region mean, momentumSpread * sqrt(2 / (tracks * cell^2 * n)) * sqrt(2).
+  // noise of a region mean, momentumSpread * sqrt(1 / (tracks * cell^2 * n)) (both projections of
+  // each track used), times sqrt(2) for the difference of two images.
   function noiseMask(diff, ph, tracks) {
     var n = {}, i, ov = new Uint8Array(ph.w * ph.h);
     for (i = 0; i < ph.region.length; i++) if (ph.region[i]) n[ph.region[i]] = (n[ph.region[i]] || 0) + 1;
     for (i = 0; i < ph.region.length; i++) {
       var r = ph.region[i];
       if (!r) continue;
-      var noisePct = MOMENTUM_SPREAD * Math.sqrt(2 / (tracks * ph.cellCm * ph.cellCm * n[r])) * Math.SQRT2 * 100;
+      var noisePct = MOMENTUM_SPREAD * Math.sqrt(1 / (tracks * ph.cellCm * ph.cellCm * n[r])) * Math.SQRT2 * 100;
       if (!(Math.abs(diff.values[i]) >= NOISE_MULTIPLE * noisePct)) ov[i] = 1;
     }
     return ov;
@@ -499,21 +501,30 @@
       return;
     }
 
-    var shown, ph, cmap, label, unit, extra = [], overlay = null;
+    var shown, ph, cmap, label, unit, extra = [], overlay = null, outlineOnly = false;
+    var none = function () { return false; };
     if (state.view === 'diff') {
       var nights = surfaceWindow(i);
-      var now = accumulated(state.layer, nights, i + 1);
+      var kept = state.layer === 'density' ? usable(nights) : nights;
+      var ref = referenceImage(state.layer);
+      outlineOnly = state.layer === 'density' && !(kept.length && ref.tracks > 0);
+      var now = accumulated(state.layer, kept.length ? kept : nights, i + 1);
       ph = now.ph;
-      shown = imaging.difference(now.img, referenceImage(state.layer), ph);
-      if (state.layer === 'impedance') overlay = impedanceOverlay(shown, ph);
-      if (state.layer === 'density') overlay = noiseMask(shown, ph, now.tracks);
+      shown = imaging.difference(now.img, ref.img, ph);
+      if (state.layer === 'impedance') overlay = outlineOverlay(shown, ph, isCalf);
+      if (state.layer === 'density') overlay = outlineOnly ? outlineOverlay(shown, ph, none) : noiseMask(shown, ph, now.tracks);
       var m = DIFF_MIN_RANGE;
       for (var k = 0; k < shown.values.length; k++) { var v = shown.values[k]; if (v === v && Math.abs(v) > m) m = Math.ceil(Math.abs(v)); }
       shown.min = -m; shown.max = m;
       cmap = 'diverging'; unit = '%';
-      label = w.diff + ': ' + state.layer + ', last ' + nights.length + (nights.length === 1 ? ' night' : ' nights') +
-        ' accumulated, compared with the first ' + WINDOW + ' nights, averaged per body region';
-      if (state.layer === 'density') {
+      var left = nights.length - kept.length;
+      label = w.diff + ': ' + state.layer + ', ' + (left ? kept.length + ' of the last ' : 'last ') + nights.length +
+        (nights.length === 1 ? ' night' : ' nights') + ' accumulated' + (left ? ' (' + left + ' left out: raised radiation)' : '') +
+        ', compared with the first ' + WINDOW + ' nights, averaged per body region';
+      if (outlineOnly) {
+        extra.push('Radiation was raised on every night of the last week, so there is no density image for this week. ' +
+          'Solar protons mostly stop inside the body or cross it with far lower momentum than cosmic rays.');
+      } else if (state.layer === 'density') {
         extra.push('Regions whose change is smaller than twice their expected noise are grey.');
         $('img-legend-mask').hidden = false;
       }
@@ -523,9 +534,16 @@
         shown = imaging.render('density', ph, { tracksPerCm2: r._truth.tracksPerCm2, seed: i + 1 });
         shown.min = 0;                               // negative values are noise
         cmap = 'gray'; unit = 'radiation lengths (x/X0)';
-        extra.push('Incident particles tonight: ' + Math.round(r._truth.tracksPerCm2).toLocaleString('en-US') + ' per cm² (assumed free-space intensity, ' +
-          (state.sh < 1 ? 'after assumed shielding' : 'no habitat shielding') + ').');
-        extra.push('Noise model: counting noise x ' + MOMENTUM_SPREAD + ' for the unknown momentum of each particle (assumption).');
+        if (r._truth.tracksUsable === false) {
+          outlineOnly = true;
+          overlay = outlineOverlay(shown, ph, none);
+          extra.push('Radiation was raised tonight. Solar protons mostly stop inside the body or cross it with far lower momentum ' +
+            'than cosmic rays, so tonight\'s tracks are left out of the density image.');
+        } else {
+          extra.push('Incident particles tonight: ' + Math.round(r._truth.tracksPerCm2).toLocaleString('en-US') + ' per cm² (assumed free-space intensity, ' +
+            (state.sh < 1 ? 'after assumed shielding' : 'no habitat shielding') + ').');
+          extra.push('Noise model: counting noise x ' + MOMENTUM_SPREAD + ' for the unknown momentum of each particle (assumption).');
+        }
       } else if (state.layer === 'pressure') {
         shown = imaging.render('pressure', ph, { env: r.env });
         shown.min = 0;
@@ -533,7 +551,7 @@
         if (shown.massKg) extra.push('Body mass derived from the pressure map: ' + shown.massKg.toFixed(1) + ' kg.');
       } else {
         shown = imaging.render('impedance', ph, { eimPhaseDeg: r.eim ? r.eim.phase50_deg : NaN, baselinePhaseDeg: data.base.eim.median });
-        overlay = impedanceOverlay(shown, ph);
+        overlay = outlineOverlay(shown, ph, isCalf);
         // Fixed scale around the baseline so a falling calf reading shows as a colour change.
         shown.min = data.base.eim.median * 0.75;
         shown.max = data.base.eim.median * 1.05;
@@ -552,7 +570,7 @@
     empty.hidden = true;
     charts.image(canvas, shown, { colormap: cmap, scale: 4, nanColor: [0, 0, 0, 0], overlay: overlay, overlayColors: { 1: MASK_RGBA, 2: OUTLINE_RGBA } });
     canvas.setAttribute('aria-label', label + ', ' + dayLabel(r));
-    charts.colorbar(bar, { min: shown.min, max: shown.max, unit: unit, colormap: cmap });
+    if (outlineOnly) clear(bar); else charts.colorbar(bar, { min: shown.min, max: shown.max, unit: unit, colormap: cmap });
     $('cap-label').textContent = scrub(label) + '.';
     $('cap-extra').textContent = extra.join(' ');
   }

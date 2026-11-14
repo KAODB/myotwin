@@ -122,11 +122,33 @@ test('S3 event labels cover exactly the nights above 2x the scenario median dose
   assert.deepStrictEqual(labelled, raised);
 });
 
-test('track count scales with the night-to-usual dose ratio', () => {
+test('track count scales with the night-to-usual dose ratio on quiet nights only', () => {
   const surf = surface(sim.generate('S3').records);
   const usual = median(surf.map((r) => r.rad.dose_uGy));
   const base = surf.find((r) => r.rad.dose_uGy === usual)._truth.tracksPerCm2;
-  assert.ok(Math.abs(surf[20]._truth.tracksPerCm2 / base - surf[20].rad.dose_uGy / usual) < 0.01 * surf[20].rad.dose_uGy / usual);
+  assert.equal(base, 2183);
+  const q = surf.find((r) => r._truth.tracksUsable && r.rad.dose_uGy > usual);
+  assert.ok(Math.abs(q._truth.tracksPerCm2 / base - q.rad.dose_uGy / usual) < 0.01);
+  assert.equal(surf[20]._truth.tracksPerCm2, 2183);   // a solar-event night does not multiply the tracks
+});
+
+test('density image: exactly the solar-event and raised-dose nights of S3 are left out', () => {
+  const ratio = sim.ASSUMPTIONS.trackQuietMaxRatio;
+  assert.equal(ratio.value, 1.15);
+  assert.deepStrictEqual(ratio.sourceIds, ['V61', 'V62']);
+  const out = surface(sim.generate('S3').records).filter((r) => r._truth.tracksUsable === false).map((r) => r.missionDay);
+  assert.deepStrictEqual(out, [14, 15, 16, 17, 18, 20, 21, 22, 23, 24, 25, 26]);
+  for (const s of ['S1', 'S2']) assert.ok(surface(sim.generate(s).records).every((r) => r._truth.tracksUsable === true), s);
+  for (const s of ['S1', 'S2', 'S3']) assert.ok(sim.generate(s).records.filter((r) => r.missionDay < 0).every((r) => r._truth.tracksUsable === null), s);
+  assert.ok(sim.generate('S4').records.every((r) => r._truth.tracksUsable === null));
+});
+
+test('LRO CRaTER: D5&6 within 2% of D1&2 on quiet nights, about a quarter of it on 10 Sep 2017', () => {
+  const crater = require('../data/lro-crater.js');
+  const d56 = median(crater.quiet.map((r) => r[1])), d12 = median(crater.quiet.map((r) => r[2]));
+  assert.ok(Math.abs(d56 / d12 - 1) < 0.02, d56 + ' vs ' + d12);
+  const n = crater.event.find((r) => r[0] === '2017-09-10');
+  assert.ok(n[1] / n[2] > 0.25 && n[1] / n[2] < 0.27, String(n[1] / n[2]));
 });
 
 test('engine: S3 night 20 is red for radiation and the brief says Report', () => {
@@ -155,8 +177,14 @@ test('S4 has rad null on every night', () => {
 test('what-if overrides change the outcome in the expected direction', () => {
   const end = (o) => surface(sim.generate('S1', o).records)[59]._truth.muscleChangePct;
   assert.ok(end({ exerciseAdherence: 0 }) < end({}));
-  const dose = (o) => surface(sim.generate('S1', o).records)[5].rad.dose_uGy;
-  assert.equal(dose({ shieldingFactor: 0.5 }), Math.round(dose({}) * 0.5 * 10) / 10);
+  // Shielding scales the tracks only; the cosmic-ray dose is the measured one.
+  const night = (o) => surface(sim.generate('S1', o).records)[5];
+  assert.equal(night({ shieldingFactor: 0.6 }).rad.dose_uGy, night({}).rad.dose_uGy);
+  assert.equal(night({ shieldingFactor: 0.6 })._truth.tracksPerCm2, Math.round(night({})._truth.tracksPerCm2 * 0.6));
+});
+
+test('S3 summary says a real crew would move to a storm shelter', () => {
+  assert.match(sim.SCENARIOS.S3.summary, /storm shelter; the replay shows what a lightly shielded detector on an orbiter recorded\.$/);
 });
 
 test('NOISE and ASSUMPTIONS are declared', () => {
