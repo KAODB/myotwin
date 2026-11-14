@@ -1,7 +1,7 @@
 /*
  * MyoTwin nightly whole-body image layers, synthesised from the phantom:
- * density (cosmic-ray scattering, experimental), pressure (mat under the
- * sleeper, mature technology) and impedance (regional EIM reading painted on
+ * density (cosmic-ray scattering, experimental), pressure (an assumed mat under
+ * the sleeper) and impedance (regional EIM reading painted on
  * the outline). Also the per-region difference against a baseline image.
  * All images are simulated and approximate; assumptions are in
  * imaging.ASSUMPTIONS. No drawing code here: the UI draws the arrays.
