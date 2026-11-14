@@ -15,7 +15,9 @@ voice generator was used.
   each number we use appears in the source. For each verified entry in
   `js/evidence.js` the sentence that carries the number was copied from the
   source. Where a value was read from a table or dataset and no sentence was
-  copied, the entry says so (for example V16, V22, V24, V31).
+  copied, the entry has no quote (for example V16, V22, V24, V31).
+  A second, separate check of the sources was run during the hackathon, and
+  its corrections were applied to `js/evidence.js` and to these documents.
 - **Code and tests.** Writing the JavaScript modules, the page, the
   stylesheet, the automated tests and the tool that generates
   `docs/EVIDENCE.md`.
@@ -45,7 +47,12 @@ stated.
 - Fitted model parameters are compared with their published anchors in the
   code comments and in the tests: the model gives -28.9% and -8.1% for the two
   bed-rest groups (published -29% and -8%, V4) and -10.5% for six months on
-  the ISS (published -13 +/- 2%, V5). The misfit to V5 is stated.
+  the ISS (published -13 +/- 2%, V5). The misfit to V5 is stated. The fit
+  treats 6-degree head-down bed rest as g = 0 and the ISS crews as full
+  exercise adherence; both are assumptions.
+- The simulated nights and the mission plan come from the same model, so the
+  demonstration shows the workflow, not how well a real decline would be
+  detected.
 - The status rules are checked by automated tests against the rules table in
   `docs/CONTRACT.md`. The engine is not allowed to read the simulator's ground
   truth.
