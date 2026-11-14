@@ -141,7 +141,8 @@
   var NASA = {
     muscle: nasa('muscle', 'V70', 'V48', [
       { text: 'NASA-STD-3001 requires countermeasures to keep in-mission muscle strength at or above ' + Math.round(evidence.value('V81', 'minStrengthFraction') * 100) + '% of baseline.', sourceIds: ['V81'] },
-      { text: 'NASA’s 2023 evidence report says “Currently, no standard in-flight measurement of strength exists.” The requirement is tested about ' + evidence.value('V85', 'testDaysAfterLandingAbout') + ' days after landing.', sourceIds: ['V85'] }
+      { text: 'NASA’s 2023 evidence report says “Currently, no standard in-flight measurement of strength exists.” The requirement is tested about ' + evidence.value('V85', 'testDaysAfterLandingAbout') + ' days after landing.', sourceIds: ['V85'] },
+      { text: 'A 2026 NASA bulletin says ISS crew strength is measured across the mission with two isometric exercise tests that are “location specific requiring specialized equipment”.', sourceIds: ['V82'] }
     ]),
     sleep: nasa('sleep', 'V71', 'V49', [
       { text: 'The rationale of a NASA-STD-3001 requirement recommends an ' + evidence.value('V78', 'recommendedSleepPeriodHours') + '-hour sleep period, which is the time set aside for sleep each day, not the hours spent asleep.', sourceIds: ['V78'] },

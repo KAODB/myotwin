@@ -8,10 +8,11 @@ spacesim, Kaohsiung.
 
 On the Moon or Mars a crew member has to notice changes in their own body: a
 message from Mars can take up to 20 minutes one way (V54). NASA requires crews
-to keep muscle strength at or above 80% of baseline (V81), and NASA's 2023
-evidence report says "Currently, no standard in-flight measurement of strength
-exists" (V85). MyoTwin measures during the hours a crew member already spends lying
-still. An assumed sensor panel in the bunk reads the calf muscle, sleep, heart
+to keep muscle strength at or above 80% of baseline (V81). The strength tests
+used on the ISS need specialized equipment in a fixed place (V82), and in 2023
+NASA's evidence report said "Currently, no standard in-flight measurement of
+strength exists" (V85). MyoTwin measures during the hours a crew member already
+spends lying still. An assumed sensor panel in the bunk reads the calf muscle, sleep, heart
 and breathing rate, and radiation overnight. In the morning one screen shows a
 body figure you can click, four checks in plain words, what NASA says about
 each risk, and what to do today. A flight surgeon decides; the software only

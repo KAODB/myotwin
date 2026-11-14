@@ -132,7 +132,7 @@ partial gravity. The image also assumes no load transfer between cells.
 |---|---|
 | `dose_uGy` | Absorbed dose over the sleep period, in uGy: in silicon on Mars (Curiosity RAD detector B), water-corrected by the instrument team on the Moon (LRO CRaTER) |
 | `dir` | Particle counts in 8 azimuth sectors; sector 0 points toward the head. The assumed trackers accept particles within 20 degrees of vertical, so the direction map mostly describes the roof; side walls would need wider acceptance. |
-| `spe` | Solar particle event flag from the detector |
+| `spe` | Solar particle event flag for the night, taken from NASA's DONKI records for the replayed date (not from the detector) |
 
 The assumed trackers are silicon-strip planes of the kind already flying in
 Fermi LAT (V36). Timepix detectors (V17, the ISS monitors) are the reference
