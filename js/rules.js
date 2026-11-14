@@ -31,7 +31,7 @@
     muscleRedNoiseMultiple: assumption(3, 'x noise7', 'Red needs a drop beyond 3 times the expected spread of a 7-night median.'),
     muscleMinUsableNights: assumption(3, 'nights', 'Fewest nights with a usable scan in the last 7 before the card is judged.'),
     // Sleep
-    sleepAmberHours: fromEvidence('V25', 'minSleepHours', 'h', 'Recommendation of 7 h or more for adults aged 18 to 60 (V25). Applied to the older adult in scenario S4 as an assumption.'),
+    sleepAmberHours: fromEvidence('V79', 'adultSleepHoursLow', 'h', 'Low end of the 7 to 9 hours a NASA technical brief says an average adult needs (V79). Applied to the older adult in scenario S4 as an assumption.'),
     sleepRedHours: assumption(Math.floor(evidence.value('V11', 'issSleepHours')), 'h', 'ISS average sleep (V11) rounded down; not a validated cut-off.', ['V11']),
     sleepMinNights: assumption(4, 'nights', 'Fewest radar nights in the last 7 before the card is judged.'),
     // Cardio
@@ -76,7 +76,7 @@
     radiation: {
       green: { meaning: "Last night's dose in the sleep station was in the usual range.", actions: ['No change needed.'] },
       amber: { meaning: "Last night's dose was more than twice the usual level.", actions: ['Check the space weather bulletin.', 'Mention it at the next contact with the {clinician}.'] },
-      red: { meaning: "Last night's dose in the sleep station was more than ten times the usual level, or the detector flagged a solar particle event. This is a record of what happened overnight: real-time warnings come from space-weather alerts and the flight rules.", actions: ['Report the logged dose to the {clinician}.', 'Use the direction map to review which side of the sleep station is less shielded.'] },
+      red: { meaning: "Last night's dose in the sleep station was more than ten times the usual level, or a solar particle event is on record for the night. This is a record of what happened overnight: real-time warnings come from space-weather alerts and the flight rules.", actions: ['Report the logged dose to the {clinician}.', 'Use the direction map to review which side of the sleep station is less shielded.'] },
       grey: { meaning: 'Not enough dose history to judge, or no particle detector at this bed.', actions: ['No action.'] }
     }
   };
@@ -88,6 +88,8 @@
   ];
 
   var DISCLAIMER = 'Screening flag from simulated data. Not a diagnosis. The {clinician} decides.';
+  // The radiation check in the space scenarios replays measured dose (data/).
+  var DISCLAIMER_REPLAYED = 'Screening flag from replayed measurements. Not a diagnosis. The {clinician} decides.';
 
   // The NASA Human Research Program risk each check relates to (V44), with one line of context.
   var CONTEXT = {
@@ -101,17 +103,85 @@
     }
   };
 
+  // Mission type of each world, as named in NASA's Human Research Roadmap rating tables (V70 to V75).
+  var MISSIONS = {
+    moon: { prefix: 'lunarSurfaceLong', label: 'a long lunar-surface mission' },
+    mars: { prefix: 'marsPlanetary', label: 'a Mars planetary mission' }
+  };
+  var SCALE_5 = 'Likelihood x consequence, each from 1 to 5.';
+
+  // In-mission (operations) rating; for radiation the long-term health rating, since its operations rating is 1x1.
+  function ratings(card, roadmapId) {
+    var out = {};
+    Object.keys(MISSIONS).forEach(function (w) {
+      var p = MISSIONS[w].prefix, v = function (k) { return evidence.value(roadmapId, p + k); };
+      out[w] = card === 'radiation' ?
+        { code: v('Health'), disposition: v('HealthDisposition'),
+          text: 'Long-term health rating ' + v('Health') + ', ' + v('HealthDisposition') + ', for ' + MISSIONS[w].label +
+            '; the in-mission rating is ' + v('Ops') + ', ' + v('OpsDisposition') + ". Rated under NASA's previous 3x4 matrix." } :
+        { code: v('Ops'), disposition: v('OpsDisposition'),
+          text: 'In-mission rating ' + v('Ops') + ', ' + v('OpsDisposition') + ', for ' + MISSIONS[w].label + '.' };
+    });
+    return out;
+  }
+
+  // NASA's own material for each check: risk, rating by mission type, two sentences from the
+  // risk page (verbatim), the standard that applies and the open research gap.
+  function nasa(card, roadmapId, riskPageId, standard) {
+    return {
+      risk: evidence.value('V44', card + 'Risk'), riskSourceIds: ['V44'],
+      roadmapId: roadmapId, ratings: ratings(card, roadmapId),
+      scale: card === 'radiation' ? 'Likelihood x consequence.' : SCALE_5,
+      lastPublished: evidence.value(roadmapId, 'lastPublished'),
+      riskPageId: riskPageId, says: evidence.value(riskPageId, 'says'), canBeDone: evidence.value(riskPageId, 'canBeDone'),
+      standard: standard,
+      gap: { id: evidence.value(roadmapId, 'gapId'), text: evidence.value(roadmapId, 'gapText') }
+    };
+  }
+  var NASA = {
+    muscle: nasa('muscle', 'V70', 'V48', [
+      { text: 'NASA-STD-3001 requires countermeasures to keep in-mission muscle strength at or above ' + Math.round(evidence.value('V81', 'minStrengthFraction') * 100) + '% of baseline.', sourceIds: ['V81'] },
+      { text: 'NASA’s evidence report says “Currently, no standard in-flight measurement of strength exists.” The requirement is tested about ' + evidence.value('V85', 'testDaysAfterLandingAbout') + ' days after landing.', sourceIds: ['V85'] }
+    ]),
+    sleep: nasa('sleep', 'V71', 'V49', [
+      { text: 'The rationale of a NASA-STD-3001 requirement recommends an ' + evidence.value('V78', 'recommendedSleepPeriodHours') + '-hour sleep period.', sourceIds: ['V78'] },
+      { text: 'A NASA brief says an average adult needs ' + evidence.value('V79', 'adultSleepHoursLow') + ' to ' + evidence.value('V79', 'adultSleepHoursHigh') + ' hours of sleep, and that astronauts sleep about ' + evidence.value('V79', 'inSpaceSleepHoursAbout') + ' hours on average in space.', sourceIds: ['V79'] }
+    ]),
+    cardio: nasa('cardio', 'V72', 'V50', [
+      { text: 'NASA-STD-3001 asks for “Assessing, recording, monitoring, and trending vital signs” in mission.', sourceIds: ['V77'] }
+    ]),
+    radiation: nasa('radiation', 'V73', 'V51', [
+      { text: 'For habitats on planetary surfaces, NASA-STD-3001 limits the effective dose from galactic cosmic rays to less than ' + evidence.value('V83', 'surfaceLimitMSvPerDay') + ' mSv per day. This card shows absorbed dose, not effective dose, so it cannot be compared with that limit without a conversion this version does not do.', sourceIds: ['V83'] },
+      { text: 'NASA-STD-3001 requires the radiation monitoring system to alert the crew when exposure rates exceed predefined thresholds, even if ground communication is disrupted.', sourceIds: ['V84'] }
+    ])
+  };
+
   // Where MyoTwin sits in NASA's five hazards of human spaceflight (V43), in NASA's order.
+  // `fact` is one NASA statement from the hazard page; `worldFact` depends on the mission type.
   var HAZARD_NAMES = evidence.value('V43', 'hazards');
+  function worldRatings() {
+    var out = {};
+    Object.keys(MISSIONS).forEach(function (w) {
+      var p = MISSIONS[w].prefix;
+      out[w] = { text: 'NASA rates Earth-independent operations ' + evidence.value('V75', p + 'Ops') + ' and medical conditions in mission ' +
+        evidence.value('V74', p + 'Ops') + ' for ' + MISSIONS[w].label + ' (likelihood x consequence, each from 1 to 5).', sourceIds: ['V75', 'V74'] };
+    });
+    return out;
+  }
   var HAZARDS = [
-    { name: HAZARD_NAMES[0], coverage: 'partly', text: 'Nightly dose and arrival direction at the bunk, from charged particles. Neutrons are not measured in this version.' },
-    { name: HAZARD_NAMES[1], coverage: 'partly', text: 'Sleep is tracked every night. Mood and team factors are not.' },
-    { name: HAZARD_NAMES[2], coverage: 'partly', text: 'The brief is made for a crew that cannot wait for a ground team: it says what the reading means, what to do today and who decides. It does not diagnose or treat.' },
-    { name: HAZARD_NAMES[3], coverage: 'partly', text: 'Calf muscle is compared with the mission plan every morning. Bone and balance are not tracked.' },
+    { name: HAZARD_NAMES[0], coverage: 'partly', text: 'Nightly dose and arrival direction at the bunk, from charged particles. Neutrons are not measured in this version.',
+      fact: { text: "NASA: astronauts cannot see or feel space radiation, and NASA continuously monitors space radiation and astronauts' exposure.", sourceIds: ['V56'] } },
+    { name: HAZARD_NAMES[1], coverage: 'partly', text: 'Sleep is tracked every night. Mood and team factors are not.',
+      fact: { text: 'NASA is developing ways to monitor behavioural health; its scientists use journaling as one tool to assess mental and emotional states.', sourceIds: ['V55'] } },
+    { name: HAZARD_NAMES[2], coverage: 'partly', text: 'The brief is made for a crew that cannot wait for a ground team: it says what the reading means, what to do today and who decides. It does not diagnose or treat.',
+      fact: { text: 'NASA: on a Mars mission the communication delay is up to ' + evidence.value('V54', 'commDelayMinutesOneWay') + ' minutes one way.', sourceIds: ['V54'] },
+      worldFact: worldRatings() },
+    { name: HAZARD_NAMES[3], coverage: 'partly', text: 'Calf muscle is compared with the mission plan every morning. Bone and balance are not tracked.',
+      fact: { text: 'NASA: in spaceflight, weight-bearing bones lose on average ' + evidence.value('V53', 'boneLossPctPerMonthLow') + '% to ' + evidence.value('V53', 'boneLossPctPerMonthHigh') + '% of mineral density a month. This version does not track bone.', sourceIds: ['V53'] } },
     { name: HAZARD_NAMES[4], coverage: 'not covered', text: "Air, noise, light and microbes are not read. Next step: show the habitat's environmental sensors beside the brief." }
   ];
 
-  var api = { THRESHOLDS: THRESHOLDS, WORDING: WORDING, TEXT: TEXT, COUNTERMEASURES: COUNTERMEASURES, DISCLAIMER: DISCLAIMER, CONTEXT: CONTEXT, HAZARDS: HAZARDS };
+  var api = { THRESHOLDS: THRESHOLDS, WORDING: WORDING, TEXT: TEXT, COUNTERMEASURES: COUNTERMEASURES, DISCLAIMER: DISCLAIMER, DISCLAIMER_REPLAYED: DISCLAIMER_REPLAYED, CONTEXT: CONTEXT, NASA: NASA, MISSIONS: MISSIONS, HAZARDS: HAZARDS };
 
   ns.rules = api;
   if (inNode) module.exports = api;
