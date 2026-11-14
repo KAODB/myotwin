@@ -22,13 +22,15 @@ recomputes every number of evidence entries V60-V63 from these files.
 - **URLs:** https://pds-ppi.igpp.ucla.edu/data/MSL-M-RAD-3-RDR-V1.0/ ; data files
   under `DATA/SOL_00000_00089/` and `DATA/SOL_00090_00179/`, one
   `RAD_RDR_<YYYY>_<DDD>_<HH>_<MM>_<SSSS>_V00.TXT` per sol.
-- **Rows:** 94, one per sol from sol 13 to sol 112: sol, UTC date of the first
+- **Rows:** 94, one per sol from sol 13 to sol 112 (the 90-night Mars scenario
+  uses sols 13 to 108): sol, UTC date of the first
   observation, median of `DOSIMETRY_TOTAL_DOSE_B` over all observations of that
   sol (uGy/h, rounded to 0.001), number of observations.
 - **Units:** absorbed dose rate in silicon detector B (label UNIT "microGray / Hour").
 - **Processing:** the dosimetry fields were extracted from the sol files
-  (about 44 observations per sol, 1920 s each); per sol, the median of detector
-  B. The median is used because a few readings are near zero and a recurring
+  (about 44 observations per sol, 1920 s each, except the first 13
+  observations on sol 13, which are 960 s); per sol, the median of detector B.
+  The median is used because a few readings are near zero and a recurring
   midday pattern (B about 14, E about 24 uGy/h) appears in about 40
   observations; the cause is not confirmed. Script: `tools/data/build_msl_rad.py`.
 - **Caveats:** sols 29-33 and 64 have no file in the PDS tree and are skipped,
@@ -36,7 +38,11 @@ recomputes every number of evidence entries V60-V63 from these files.
   correction: this is dose in silicon, not in water or tissue. 8 observations
   carry a placeholder UTC stamp (`2013-123 21:52:00`); their dose values are
   kept and their stamps are ignored for the date. The day-night difference is
-  about 1%, so the per-sol median stands in for a night.
+  small: in the median sol, detector B read 0.7% lower at night (observations
+  starting 22:00 to 06:00 local mean solar time) than at midday (10:00 to
+  16:00), over the 89 sols with at least three observations in each window
+  (range from 5% lower to 5% higher). So the per-sol median stands in for a
+  night.
 - **Terms:** PDS data are public (NASA science information policy,
   https://science.nasa.gov/researchers/science-data/science-information-policy/).
   Cite: Hassler D.M. et al., MSL RAD Reduced Data Records,
@@ -69,12 +75,19 @@ recomputes every number of evidence entries V60-V63 from these files.
   hour the values are identical; the script stops if they ever differ. Script:
   `tools/data/build_lro_crater.py`.
 - **Caveats:** measured in lunar orbit and scaled to the surface by the
-  provider (the altitude factor, about 0.70-0.79, accounts for the Moon blocking
-  about half the sky). Dose in water after the provider's silicon-to-water
-  factor of 1.333. D1&2 sits at the zenith end behind the thinnest shielding;
-  D5&6 sits behind both tissue-equivalent plastic blocks (about 81 mm, a figure
-  from Spence et al. 2010, not re-read from a file). D5&6 is used as a stand-in
-  for someone inside a habitat; it is not a habitat measurement. The 22:00-06:00
+  provider (the altitude factor, 0.725 to 0.814 over the night hours used here,
+  read from the raw files, accounts for the Moon blocking about half the sky).
+  Dose in water after the provider's silicon-to-water factor of 1.333. D1&2
+  sits at the zenith end, facing deep space behind a thin aluminium cap; D5&6
+  sits at the nadir end, facing the Moon behind a cap of about the same thickness,
+  with both tissue-equivalent plastic pieces (about 54 and 27 mm) between it
+  and deep space (V93). D5&6 is replayed for every Moon night, but it is a
+  lightly shielded detector on an orbiter, not a model of a habitat. On the
+  night of 10 September 2017 (mission night 20 of the solar-event scenario) it
+  read 43.5 mGy, about 500 times a quiet night, against 166 mGy at D1&2. Thick
+  habitat shielding stops most solar protons, so a crew inside would receive
+  much less: under 23 g/cm2 of Martian air, Curiosity's RAD saw the dose rate
+  rise only two- to threefold in the same event (V92). The 22:00-06:00
   UTC sleep window is our assumption. The quiet window was chosen by
   inspection: no daily D1&2 mean in day-of-year 60-260 of 2017 exceeds 0.031
   cGy/day apart from 07-14 to 07-30 and 09-04 to 09-17.

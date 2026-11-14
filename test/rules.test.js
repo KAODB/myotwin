@@ -147,7 +147,8 @@ test('numbers in the NASA standard sentences come from evidence values', () => {
   for (const id of CARDS) {
     for (const s of rules.NASA[id].standard) assert.ok(s.sourceIds.length > 0, id + ' standard sources');
   }
-  assert.deepStrictEqual(rules.NASA.muscle.standard.map((s) => s.sourceIds[0]), ['V81', 'V85']);
+  assert.deepStrictEqual(rules.NASA.muscle.standard.map((s) => s.sourceIds[0]), ['V81', 'V85', 'V82']);
+  assert.match(text('muscle'), /2023 evidence report/);   // the quote carries its year, beside the 2026 bulletin
   assert.deepStrictEqual(rules.NASA.sleep.standard.map((s) => s.sourceIds[0]), ['V78', 'V79']);
   assert.deepStrictEqual(rules.NASA.cardio.standard.map((s) => s.sourceIds[0]), ['V77']);
   assert.deepStrictEqual(rules.NASA.radiation.standard.map((s) => s.sourceIds[0]), ['V83', 'V84']);
@@ -185,4 +186,13 @@ test('radiation wording: the solar particle event is on record, and its disclaim
   assert.doesNotMatch(rules.TEXT.radiation.red.meaning, /detector flagged/);
   assert.match(rules.DISCLAIMER_REPLAYED, /^Screening flag from replayed measurements\./);
   assert.match(rules.DISCLAIMER, /^Screening flag from simulated data\./);
+});
+
+test('radiation wording names a replayed dose, and the direction map is not a shielding claim', () => {
+  assert.match(rules.TEXT.radiation.green.meaning, /^Last night's replayed dose /);
+  assert.match(rules.TEXT.radiation.red.meaning, /^Last night's replayed dose /);
+  assert.doesNotMatch(JSON.stringify(rules.TEXT.radiation), /sleep station/);
+  assert.ok(rules.TEXT.radiation.red.actions.includes('Use the direction map to see which side more particles came from.'));
+  // The alert requirement and its rationale are told apart.
+  assert.match(rules.NASA.radiation.standard[1].text, /the rationale adds that the crew must be alerted even if ground communication is disrupted/);
 });

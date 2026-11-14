@@ -90,3 +90,14 @@ test('Human Research Roadmap ratings and NASA-STD-3001 requirements are present 
     assert.ok(it.quote && it.quote.length > 20, id + ' needs a quote');
   }
 });
+
+test('V92 (RAD on Mars, September 2017) and V93 (CRaTER layout) are verified, quoted and carry their numbers', () => {
+  const v92 = evidence.get('V92'), v93 = evidence.get('V93');
+  assert.equal(v92.status, 'verified');
+  assert.equal(v93.status, 'verified');
+  assert.ok(v92.quote.includes('23 g/cm2 of CO2') && v92.quote.includes('factors of 2 to 3'));
+  assert.deepStrictEqual([evidence.value('V92', 'atmosphereGPerCm2'), evidence.value('V92', 'doseRateRiseFactorLow'), evidence.value('V92', 'doseRateRiseFactorHigh')], [23, 2, 3]);
+  assert.ok(v93.quote.includes('53.992 mm') && v93.quote.includes('26.972') && v93.quote.includes('812.8'));
+  assert.equal(evidence.value('V93', 'tepZenithMm'), 53.992);
+  assert.equal(evidence.value('V93', 'tepNadirMm'), 26.972);
+});

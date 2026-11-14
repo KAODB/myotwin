@@ -288,7 +288,8 @@ Measured radiation data on the page (space scenarios only; none of it appears wh
 - Card tags: the radiation card carries "Measured, replayed" (on nights with `rad`), the other
   three cards "Simulated". Under the cards, `#rad-source` says where tonight's dose comes from,
   built from `rad.measured` (V60 for Curiosity RAD, V61 for LRO CRaTER), and, on a night with
-  `rad.events`, the first DONKI record (linked to V62 only when it is that record, otherwise its id).
+  `rad.events`, one DONKI record: the record named in the evidence table (V62) is preferred when
+  it is among the night's records (linked to V62); otherwise the first record, shown by its id.
 - Trend panel, radiation card, solar-event scenario (S3): `#flux-fig` draws the OMNI2 hourly
   proton flux above 10 MeV, 4 to 16 September 2017, on a log10 axis (`charts.logSeries`), with the
   selected night's 22:00 to 06:00 UTC window shaded; caption links V63.

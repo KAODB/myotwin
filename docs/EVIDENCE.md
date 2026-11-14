@@ -222,15 +222,15 @@ another citation without opening the original; **fitted** means estimated from e
 - Quote: "rate of 1.3 mSv/day for systems in free space and to less than 0.9 mSv/day for systems on planetary surfaces."
 - Values: `surfaceLimitMSvPerDay` = 0.9; `freeSpaceLimitMSvPerDay` = 1.3
 
-**V84**. NASA-STD-3001 requires radiation monitoring in habitable volumes that reports dose, intensity and angles of incidence, and an alert to the crew when exposure rates exceed thresholds, even without ground communication.
+**V84**. NASA-STD-3001 requires the program to monitor the radiation exposure from galactic cosmic rays, solar energetic particles, trapped radiation and neutrons in habitable volumes, and requires the monitoring system to alert the crew and operations teams when exposure rates exceed predefined thresholds. The rationale, not the requirement text, adds that monitoring gives the radiation type, LET, intensity and angles of incidence, and that the crew must be alerted even if ground communication is disrupted.
 
 - Status: verified (official-document)
 - Source: NASA-STD-3001 Volume 2, Revision F, requirements [V2 6161] Intravehicular Area Monitoring and [V2 6164] Alerting. <https://www.nasa.gov/wp-content/uploads/2025/05/nasa-std-3001-vol-2.pdf>
-- Quote: "Appropriate dose monitoring provides data on the radiation type, linear energy transfer (LET), intensity, and angles of incidence. ... Timepix-based instruments have been used by past programs to characterize the ionizing radiation inside crewed vehicles and to measure the dose and dose rates. ... The radiation monitoring system shall alert the crew and operations teams when radiation exposure rates exceed predefined thresholds. ... The crew must be alerted even if ground communication is disrupted or is unviable."
+- Quote: "The program shall monitor the radiation exposure produced by galactic cosmic rays, solar energetic particles, trapped radiation, and neutrons in habitable volumes ... Appropriate dose monitoring provides data on the radiation type, linear energy transfer (LET), intensity, and angles of incidence. ... Timepix-based instruments have been used by past programs to characterize the ionizing radiation inside crewed vehicles and to measure the dose and dose rates. ... The radiation monitoring system shall alert the crew and operations teams when radiation exposure rates exceed predefined thresholds. ... The crew must be alerted even if ground communication is disrupted or is unviable."
 
 ### Muscle
 
-**V85**. NASA's evidence report on muscle and aerobic capacity states that no standard in-flight measurement of strength exists and that the strength requirement is tested about a week after landing. With ISS countermeasures, knee strength falls about 15% on average and about 31% of crew lose more than 20%.
+**V85**. NASA's evidence report on muscle and aerobic capacity states that no standard in-flight measurement of strength exists and that the strength requirement is tested about a week after landing. With ISS countermeasures, knee strength falls about 15% on average. About 31% of ISS crew come back with knee strength more than 20% below preflight.
 
 - Status: verified (official-document)
 - Source: NASA Human Research Program Evidence Report, Risk of Impaired Performance due to Reduced Muscle Mass, Strength and Endurance and Risk of Reduced Physical Performance Capabilities due to Reduced Aerobic Capacity (approved for public release 22 January 2023). <https://humanresearchroadmap.nasa.gov/evidence/reports/Evidence%20report%20aerobic%20and%20muscle_FINAL%204-3-2024.pdf>
@@ -343,7 +343,7 @@ another citation without opening the original; **fitted** means estimated from e
 
 ### Electrical impedance myography (EIM)
 
-**V87**. A NASA-funded study of astronauts (2019 to 2034) performs non-invasive electrical impedance myography before and after flight.
+**V87**. A NASA-funded study adds impedance myography before and after flight in astronauts (2019 to 2034), alongside the standard muscle measures.
 
 - Status: verified (official-database)
 - Source: NASA Task Book, Time Course of Spaceflight-Induced Adaptations in Bone Morphology, Bone Strength and Muscle Quality (principal investigator M. Bouxsein). <https://taskbook.nasaprs.com/tbp/index.cfm?action=public_query_taskbook_content&TASKID=07387AE7B0ED65293EFA45E8203BB732>
@@ -459,6 +459,20 @@ another citation without opening the original; **fitted** means estimated from e
 - Source: NASA GSFC SPDF OMNI2 hourly data, omni2_2017.dat, word 46; data/omni-protons.js. <https://spdf.gsfc.nasa.gov/pub/data/omni/low_res_omni/omni2_2017.dat>
 - Quote: none recorded
 - Values: `peakGt10MeVPfu` = 1208.39; `peakHour` = 2017-09-11T11:00Z
+
+**V92**. On the surface of Mars, under about 23 g/cm2 of CO2 atmosphere, Curiosity RAD saw dose rates rise above the galactic-cosmic-ray background by factors of 2 to 3 during the solar particle event of 10-12 September 2017.
+
+- Status: verified (abstract)
+- Source: Zeitlin C et al. Analysis of the Radiation Hazard Observed by RAD on the Surface of Mars During the September 2017 Solar Particle Event. Geophys Res Lett 2018;45:5845-5851. Abstract read in the Crossref record. <https://doi.org/10.1029/2018GL077760>
+- Quote: "Despite 23 g/cm2 of CO2 shielding provided by the atmosphere above RAD, dose rates rose above background galactic cosmic ray levels by factors of 2 to 3 over the course of several hours and leveled off at sustained peak rates for about 12 hr before declining over the following 36 hr."
+- Values: `atmosphereGPerCm2` = 23; `doseRateRiseFactorLow` = 2; `doseRateRiseFactorHigh` = 3
+
+**V93**. LRO CRaTER: two pieces of tissue-equivalent plastic, about 54 mm and 27 mm long, sit between its three detector pairs, and aluminium end caps about 0.81 mm thick close both ends. D1&2 sits behind the zenith cap, facing deep space; D5&6 sits behind the nadir cap, facing the Moon.
+
+- Status: verified (full-text)
+- Source: Spence HE et al. CRaTER: The Cosmic Ray Telescope for the Effects of Radiation Experiment on the Lunar Reconnaissance Orbiter Mission. Space Sci Rev 2010;150:243-284, Tables 2 to 4. Read in the open copy at the MDSOAR repository (hdl.handle.net/11603/43632). <https://doi.org/10.1007/s11214-009-9584-8>
+- Quote: "TEP on-axis linear dimensions: 53.992 mm (zenith section) and 26.972 (nadir section) ... Aluminum end cap thickness: 812.8 µm (zenith cap) and 810.3 µm (nadir cap)"
+- Values: `tepZenithMm` = 53.992; `tepNadirMm` = 26.972; `endCapZenithUm` = 812.8; `endCapNadirUm` = 810.3
 
 **V17**. Timepix-based Radiation Environment Monitors have flown on the ISS since 16 October 2012; the direction of each particle track can be reconstructed. The Timepix-based HERA flew on Artemis I.
 
@@ -593,7 +607,7 @@ another citation without opening the original; **fitted** means estimated from e
 | timeConstantDays | 42 | days | fitted | V4, V5 | Time constant of the approach to the loss target. Fitted together with maxLossFraction and exerciseEfficacy (see there). |
 | exerciseEfficacy | 0.72 | fraction of loss prevented at full adherence | fitted | V4, V5 | From the V4 ratio of exercise to control loss (8/29 = 0.28, so efficacy about 0.72). Applied to V5 as well, although that programme differed (see maxLossFraction). |
 | recoveryTimeConstantDays | 30 | days | assumption |  | Time constant of recovery toward baseline at g >= 1. No fitted source; chosen to be shorter than the loss time constant. |
-| gravityShape | 1 | exponent | assumption | V6, V90, V91 | Unloading = (1 - g) ^ gravityShape; 1 means loss scales linearly with missing gravity. Mouse data in V6 (0.33 g preserved soleus size, 0.67 g needed for function) suggest the relation may not be linear. In rats after 28 days at 0.4 g weight bearing (V90, V91; six measures, 1 g change subtracted), the loss was 0.25 to 1.05 (median 0.56) of the fully unloaded loss; the model uses 0.60 at 0.4 g. |
+| gravityShape | 1 | exponent | assumption | V6, V90, V91 | Unloading = (1 - g) ^ gravityShape; 1 means loss scales linearly with missing gravity. Mouse data in V6 (0.33 g preserved soleus size, 0.67 g needed for function) suggest the relation may not be linear. In rats after 28 days at 0.4 g weight bearing (V90, V91; three measures in each sex, six results, 1 g change subtracted), the loss was 0.25 to 1.05 (median 0.56) of the fully unloaded loss; the model uses 0.60 at 0.4 g. |
 | eimPhasePctPerMusclePct | 1 | % phase change per % muscle change | assumption | V8 | Assumed one-to-one. V8 reports a 28.4% lower 50 kHz phase in the tibialis anterior after 10-59 days in a cast, but with no paired muscle-size measurement, so the slope is not fitted. |
 
 ### Simulator assumptions (`sim.ASSUMPTIONS`)

@@ -7,11 +7,12 @@ MyoTwin is concept software for the 2026 NASA Space Apps Challenge
 spacesim, Kaohsiung.
 
 On the Moon or Mars a crew member has to notice changes in their own body: a
-message from Mars can take up to 20 minutes each way (V54). NASA requires crews
-to keep muscle strength at or above 80% of baseline (V81), and its evidence
-report says "Currently, no standard in-flight measurement of strength exists"
-(V85). MyoTwin measures during the hours a crew member already spends lying
-still. An assumed sensor panel in the bunk reads the calf muscle, sleep, heart
+message from Mars can take up to 20 minutes one way (V54). NASA requires crews
+to keep muscle strength at or above 80% of baseline (V81). The strength tests
+used on the ISS need specialized equipment in a fixed place (V82), and in 2023
+NASA's evidence report said "Currently, no standard in-flight measurement of
+strength exists" (V85). MyoTwin measures during the hours a crew member already
+spends lying still. An assumed sensor panel in the bunk reads the calf muscle, sleep, heart
 and breathing rate, and radiation overnight. In the morning one screen shows a
 body figure you can click, four checks in plain words, what NASA says about
 each risk, and what to do today. A flight surgeon decides; the software only
@@ -46,7 +47,8 @@ node --test "test/*.test.js"
 ## What is measured and what is simulated
 
 - **Measured, replayed:** the radiation dose of every Moon and Mars night.
-  Mars nights replay Curiosity's RAD from NASA's Planetary Data System (V60).
+  Mars nights replay Curiosity's RAD from NASA's Planetary Data System, from
+  94 sols of RAD data (the 90-night scenario uses sols 13 to 108) (V60).
   Moon nights replay LRO's CRaTER, including the solar particle events of
   September 2017 (V61). NASA's DONKI records mark the nights with an event
   (V62), and a chart shows NASA's OMNI proton flux (V63). The muscle model's
@@ -55,8 +57,14 @@ node --test "test/*.test.js"
   `data/`, each with its source, units, processing and terms, and the scripts
   in `tools/data/` rebuild them from the downloads. See
   [data/README.md](data/README.md). Replaying a 2012 or 2017 night for a
-  mission night is an assumption; the Moon values were measured in orbit behind
-  a detector's plastic, not in a habitat.
+  mission night is an assumption, and the Moon values were measured in lunar
+  orbit, not in a habitat. In the solar-event scenario, mission night 20
+  replays the night of 10 September 2017: 43.5 mGy at CRaTER's D5&6 detectors,
+  about 500 times a quiet night. That pair is a lightly shielded detector on an
+  orbiter (V93), not a model of a habitat. Thick habitat shielding stops most
+  solar protons, so a crew inside would receive much less. Under 23 g/cm2 of
+  Martian air, Curiosity's RAD saw the dose rate rise only two- to threefold in
+  the same event (V92).
 - **Simulated:** everything about the crew member: the muscle readings, sleep,
   heart and breathing rate, the particle directions and all three image
   layers. The simulator (`js/sim.js`) is seeded, and each scenario has its own
@@ -68,7 +76,7 @@ node --test "test/*.test.js"
 - **From NASA and published sources:** the risk named on each check and its
   rating for the mission selected (NASA Human Research Roadmap, V70 to V75),
   the sentences quoted on each check (NASA risk pages, V48 to V51), the
-  standards behind the lines (NASA-STD-3001, V76 to V84), and the published
+  standards behind the lines (NASA-STD-3001 and OCHMO briefs, V76 to V84), and the published
   results the muscle model is fitted to (V4, V5).
 - **Real code:** the assessment engine, the rules, the muscle model and the
   image layers, with automated tests.
@@ -92,26 +100,40 @@ evidence table and the data cannot drift apart.
 2. Movement during the night and tails from nuclear interactions. Next: sort
    tracks by posture with the pressure map, and run a particle-transport
    simulation.
-3. Habitat shielding changes which particles arrive (V37). Next: simulate the
-   tracks behind it.
-4. I found no published density image of a body made this way. Next: repeat
+3. Habitat shielding changes which particles arrive (V37), and thick body
+   regions filter out low-momentum particles, so scattering does not scale
+   linearly with thickness. One reference block calibrates one thickness only.
+   Next: simulate the tracks behind the habitat and through the body.
+4. Scattering measures all the material along each path. Bedding, body fluid,
+   fat and muscle all add to it, and water and muscle differ by under 3% in
+   radiation length (V31), so fluid loss and muscle loss look alike. Next:
+   compare the signal summed over the whole limb, with the bedding fixed or
+   measured, and read it beside the impedance.
+5. I found no published density image of a body made this way. Next: repeat
    the ground test with sea-level muons and a body phantom (V35).
-5. I found no published human impedance data from space, bed rest or the back
+6. I found no published human impedance data from space, bed rest or the back
    of the calf (V8), and no study of bed-integrated dry electrodes (V30).
    Next: a bed-rest study beside strength tests and MRI.
-6. Fluid shifts move the impedance reading (V28). Next: measure in the last
-   hour before waking.
-7. I found no published test of radar vital signs in space (V39). Next: a mock
+7. The impedance baseline is taken on Earth, where the calf presses on the
+   strip about six times harder than on the Moon (2.6 times harder than on
+   Mars, V14), and fluid shifts move the reading (V28). The size of the
+   arrival step is assumed. Next: measure in the last hour before waking,
+   re-baseline in the first surface week, and measure the arrival step in a
+   partial-gravity analogue.
+8. I found no published test of radar vital signs in space (V39). Next: a mock
    sleep station and an analogue.
-8. The radiation card shows absorbed dose (in silicon on Mars, water-corrected
-   at the Moon), not effective dose, and neutrons are not measured (V46).
-   Next: a validated transport model and a neutron channel.
-9. Detection accuracy: the simulated nights and the plan share one model.
-   Next: test the rules on recorded bed-rest data.
-10. The transit: in weightlessness the sleeper does not rest on the panel, so
+9. Radiation. The card shows absorbed dose (in silicon on Mars, water-corrected
+   at the Moon), not effective dose, and neutrons are not measured (V46). The
+   Moon nights replay a lightly shielded detector on an orbiter. Behind thick
+   habitat shielding a crew would receive much less from a solar particle
+   event (V92). Next: run the measured proton spectrum through a validated
+   transport model of the habitat, and add a neutron channel.
+10. Detection accuracy: the simulated nights and the plan share one model.
+    Next: test the rules on recorded bed-rest data.
+11. The transit: in weightlessness the sleeper does not rest on the panel, so
     MyoTwin starts at arrival (V42). Next: pair it with a worn sensor for the
     transit.
-11. Mood, air, noise and light are not read (V43). Next: show the habitat's
+12. Mood, air, noise and light are not read (V43). Next: show the habitat's
     environmental sensors beside the brief.
 
 ## Use of SI and earlier work

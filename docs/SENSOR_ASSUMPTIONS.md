@@ -130,23 +130,47 @@ partial gravity. The image also assumes no load transfer between cells.
 
 | Field | Meaning |
 |---|---|
-| `dose_uGy` | Absorbed dose in silicon over the sleep period, in uGy |
-| `dir` | Particle counts in 8 azimuth sectors; sector 0 points toward the head |
-| `spe` | Solar particle event flag from the detector |
+| `dose_uGy` | Absorbed dose over the sleep period, in uGy: in silicon on Mars (Curiosity RAD detector B), water-corrected by the instrument team on the Moon (LRO CRaTER) |
+| `dir` | Particle counts in 8 azimuth sectors; sector 0 points toward the head. The assumed trackers accept particles within 20 degrees of vertical, so the direction map mostly describes the roof; side walls would need wider acceptance. |
+| `spe` | Solar particle event flag for the night, taken from NASA's DONKI records for the replayed date (not from the detector) |
+
+The assumed trackers are silicon-strip planes of the kind already flying in
+Fermi LAT (V36). Timepix detectors (V17, the ISS monitors) are the reference
+only for measuring dose and energy deposit: their chips are small, and covering
+a whole bed with them is not practical.
 
 The density image also needs the number of usable tracks per cm2 in the night.
 In this version the simulator supplies it (`_truth.tracksPerCm2`, which the
 assessment engine never reads): 2,183 incident GCR protons per cm2 in an 8-hour
 night within a 20-degree cone (assumed free-space intensity of 0.2 per cm2 per
-s per sr; no habitat shielding; the Mars atmosphere is ignored).
+s per sr). The same value is used for the Moon and Mars. On Mars about 20 g/cm2
+of air removes roughly a quarter of the usable tracks (our estimate); this
+version does not apply it.
+
+- **Habitat shielding what-if** (0.6 to 1): the share of cosmic-ray tracks that
+  still cross the sleeper. It acts on the tracks only and does not change the
+  dose, because galactic-cosmic-ray dose changes little behind shielding. On
+  quiet nights CRaTER's D5&6 pair, which cosmic rays from deep space reach
+  through both plastic pieces (V93), reads within 2% of D1&2 behind the thin
+  zenith cap: about 89.6 against 91.3 uGy (V61).
+- **Nights with raised radiation** add no usable tracks. A night counts as
+  quiet when no solar particle event is on record and its dose is at most 1.15
+  times the scenario median. Solar protons mostly stop inside the body or cross
+  it with far lower momentum than cosmic rays. In the solar-event scenario this
+  leaves out nights 14 to 18 and 20 to 26.
+- **Unknown momentum:** the trackers measure angles, not momentum, so each
+  track is a noisier estimate of the material it crossed. The density image
+  multiplies the counting noise by 5 for this, and uses both projections of
+  each track.
 
 **Evidence that the principle works**
 
-- Timepix-based Radiation Environment Monitors have flown on the ISS since 16
-  October 2012, and the direction of each particle track can be
-  reconstructed. The Timepix-based HERA flew on Artemis I (V17).
 - Large silicon-strip trackers already fly in space: Fermi LAT has 16 towers
   of 18 x/y planes with 228 um strip pitch (V36).
+- Timepix-based Radiation Environment Monitors, the reference for measuring
+  dose and energy deposit, have flown on the ISS since 16 October 2012, and the
+  direction of each particle track can be reconstructed. The Timepix-based
+  HERA flew on Artemis I (V17).
 - Multiple-scattering angle follows the Highland formula, accurate to 11% or
   better (V32), and depends on the radiation length of the material: water
   36.08 cm, skeletal muscle 35.14 cm, adipose tissue 45.36 cm, compact bone
@@ -181,8 +205,10 @@ assumed to be passive detectors; they add no radiation source.
 2. **Movement during the night, and tails from nuclear interactions.** Next
    step: sort tracks by posture with the pressure image, start with large
    regions, and run a particle-transport simulation.
-3. **Habitat shielding** changes which particles reach the trackers (V37).
-   Next step: simulate usable tracks behind different shielding.
+3. **Habitat shielding** changes which particles reach the trackers (V37),
+   and thick body regions filter out low-momentum particles, so scattering
+   does not scale linearly with thickness. Next step: simulate usable tracks
+   behind the habitat and through the body.
 4. **We found no published density image of a body made this way.** A 2026
    study argues the natural muon flux on Earth is too low for medical imaging
    (V38). Next step: repeat the published ground test with sea-level muons and
@@ -195,10 +221,18 @@ assumed to be passive detectors; they add no radiation source.
    last hour before waking.
 7. **We found no published test of radar vital signs in space** (V39). Next
    step: test in a mock sleep station and an analogue.
-8. **The radiation card shows absorbed dose in silicon, not effective dose.**
-   Next step: add the conversion with a validated transport model.
+8. **The radiation card shows absorbed dose (silicon on Mars, water on the Moon), not effective dose.**
+   The Moon nights replay a lightly shielded detector on an orbiter; behind
+   thick habitat shielding a crew would receive much less from a solar
+   particle event (V92). Next step: add the conversion with a validated
+   transport model of the habitat.
 9. **Detection accuracy:** the simulated nights and the plan share one model.
    Next step: test the rules on recorded bed-rest data.
 10. **The transit:** in weightlessness the sleeper does not rest on the panel,
     so MyoTwin starts at arrival. Next step: pair it with a worn sensor for the
     transit.
+11. **Materials flammability** rules for a low-pressure, oxygen-rich habitat
+    atmosphere apply to the electronics and the current in the mattress. Next
+    step: add the flammability tests to the hardware requirements.
+12. **Lunar dust** on the dry electrodes and the mattress surface. Next step:
+    replaceable electrode covers.
