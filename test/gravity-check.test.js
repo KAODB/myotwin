@@ -175,7 +175,8 @@ test('describeGravityCheck builds the panel text from checkGravityTerm output on
   assert.match(one.caveats[1], /not muscle volume/);
   assert.ok(one.caveats[2].includes('gained ' + Math.round(mg.pct1g) + '% grip') && one.caveats[2].includes(mg.share.toFixed(2)));
   assert.match(one.caveats[3], /^One share is above 1 \(calf girth, females, 1\.05\)/);
-  assert.equal(one.caveats.length, 4);   // no share is flagged unstable
+  assert.match(one.caveats[4], /^At lunar gravity, mouse studies point to less loss.*\(V40\).*\(V6\)\.$/);
+  assert.equal(one.caveats.length, 5);   // no share is flagged unstable
 });
 
 test('the muscle model behaves at shape 0.25 in the Moon and Mars scenarios', () => {

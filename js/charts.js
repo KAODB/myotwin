@@ -129,6 +129,11 @@
     return max > min ? (v - min) / (max - min) : 0.5;
   }
 
+  /** The points of nights up to and including `day` (all of them when `day` is null). */
+  function upToDay(points, day) {
+    return day == null ? (points || []) : (points || []).filter(function (p) { return p.missionDay <= day; });
+  }
+
   // ---- DOM helpers -------------------------------------------------------------
   function el(tag, attrs, parent) {
     var n = root.document.createElementNS(SVG_NS, tag);
@@ -177,18 +182,21 @@
    * Draw a time series into an <svg>.
    * opts: { series: [{missionDay, value|null}], raw: [{missionDay, value|null}]|null,
    *   baseline: {median, low, high}|null, expected: [{missionDay, low, high}]|null,
-   *   thresholds: [{value, label, shortLabel?, status}], markers: [{missionDay, label, shortLabel?}],
+   *   thresholds: [{value, label, shortLabel?, status}], markers: [{missionDay, label, shortLabel?, tinyLabel?}],
    *   exercise: [{missionDay, done}]|null, statusAt: (missionDay) => status,
    *   selectedDay, unit, yLabel, xTitle = 'Mission day', axisBreak: missionDay|null,
-   *   logY: false, yFormat: (value) => tick text }
+   *   logY: false, yFormat: (value) => tick text, upTo: missionDay|null }
    * `logY` draws the vertical axis on a log10 scale with decade ticks (non-positive values are gaps).
    * `series` is the line the status is judged on (status-shaped markers); `raw` are the
    * nightly readings drawn as small neutral dots. `axisBreak` draws a break in the x axis
-   * just before that day and never joins the line across it.
+   * just before that day and never joins the line across it. `upTo` draws the readings, the judged
+   * line, its points and the exercise ticks only up to that night; the axes, bands, thresholds and
+   * markers still come from every point passed, so the chart keeps its frame while the nights advance.
    */
   function line(svg, opts) {
     opts = opts || {};
     var series = opts.series || [];
+    var shown = function (pts) { return upToDay(pts, opts.upTo); };
     var size = sizeOf(svg, 640, 260);
     var W = size.w, H = size.h;
     var hasEx = opts.exercise && opts.exercise.length;
@@ -205,7 +213,7 @@
     var xTitle = opts.xTitle || 'Mission day';
     var raw = opts.raw || [];
     var label = (opts.yLabel || 'Value') + (opts.unit ? ' (' + opts.unit + ')' : '') +
-      ' by ' + xTitle.toLowerCase() + ', ' + series.filter(function (p) { return p.value != null; }).length + ' nights with data' + (logY ? ', logarithmic scale' : '');
+      ' by ' + xTitle.toLowerCase() + ', ' + shown(series).filter(function (p) { return p.value != null; }).length + ' nights with data' + (logY ? ', logarithmic scale' : '');
     svg.setAttribute('aria-label', label);
     el('title', null, svg).textContent = label;
 
@@ -314,11 +322,17 @@
       el('line', { x1: mx, x2: mx, y1: 4, y2: m.t + ph, 'class': 'event' }, svg);
       if (!mk.label) return;
       labels.push(function () {
+        // Beside its own line: the longest wording that fits to its right, else to its left;
+        // when none fits, the shortest wording, kept inside the chart as close to its line as it can be.
         var n = text(svg, mx + 4, 16 + (k % rows) * 14, mk.label, 'event-label', 'start');
-        if (mk.shortLabel && widthOf(n) > pw - 8) n.textContent = mk.shortLabel;
-        // Beside its own line: to the right if it fits, else to the left, else kept inside the plot.
-        var w = widthOf(n);
-        var lx = mx + 4 + w <= W - m.r ? mx + 4 : mx - 4 - w >= m.l ? mx - 4 - w : Math.max(m.l + 2, W - m.r - w);
+        var words = [mk.label, mk.shortLabel, mk.tinyLabel].filter(Boolean), lx = null;
+        for (var j = 0; j < words.length && lx == null; j++) {
+          n.textContent = words[j];
+          var w = widthOf(n);
+          if (mx + 4 + w <= W - 2) lx = mx + 4;
+          else if (mx - 4 - w >= m.l) lx = mx - 4 - w;
+        }
+        if (lx == null) lx = Math.max(2, Math.min(W - 2 - widthOf(n), mx - widthOf(n) / 2));
         n.setAttribute('x', lx);
       });
     });
@@ -329,14 +343,14 @@
     }
 
     // Nightly readings: small neutral dots
-    raw.forEach(function (p) {
+    shown(raw).forEach(function (p) {
       if (!ok(p.value)) return;
       el('circle', { cx: X(p.missionDay).toFixed(1), cy: Y(p.value).toFixed(1), r: 1.8, 'class': 'raw-dot' }, svg);
     });
 
     // Judged line with gaps (and never across the axis break), then status-shaped points
     var path = '', pen = false, prev = null;
-    series.forEach(function (p) {
+    shown(series).forEach(function (p) {
       if (brk != null && prev != null && prev < brk && p.missionDay >= brk) pen = false;
       prev = p.missionDay;
       if (!ok(p.value)) { pen = false; return; }
@@ -345,7 +359,7 @@
     });
     if (path) el('path', { d: path, 'class': 'series' }, svg);
     var r = series.length > 120 ? 2.5 : 3.5;
-    series.forEach(function (p) {
+    shown(series).forEach(function (p) {
       if (!ok(p.value)) return;
       var st = opts.statusAt ? opts.statusAt(p.missionDay) : 'green';
       var big = p.missionDay === opts.selectedDay;
@@ -356,7 +370,7 @@
     // Exercise log ticks along the bottom
     if (hasEx) {
       var ey = H - m.b + 30;
-      opts.exercise.forEach(function (e) {
+      shown(opts.exercise).forEach(function (e) {
         if (e.missionDay < x0 || e.missionDay > x1) return;
         el('line', { x1: X(e.missionDay), x2: X(e.missionDay), y1: ey - (e.done ? 6 : 2), y2: ey,
           'class': e.done ? 'ex-done' : 'ex-missed' }, svg);
@@ -548,51 +562,70 @@
 
   // ---- labelled dot scale ------------------------------------------------------
   /**
-   * One row per mark on a shared horizontal scale from 0 to `max`, the label above each
-   * row (so it fits at 320 px), and one dashed vertical reference line with its label.
+   * One row per mark on a shared horizontal scale from 0 to `max`. Each label sits in a left
+   * gutter outside the plot, vertically centred on its own row with its mark, so no grid or
+   * reference line crosses it; on a narrow chart (under 560 px) the label goes on two lines,
+   * split after its first comma. One dashed vertical reference line, its label above the plot
+   * and kept inside the plot's width.
    * opts: { rows: [{ value, label, shape: 'circle' | 'square' | 'triangle' }],
    *   max, ticks: number[], ref: { value, label }, title, label }
    * The <svg> height attribute is set here from the number of rows (give it no CSS height).
+   * Returns { x, rowY, gutter } (rowY[i] is the centre of row i).
    */
   function dotScale(svg, opts) {
-    var ROW = 36, m = { l: 12, r: 18, t: 30, b: 60 };
+    var W = sizeOf(svg, 640, 300).w, narrow = W < 560;
+    var ROW = narrow ? 40 : 34, m = { l: 12, r: 18, t: 30, b: 60 };
     var H = m.t + opts.rows.length * ROW + m.b;
     svg.setAttribute('height', H);
-    var W = sizeOf(svg, 640, H).w;
     clear(svg);
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
     svg.setAttribute('aria-label', opts.label || 'Chart');
     el('title', null, svg).textContent = opts.label || 'Chart';
-    var pw = W - m.l - m.r;
-    function X(v) { return m.l + Math.max(0, Math.min(opts.max, v)) / opts.max * pw; }
+    var rowY = opts.rows.map(function (r, i) { return m.t + i * ROW + ROW / 2; });
+    // Labels first, in the gutter, so the plot can start after the widest one.
+    var widest = 0;
+    opts.rows.forEach(function (r, i) {
+      var full = r.label + ': ' + r.value.toFixed(2), cut = r.label.indexOf(', ');
+      var lines = narrow && cut > 0 ? [r.label.slice(0, cut + 1), r.label.slice(cut + 2) + ': ' + r.value.toFixed(2)] : [full];
+      lines.forEach(function (s, k) {
+        var y = rowY[i] + 4.5 + (lines.length === 2 ? (k ? 7 : -7) : 0);
+        widest = Math.max(widest, widthOf(text(svg, m.l, y, s, 'ax-label dot-label', 'start')));
+      });
+    });
+    var x0 = m.l + Math.ceil(widest) + 14;
+    var pw = W - x0 - m.r;
+    function X(v) { return x0 + Math.max(0, Math.min(opts.max, v)) / opts.max * pw; }
     var y1 = m.t + opts.rows.length * ROW;
     (opts.ticks || []).forEach(function (v) {
       el('line', { x1: X(v), x2: X(v), y1: m.t, y2: y1, 'class': 'grid' }, svg);
       text(svg, X(v), y1 + 16, fmt(v), 'ax-label');
     });
-    el('line', { x1: m.l, x2: W - m.r, y1: y1, y2: y1, 'class': 'axis' }, svg);
+    el('line', { x1: x0, x2: W - m.r, y1: y1, y2: y1, 'class': 'axis' }, svg);
     // The axis title goes on two lines when it is wider than the plot (narrow screens).
-    var tt = text(svg, m.l + pw / 2, y1 + 36, opts.title || '', 'ax-title');
+    var tt = text(svg, x0 + pw / 2, y1 + 36, opts.title || '', 'ax-title');
     if (widthOf(tt) > pw) {
       var words = tt.textContent.split(' '), half = Math.ceil(words.length / 2);
       tt.textContent = words.slice(0, half).join(' ');
-      text(svg, m.l + pw / 2, y1 + 51, words.slice(half).join(' '), 'ax-title');
+      text(svg, x0 + pw / 2, y1 + 51, words.slice(half).join(' '), 'ax-title');
     }
-    // Reference line under the rows so it never hides a label; its own label above the plot.
+    opts.rows.forEach(function (r, i) {
+      el('line', { x1: x0, x2: W - m.r, y1: rowY[i], y2: rowY[i], 'class': 'dot-track' }, svg);
+    });
+    // Reference line under the marks; its label above the plot, centred on the line but never past the plot's edges.
     if (opts.ref) {
       var xr = X(opts.ref.value);
       el('line', { x1: xr, x2: xr, y1: m.t - 8, y2: y1, 'class': 'dot-ref' }, svg);
-      text(svg, xr, m.t - 14, opts.ref.label, 'dot-ref-label', xr > m.l + pw * 0.75 ? 'end' : xr < m.l + pw * 0.25 ? 'start' : 'middle');
+      var rl = text(svg, xr, m.t - 14, opts.ref.label, 'dot-ref-label', 'start');
+      var w = widthOf(rl);
+      rl.setAttribute('x', Math.max(x0, Math.min(W - m.r - w, xr - w / 2)));
     }
     opts.rows.forEach(function (r, i) {
-      var y = m.t + i * ROW + 26, x = X(r.value), s = 5.5;
-      el('line', { x1: m.l, x2: W - m.r, y1: y, y2: y, 'class': 'dot-track' }, svg);
-      text(svg, m.l, y - 12, r.label + ': ' + r.value.toFixed(2), 'ax-label dot-label', 'start');
+      var y = rowY[i], x = X(r.value), s = 5.5;
       if (r.shape === 'square') el('rect', { x: x - s, y: y - s, width: 2 * s, height: 2 * s, 'class': 'dot dot-square' }, svg);
-      else if (r.shape === 'triangle') el('path', { d: 'M' + x + ',' + (y - s * 1.3) + 'L' + (x + s * 1.2) + ',' + (y + s) + 'L' + (x - s * 1.2) + ',' + (y + s) + 'Z', 'class': 'dot dot-triangle' }, svg);
+      else if (r.shape === 'triangle') el('path', { d: 'M' + x + ',' + (y - s * 1.15) + 'L' + (x + s * 1.2) + ',' + (y + s * 0.95) + 'L' + (x - s * 1.2) + ',' + (y + s * 0.95) + 'Z', 'class': 'dot dot-triangle' }, svg);
       else el('circle', { cx: x, cy: y, r: s, 'class': 'dot dot-circle' }, svg);
     });
-    return { x: X };
+    return { x: X, rowY: rowY, gutter: x0 };
   }
 
   var api = {
@@ -606,6 +639,7 @@
     doseParts: doseParts,
     doseTick: doseTick,
     useLogScale: useLogScale,
+    upToDay: upToDay,
     colormap: colormap,
     parseStops: parseStops,
     normalise: normalise,

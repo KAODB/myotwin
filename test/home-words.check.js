@@ -11,7 +11,7 @@
 const { chromium } = require(process.env.PLAYWRIGHT || 'playwright');
 
 const BASE = process.argv[2];
-const BANNED = /sleep station|bunk|mission|habitat|countermeasure|flight surgeon|crew|\bmoon\b|\bmars\b|transit/gi;
+const BANNED = /sleep station|bunk|mission|habitat|countermeasure|flight surgeon|crew|\bmoon\b|\bmars\b|transit|astronaut|in space/gi;
 const EXEMPT = ['#g-context-title', '#g-context', '#evidence', '#scenario'];
 const VIEWS = [];
 for (const card of ['muscle', 'sleep', 'cardio']) {

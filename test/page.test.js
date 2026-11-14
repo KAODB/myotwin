@@ -59,3 +59,19 @@ test('shielding slider runs 0.6 to 1 in steps of 0.1 and matches WHATIF.sh; the 
   assert.equal(snap('0.3', sh), 1);      // an old link below 0.6: the default and the notice
   assert.doesNotMatch(app, /shieldNote|CRATER_SHIELD|behind about 8 cm/);
 });
+
+// The limits list on the page carries as many items as that section of docs/SUBMISSION.md, in the
+// page's "Not accounted for / Next step" format; at home only items without the space-only mark show.
+test('the page limits list has the same number of items as the SUBMISSION limits section', () => {
+  const sub = fs.readFileSync(path.join(root, 'docs/SUBMISSION.md'), 'utf8');
+  const sec = sub.split('### What this version does not account for, and the next step')[1].split('\n### ')[0];
+  const n = (sec.match(/^\d+\. /gm) || []).length;
+  const ol = html.match(/<ol class="limits-list">([\s\S]*?)<\/ol>/)[1];
+  const items = ol.match(/<li[^>]*>[\s\S]*?<\/li>/g);
+  assert.strictEqual(n, 12);
+  assert.strictEqual(items.length, n);
+  for (const li of items) assert.match(li, /<strong>Not accounted for:<\/strong>[\s\S]*<strong>Next step:<\/strong>/);
+  const home = items.filter((li) => !/^<li class="space-only"/.test(li)).map((li) => li.replace(/<span class="space-only">[\s\S]*?<\/span>/g, ''));
+  assert.ok(home.length >= 1);
+  for (const li of home) assert.doesNotMatch(li, /space|mission|habitat|crew|astronaut|moon|mars|transit/i);
+});

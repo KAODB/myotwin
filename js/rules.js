@@ -158,7 +158,8 @@
   };
 
   // Where MyoTwin sits in NASA's five hazards of human spaceflight (V43), in NASA's order.
-  // `fact` is one NASA statement from the hazard page; `worldFact` depends on the mission type.
+  // `fact` is one NASA statement from the hazard page; `worldFact` depends on the mission type;
+  // `quote` is a verbatim NASA sentence shown as a quotation.
   var HAZARD_NAMES = evidence.value('V43', 'hazards');
   function worldRatings() {
     var out = {};
@@ -173,7 +174,9 @@
     { name: HAZARD_NAMES[0], coverage: 'partly', text: 'Nightly dose and arrival direction at the bunk, from charged particles. Neutrons are not measured in this version.',
       fact: { text: "NASA: astronauts cannot see or feel space radiation, and NASA continuously monitors space radiation and astronauts' exposure.", sourceIds: ['V56'] } },
     { name: HAZARD_NAMES[1], coverage: 'partly', text: 'Sleep is tracked every night. Mood and team factors are not.',
-      fact: { text: 'NASA is developing ways to monitor behavioural health; its scientists use journaling as one tool to assess mental and emotional states.', sourceIds: ['V55'] } },
+      fact: { text: 'NASA is developing ways to monitor behavioural health; its scientists use journaling as one tool to assess mental and emotional states.', sourceIds: ['V55'] },
+      // Verbatim from NASA's page on behavioural conditions (V52).
+      quote: { text: evidence.value('V52', 'says'), sourceIds: ['V52'] } },
     { name: HAZARD_NAMES[2], coverage: 'partly', text: 'The brief is made for a crew that cannot wait for a ground team: it says what the reading means, what to do today and who decides. It does not diagnose or treat.',
       fact: { text: 'NASA: on a Mars mission the communication delay is up to ' + evidence.value('V54', 'commDelayMinutesOneWay') + ' minutes one way.', sourceIds: ['V54'] },
       worldFact: worldRatings() },

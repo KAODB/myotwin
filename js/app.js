@@ -23,39 +23,27 @@
   var T = rules.THRESHOLDS;
   var has = function (o, k) { return Object.prototype.hasOwnProperty.call(o, k); };
 
-  // ---- constants -----------------------------------------------------------------
+  // ---- view state: address and per-scenario memory -------------------------------
+  // Pure helpers; they read only `sim` and `has`. test/address.test.js runs this block in Node
+  // (from this marker to the matching "end" marker below), so keep it free of the DOM.
+  // BEGIN view-state helpers
   var CARD_IDS = ['muscle', 'sleep', 'cardio', 'radiation'];
-  var CARD_NAMES = { muscle: 'Muscle', sleep: 'Sleep', cardio: 'Heart and breathing', radiation: 'Radiation' };
   var LAYERS = ['density', 'pressure', 'impedance'];
   var VIEWS = ['raw', 'diff'];
   var MODES = ['astronaut', 'eldercare'];
-  var ENV_NAMES = { moon: 'Moon', mars: 'Mars', earth: 'Earth' };
   var WHATIF = {
     ex: { min: 0, max: 1, step: 0.05, def: null },   // null = the scenario's own plan
     gs: { min: 0.25, max: 4, step: 0.25, def: 1 },
     sh: { min: 0.6, max: 1, step: 0.1, def: 1 },
     nz: { min: 0.01, max: 0.08, step: 0.01, def: sim.NOISE.eimPhaseSdFraction.value }
   };
-  var WINDOW = T.windowNights.value;               // arrival week and accumulation window
-  var REF_SEED = 7;                                // fixed seed for the arrival-week density image
-  var DIFF_MIN_RANGE = 10;                         // change view: colour scale at least +/-10 %
-  var NOISE_MULTIPLE = 2;                          // change view: grey out regions below 2 x expected noise
-  var MASK_RGBA = [96, 104, 118, 255];             // "below noise"
-  var OUTLINE_RGBA = [150, 160, 175, 255];         // "not measured"
-  var THIGH_RATIO = evidence.value('V4', 'thighControlPct') / evidence.value('V4', 'calfControlPct');
-  var MOMENTUM_SPREAD = imaging.ASSUMPTIONS.filter(function (a) { return a.name === 'momentumSpreadFactor'; })[0].value;
-  var HOME_BANNED = /mission|arrival|habitat|flight surgeon|spaceflight/i;
-  var reducedMotion = root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  // ---- state -----------------------------------------------------------------------
-  var state = {};
-  var data = { key: null, gen: null, dayIndex: {}, base: null, ref: {}, assessKey: null, assessments: [] };
-  var playTimer = null;
-  var lastSpace = 'S2';                            // the Astronaut button returns to this scenario
+  // The home scenario has no exercise plan, no partial gravity and no habitat: these what-ifs do not apply there.
+  var HOME_IGNORED = ['ex', 'gs', 'sh'];
 
   function defaultDay(s) { return s === 'S2' ? 42 : null; }          // null = last night
   // The Eldercare presentation is shown exactly when the Earth scenario is selected.
   function defaultMode(s) { return s === 'S4' ? 'eldercare' : 'astronaut'; }
+  function defaultLayer(s) { return s === 'S4' ? 'pressure' : 'density'; }
 
   function snap(v, o) {
     var n = parseFloat(v);
@@ -64,15 +52,17 @@
   }
   function pick(v, list, def) { return list.indexOf(v) >= 0 ? v : def; }
 
-  // Parse a view from the address. Any value that is rejected or changed sets `rejected`,
-  // so the page can say that the link could not be opened as written.
+  // Parse a view from the address. Any value that is unknown, repeated, rejected or changed sets
+  // `rejected`, so the page can say that the link could not be opened as written. A valid `mode`
+  // from an older link is accepted and ignored (the presentation follows the scenario); in the home
+  // scenario the what-ifs `ex`, `gs` and `sh` are ignored and left out of the address.
   var HASH_KEYS = ['s', 'd', 'layer', 'view', 'mode', 'card', 'ex', 'gs', 'sh', 'nz', 'ev'];
   function parseHash(hash) {
     var q = Object.create(null), bad = false;
     hash.replace(/^#/, '').split('&').forEach(function (kv) {
       if (!kv) return;
       var i = kv.indexOf('='), k = kv.slice(0, i);
-      if (i <= 0 || HASH_KEYS.indexOf(k) < 0) { bad = true; return; }
+      if (i <= 0 || HASH_KEYS.indexOf(k) < 0 || k in q) { bad = true; return; }
       try { q[k] = decodeURIComponent(kv.slice(i + 1)); } catch (e) { bad = true; }
     });
     function check(k, v) { if (k in q && v !== q[k]) bad = true; return v; }
@@ -80,11 +70,11 @@
     var s = check('s', has(sim.SCENARIOS, q.s) ? q.s : 'S2');
     var d = /^-?\d+$/.test(q.d || '') ? parseInt(q.d, 10) : defaultDay(s);
     if ('d' in q && String(d) !== q.d) bad = true;
-    // The presentation follows the scenario; a valid mode from an older link is accepted and ignored.
     if ('mode' in q && MODES.indexOf(q.mode) < 0) bad = true;
+    if (s === 'S4') HOME_IGNORED.forEach(function (k) { delete q[k]; });
     var st = {
       s: s, d: d,
-      layer: check('layer', pick(q.layer, LAYERS, s === 'S4' ? 'pressure' : 'density')),
+      layer: check('layer', pick(q.layer, LAYERS, defaultLayer(s))),
       view: check('view', pick(q.view, VIEWS, 'raw')),
       mode: defaultMode(s),
       card: check('card', pick(q.card, CARD_IDS, 'muscle')),
@@ -98,10 +88,44 @@
 
   function hashFor(st) {
     var parts = ['s=' + st.s, 'd=' + st.d, 'layer=' + st.layer, 'view=' + st.view, 'mode=' + st.mode, 'card=' + st.card];
-    Object.keys(WHATIF).forEach(function (k) { if (st[k] !== WHATIF[k].def && st[k] != null) parts.push(k + '=' + st[k]); });
+    Object.keys(WHATIF).forEach(function (k) {
+      if (st.s === 'S4' && HOME_IGNORED.indexOf(k) >= 0) return;
+      if (st[k] !== WHATIF[k].def && st[k] != null) parts.push(k + '=' + st[k]);
+    });
     if (st.ev) parts.push('ev=' + st.ev);
     return '#' + parts.join('&');
   }
+
+  // Each scenario keeps its own night, layer and view for the page session (memory only; the
+  // address stays the source of truth on load and for sharing). Records the current scenario's
+  // values in `memory` and returns the changes that open scenario `s`.
+  function scenarioChanges(memory, st, s) {
+    memory[st.s] = { d: st.d, layer: st.layer, view: st.view };
+    var m = has(memory, s) ? memory[s] : { d: defaultDay(s), layer: defaultLayer(s), view: 'raw' };
+    return { s: s, d: m.d, layer: m.layer, view: m.view };
+  }
+  // END view-state helpers
+
+  // ---- constants -----------------------------------------------------------------
+  var CARD_NAMES = { muscle: 'Muscle', sleep: 'Sleep', cardio: 'Heart and breathing', radiation: 'Radiation' };
+  var ENV_NAMES = { moon: 'Moon', mars: 'Mars', earth: 'Earth' };
+  var WINDOW = T.windowNights.value;               // arrival week and accumulation window
+  var REF_SEED = 7;                                // fixed seed for the arrival-week density image
+  var DIFF_MIN_RANGE = 10;                         // change view: colour scale at least +/-10 %
+  var NOISE_MULTIPLE = 2;                          // change view: grey out regions below 2 x expected noise
+  var MASK_RGBA = [96, 104, 118, 255];             // "below noise"
+  var OUTLINE_RGBA = [150, 160, 175, 255];         // "not measured"
+  var THIGH_RATIO = evidence.value('V4', 'thighControlPct') / evidence.value('V4', 'calfControlPct');
+  var MOMENTUM_SPREAD = imaging.ASSUMPTIONS.filter(function (a) { return a.name === 'momentumSpreadFactor'; })[0].value;
+  var HOME_BANNED = /mission|arrival|habitat|flight surgeon|spaceflight|astronaut|in space/i;
+  var reducedMotion = root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---- state -----------------------------------------------------------------------
+  var state = {};
+  var data = { key: null, gen: null, dayIndex: {}, base: null, ref: {}, assessKey: null, assessments: [] };
+  var playTimer = null;
+  var lastSpace = 'S2';                            // the Astronaut button returns to this scenario
+  var scenarioMemory = {};                         // per-scenario night, layer and view (scenarioChanges)
 
   function writeHash() {
     var h = hashFor(state);
@@ -115,6 +139,7 @@
     var changed = false;
     state.mode = defaultMode(state.s);           // the presentation follows the scenario
     if (state.s !== 'S4') lastSpace = state.s;
+    else HOME_IGNORED.forEach(function (k) { state[k] = WHATIF[k].def; });   // no what-if of these at home
     var key = [state.s, state.ex, state.gs, state.sh, state.nz].join('|');
     if (data.key !== key) {
       // Each scenario has its own default seed (sim.SCENARIOS[s].seed), so no seed is passed.
@@ -627,22 +652,35 @@
   }
   function band(b) { return b && b.median != null ? { median: b.median, low: b.median - 2 * b.sd, high: b.median + 2 * b.sd } : null; }
 
+  // Shorter wordings of a measured solar-event label, for narrow charts (charts.line picks the longest that fits).
+  function eventMarker(e) {
+    var mk = { missionDay: e.from, label: e.label };
+    var m = e.label.match(/^Measured: solar particle (events?) of (\S+ \w+) (\d{4})/);
+    if (m) {
+      mk.shortLabel = 'Solar particle ' + m[1] + ', ' + m[2] + ' ' + m[3];
+      mk.tinyLabel = (m[1] === 'events' ? 'Solar events, ' : 'Solar event, ') + m[2];
+    }
+    return mk;
+  }
+  // The arrival line and the scenario's events up to the selected night: a later event is not shown before it happens.
   function startMarkers() {
     var sc = data.gen.scenario, w = words();
     var label = sc.transitDays > 0 ? 'Arrival after a ' + sc.transitDays + '-day transit (not monitored)' : w.start;
     var shortLabel = sc.transitDays > 0 ? 'Arrival (transit not monitored)' : null;
-    return [{ missionDay: 0, label: label, shortLabel: shortLabel }].concat(sc.events.map(function (e) { return { missionDay: e.from, label: e.label }; }));
+    return [{ missionDay: 0, label: label, shortLabel: shortLabel }].concat(sc.events.filter(function (e) {
+      return e.from <= state.d;
+    }).map(eventMarker));
   }
 
   function trendSpec(cardId) {
     var recs = data.gen.records, b = chartBaseline(), w = words(), c = card(cardId), x = c.extra || {};
     var o = {
-      statusAt: statusAtFor(cardId), selectedDay: state.d, thresholds: [], markers: startMarkers(),
+      statusAt: statusAtFor(cardId), selectedDay: state.d, upTo: state.d, thresholds: [], markers: startMarkers(),
       series: judgedSeries(cardId), xTitle: w.day,
       axisBreak: data.gen.scenario.transitDays > 0 ? 0 : null
     };
     var legend = [['dot', 'Nightly reading']];
-    var note = '';
+    var note = '', noteMore = null;
     if (cardId === 'muscle') {
       var me = muscleExtra(), med = b.eim.median, plan = data.gen.plan.expectedChangePct;
       var ok = med != null && me && me.amberLimitPct != null;
@@ -702,9 +740,14 @@
         (x.usualUGy != null ? 'Measured dose over each sleep period (' + doseMedium() + '), replayed night by night. Usual level before tonight: ' + fmtDose(x.usualUGy) +
         ' (median of up to ' + T.radiationHistoryNights.value + ' earlier nights). The brief is read the morning after: real-time warnings come from space-weather alerts and the flight rules.' :
         'Not enough earlier nights to set a usual level, so no lines are drawn.');
+      // Solar-event scenario: why a night can be on Report below the line, and what Curiosity saw under Martian air (V92).
+      if (data.gen.scenario.rad && data.gen.scenario.rad.checkSpe) {
+        note += ' A night with a solar particle event on record is on Report even when its dose is below the line.';
+        noteMore = { text: 'Under 23 g/cm2 of Martian air, Curiosity\'s RAD saw the dose rate rise only two- to threefold in the same event.', ids: ['V92'] };
+      }
     }
     if (o.axisBreak != null) legend.push(['break', 'Break: the transit is not monitored']);
-    return { opts: o, legend: legend, note: note };
+    return { opts: o, legend: legend, note: note, noteMore: noteMore };
   }
 
   function renderLegend(items) {
@@ -725,7 +768,9 @@
     $('trend-card').textContent = CARD_NAMES[cardId];
     charts.line($('trend-chart'), t.opts);
     renderLegend(t.legend);
-    $('trend-note').textContent = scrub(t.note);
+    var tn = $('trend-note');
+    tn.textContent = scrub(t.note);
+    if (t.noteMore) withLinks(tn, ' ' + t.noteMore.text, t.noteMore.ids);
 
     var p = cardId === 'muscle' ? engine.project(data.gen.records, idx()) : null;
     var proj = $('projection');
@@ -799,7 +844,8 @@
   // NASA's material for one check (js/rules.js NASA), for the mission type of this world.
   // The standard and the research gap fold into a <details>, open on wide screens.
   var nasaMoreOpen = !root.matchMedia || root.matchMedia('(min-width: 761px)').matches;
-  function nasaBlock(nx, world) {
+  // `ctx` is the check's line from rules.CONTEXT (V43, V45, V46), drawn as the last row.
+  function nasaBlock(nx, world, ctx) {
     var box = el('div', 'nasa');
     var dl = el('dl', 'nasa-rows');
     var risk = el('dd');
@@ -811,6 +857,7 @@
     says.appendChild(el('q', 'nasa-quote', nx.says));
     says.appendChild(el('q', 'nasa-quote', nx.canBeDone));
     nasaRow(dl, 'What NASA says', withLinks(says, '', [nx.riskPageId]));
+    if (ctx) nasaRow(dl, 'More context', withLinks(el('dd'), ctx.note, ctx.sourceIds));
     box.appendChild(dl);
 
     var more = el('details', 'nasa-more');
@@ -855,16 +902,20 @@
       ctx.appendChild(sourceLink('V47'));
     } else {
       $('g-context-title').textContent = 'NASA context for this check';
-      ctx.appendChild(nasaBlock(rules.NASA[state.card], data.gen.scenario.env));
+      ctx.appendChild(nasaBlock(rules.NASA[state.card], data.gen.scenario.env, rules.CONTEXT[state.card]));
     }
 
     var src = $('g-sources');
     clear(src);
-    if (!c.sourceIds.length) src.appendChild(el('li', 'muted', 'Interim assumption; see the assumptions list in the evidence drawer.'));
-    c.sourceIds.forEach(function (id) {
+    // At home the sleep sources lead with what applies there: the adult recommendation (V25) and the first half of V79.
+    var ids = c.sourceIds.slice();
+    if (isHome() && state.card === 'sleep') ids = ['V25', 'V79'].concat(ids.filter(function (id) { return id !== 'V25' && id !== 'V79'; }));
+    if (!ids.length) src.appendChild(el('li', 'muted', 'Interim assumption; see the assumptions list in the evidence drawer.'));
+    ids.forEach(function (id) {
       var li = el('li');
       li.appendChild(sourceLink(id));
-      var claim = claimOf(id);
+      var claim = isHome() && id === 'V79' ? 'A NASA technical brief states that an average adult needs ' +
+        evidence.value('V79', 'adultSleepHoursLow') + ' to ' + evidence.value('V79', 'adultSleepHoursHigh') + ' hours of sleep.' : claimOf(id);
       // At home a claim about spaceflight would read out of place; the link still opens it.
       if (claim && !(isHome() && HOME_BANNED.test(claim))) li.appendChild(document.createTextNode(' ' + claim));
       src.appendChild(li);
@@ -913,6 +964,11 @@
         var wf = h.worldFact && h.worldFact[data.gen.scenario.env];
         if (wf) withLinks(f, ' ' + wf.text, wf.sourceIds);
         li.appendChild(f);
+      }
+      if (h.quote) {
+        var qt = el('span', 'cm-note hz-fact');
+        qt.appendChild(el('q', 'nasa-quote', h.quote.text));
+        li.appendChild(withLinks(qt, '', h.quote.sourceIds));
       }
       ul.appendChild(li);
     });
@@ -975,6 +1031,9 @@
     return String(v);
   }
 
+  // Topic heading in the drawer: sentence case with the acronyms in capitals ("NASA ratings and requirements").
+  function topicTitle(topic) { return capital(topic).replace(/\b(nasa|eim)\b/gi, function (w) { return w.toUpperCase(); }); }
+
   function buildEvidence() {
     var box = $('evidence-list');
     clear(box);
@@ -984,7 +1043,7 @@
       groups[it.topic].push(it);
     });
     order.forEach(function (topic) {
-      box.appendChild(el('h3', 'ev-group', capital(topic)));
+      box.appendChild(el('h3', 'ev-group', topicTitle(topic)));
       var ol = el('ol', 'evidence-list');
       groups[topic].forEach(function (it) {
         var li = el('li');
@@ -1128,7 +1187,7 @@
   function wire() {
     $('scenario').addEventListener('change', function (e) {
       setPlaying(false);
-      update({ s: e.target.value, d: defaultDay(e.target.value) });
+      update(scenarioChanges(scenarioMemory, state, e.target.value));
     });
     document.addEventListener('click', function (e) {
       var b = e.target.closest('button');
@@ -1136,7 +1195,7 @@
       if (b.dataset.mode) {
         // Eldercare is the home scenario (S4); Astronaut returns to the last space scenario.
         var s = b.dataset.mode === 'eldercare' ? 'S4' : lastSpace;
-        if (s !== state.s) { setPlaying(false); update({ s: s, d: defaultDay(s) }); }
+        if (s !== state.s) { setPlaying(false); update(scenarioChanges(scenarioMemory, state, s)); }
       }
       else if (b.dataset.layer) update({ layer: b.dataset.layer });
       else if (b.dataset.view) update({ view: b.dataset.view });
@@ -1194,7 +1253,9 @@
     });
   }
 
-  // Measured data used on this page, from the metadata each data module exports.
+  // Measured data used on this page, from the metadata each data module exports. The DONKI API
+  // address (data/README.md) needs a key, so the page links NASA CCMC's DONKI page a person can read.
+  var READABLE_SOURCE = { donkiSep2017: 'https://ccmc.gsfc.nasa.gov/tools/DONKI/' };
   function buildMeasured() {
     var ul = $('measured-list'), D = M.data || {};
     clear(ul);
@@ -1207,8 +1268,9 @@
       li.appendChild(el('strong', null, d.name));
       li.appendChild(document.createTextNode(': ' + x[1] + '. '));
       li.appendChild(el('span', null, d.source + ' '));
-      var a = el('a', null, 'Source: ' + new URL(d.url).hostname);
-      a.href = d.url;
+      var url = has(READABLE_SOURCE, x[0]) ? READABLE_SOURCE[x[0]] : d.url;
+      var a = el('a', null, 'Source: ' + new URL(url).hostname);
+      a.href = url;
       a.target = '_blank';
       a.rel = 'noopener noreferrer';
       li.appendChild(a);
