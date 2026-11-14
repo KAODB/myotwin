@@ -4,32 +4,33 @@
 
 MyoTwin is concept software for the 2026 NASA Space Apps Challenge
 (*Create Health Monitoring Software for Astronauts on Space Missions*), team
-spacesim, Kaohsiung. NASA requires in-mission muscle strength to stay at or
-above 80% of baseline (V1). In 2019 a NASA presentation stated that the ability
-to assess muscle strength in flight did not exist (V2). Whatever has changed
-since, a strength test costs crew time. MyoTwin's point is measurement that
-takes no crew time, every night: an assumed sensor panel in the sleep station
-of a lunar or Mars surface habitat measures the crew while they sleep, and each
-morning MyoTwin shows one whole-body image, four status cards (muscle, sleep,
-heart and breathing, radiation), the trend against the person's own baseline
-and the mission plan, and what to do next. Each check names the NASA Human
-Research Program risk it relates to (V44), and the page shows where MyoTwin
-sits in NASA's five hazards of human spaceflight (V43). The status colours are interim
-screening flags; a flight surgeon decides. An eldercare wording of the same
-engine follows an older adult at home. Ids such as (V1) are entries in
-[docs/EVIDENCE.md](docs/EVIDENCE.md).
+spacesim, Kaohsiung.
+
+On the Moon or Mars a crew member has to notice changes in their own body: a
+message from Mars can take up to 20 minutes each way (V54). NASA requires crews
+to keep muscle strength at or above 80% of baseline (V81), and its evidence
+report says "Currently, no standard in-flight measurement of strength exists"
+(V85). MyoTwin measures during the hours a crew member already spends lying
+still. An assumed sensor panel in the bunk reads the calf muscle, sleep, heart
+and breathing rate, and radiation overnight. In the morning one screen shows a
+body figure you can click, four checks in plain words, what NASA says about
+each risk, and what to do today. A flight surgeon decides; the software only
+flags. The same engine, with home wording, follows an older adult after a
+hospital stay.
+
+Ids such as (V85) are entries in [docs/EVIDENCE.md](docs/EVIDENCE.md).
 
 Live page: https://kaodb.github.io/myotwin/
 
 Demo, seven slides: [PDF](https://kaodb.github.io/myotwin/demo/slides/MyoTwin-demo.pdf), or the editable [PowerPoint file](demo/slides/MyoTwin-demo.pptx).
 
-Screenshots (simulated data):
+Screenshots:
 
 ![Morning brief on Mars, day 45: the muscle card reports a decline beside the whole-body image and the sleep, heart and breathing, and radiation cards](demo/screenshots/brief-mars-day45.png)
 
 ![Whole-body image panel, density layer, change since arrival on Mars day 45](demo/screenshots/wholebody-density-diff.png)
 
-![Eldercare wording for an older adult at home, day 34: the muscle card is on watch](demo/screenshots/eldercare-day34.png)
+![Home wording for an older adult after a hospital stay, day 34: the muscle card is on watch](demo/screenshots/eldercare-day34.png)
 
 ## Run it
 
@@ -42,70 +43,82 @@ Run the tests with Node 22 or newer, from the repository root:
 node --test "test/*.test.js"
 ```
 
-## What is real and what is simulated
+## What is measured and what is simulated
 
-- **Simulated:** every night of data, every image and every status card. The
-  simulator (`js/sim.js`) is seeded, and each scenario has its own simulated
-  person and seed, so the same scenario always gives the same nights. No real
+- **Measured, replayed:** the radiation dose of every Moon and Mars night.
+  Mars nights replay Curiosity's RAD from NASA's Planetary Data System (V60).
+  Moon nights replay LRO's CRaTER, including the solar particle events of
+  September 2017 (V61). NASA's DONKI records mark the nights with an event
+  (V62), and a chart shows NASA's OMNI proton flux (V63). The files are in
+  `data/`, each with its source, units, processing and terms, and the scripts
+  in `tools/data/` rebuild them from the downloads. See
+  [data/README.md](data/README.md). Replaying a 2012 or 2017 night for a
+  mission night is an assumption; the Moon values were measured in orbit behind
+  a detector's plastic, not in a habitat.
+- **Simulated:** everything about the crew member: the muscle readings, sleep,
+  heart and breathing rate, the particle directions and all three image
+  layers. The simulator (`js/sim.js`) is seeded, and each scenario has its own
+  simulated person, so the same scenario always gives the same nights. No real
   person's data are in this repository.
 - **Assumed, not built:** the sensor panel (impedance strip under the calves,
   60 GHz radar above the bunk, pressure mat, particle trackers above and below
   the sleeper). See [docs/SENSOR_ASSUMPTIONS.md](docs/SENSOR_ASSUMPTIONS.md).
-- **From published sources:** the standards, the muscle-loss anchors the model
-  is fitted to, the EIM variability behind the muscle limits (V10), surface
-  gravity, surface dose rates and tissue properties. Of the sleep lines, only
-  the 7-hour line comes from a published recommendation (for adults aged 18 to
-  60, V25; used for the older adult as an assumption). The 6-hour red line is
-  an assumption, the ISS average of 6.09 h rounded down (V11), not a validated
-  cut-off.
+- **From NASA and published sources:** the risk named on each check and its
+  rating for the mission selected (NASA Human Research Roadmap, V70 to V75),
+  the sentences quoted on each check (NASA risk pages, V48 to V51), the
+  standards behind the lines (NASA-STD-3001, V76 to V84), and the published
+  results the muscle model is fitted to (V4, V5).
 - **Real code:** the assessment engine, the rules, the muscle model and the
   image layers, with automated tests.
 
 The simulated nights and the mission plan come from the same model, so the
-demonstration shows the workflow, not how well a real decline would be
-detected.
+page shows the workflow, not how well a real decline would be detected.
 
 ## Where the numbers come from
 
 Every number the code uses is either an entry in `js/evidence.js`, most with
-the sentence that carries it (two are secondary citations), or a declared
-assumption in the module that owns it. [docs/EVIDENCE.md](docs/EVIDENCE.md)
-lists both. It is generated by `node tools/evidence-md.js > docs/EVIDENCE.md`,
-and a test fails if it is out of date.
+the sentence that carries it, or a declared assumption in the module that owns
+it. [docs/EVIDENCE.md](docs/EVIDENCE.md) lists both. It is generated by
+`node tools/evidence-md.js > docs/EVIDENCE.md`, and a test fails if it is out
+of date. Numbers taken from the data files are recomputed by tests, so the
+evidence table and the data cannot drift apart.
 
 ## What this version does not account for, and the next step
 
-1. Particle momentum is unknown. Next: a reference block beside the sleeper,
-   then a momentum-measuring layer.
-2. Night-time movement and tails from nuclear interactions. Next: sort tracks
-   by posture with the pressure image, start with large regions, run a
-   particle-transport simulation.
-3. Habitat shielding changes which particles arrive (V37). Next: simulate
-   usable tracks behind different shielding.
-4. We found no published density image of a body made this way. Next: repeat
+1. The momentum of each cosmic-ray particle. Next: a reference block beside
+   the sleeper, then a layer that measures momentum.
+2. Movement during the night and tails from nuclear interactions. Next: sort
+   tracks by posture with the pressure map, and run a particle-transport
+   simulation.
+3. Habitat shielding changes which particles arrive (V37). Next: simulate the
+   tracks behind it.
+4. I found no published density image of a body made this way. Next: repeat
    the ground test with sea-level muons and a body phantom (V35).
-5. We found no published human EIM data from space, bed rest or the back of
-   the calf (V8), and no study of bed-integrated dry-electrode EIM (V30).
+5. I found no published human impedance data from space, bed rest or the back
+   of the calf (V8), and no study of bed-integrated dry electrodes (V30).
    Next: a bed-rest study beside strength tests and MRI.
 6. Fluid shifts move the impedance reading (V28). Next: measure in the last
    hour before waking.
-7. We found no published test of radar vital signs in space (V39). Next: a
-   mock sleep station and an analogue.
-8. The radiation card shows absorbed dose in silicon, not effective dose.
-   Next: a validated transport model.
+7. I found no published test of radar vital signs in space (V39). Next: a mock
+   sleep station and an analogue.
+8. The radiation card shows absorbed dose (in silicon on Mars, water-corrected
+   at the Moon), not effective dose, and neutrons are not measured (V46).
+   Next: a validated transport model and a neutron channel.
 9. Detection accuracy: the simulated nights and the plan share one model.
    Next: test the rules on recorded bed-rest data.
 10. The transit: in weightlessness the sleeper does not rest on the panel, so
-    MyoTwin starts at arrival. Next: pair it with a worn sensor for the
+    MyoTwin starts at arrival (V42). Next: pair it with a worn sensor for the
     transit.
+11. Mood, air, noise and light are not read (V43). Next: show the habitat's
+    environmental sensors beside the brief.
 
 ## Use of SI and earlier work
 
-Code, tests, simulated data and text were produced with one SI tool, Claude
-(by Anthropic) through Claude Code, and checked by the team; the concept and
-every clinical judgement are the team lead's. The form of the muscle model
-comes from a private simulator the team wrote on 11-13 November 2026, before
-the hackathon; everything else was written during it. Details:
+Code, tests, data files and text were produced with one SI tool, Claude (by
+Anthropic) through Claude Code. The idea, the choice of what to measure and
+every clinical judgement are the team member's. The form of the muscle model
+comes from a private simulator written on 11-13 November 2026, before the
+hackathon; everything else was written during it. Details:
 [docs/SI_USE.md](docs/SI_USE.md).
 
 ## Licence
