@@ -65,8 +65,6 @@
     <div class="brief-head">
       <h1 id="brief-title" class="eyebrow" tabindex="-1">Morning brief <span id="brief-date" class="muted">no night selected</span></h1>
       <p id="headline" class="headline" aria-live="polite">The brief appears here once the simulated mission loads.</p>
-      <p id="data-source" class="data-source">Measured by a sensor panel in the sleep station while the crew sleep. Nothing is worn and it takes no crew time.</p>
-      <p id="hrp-line" class="hrp-line muted">Each check is tied to a NASA Human Research Program risk: musculoskeletal fitness, sleep, cardiovascular adaptations and radiation. <a id="hrp-link" class="ev-link" href="#evidence">V44</a></p>
       <p id="notice" class="notice" role="status" hidden>This link could not be opened; showing the default view.</p>
       <p id="scenario-summary" class="scenario-summary muted"></p>
       <noscript><p class="notice">MyoTwin needs JavaScript to build the brief. Nothing is sent anywhere; it runs entirely in this page.</p></noscript>
@@ -90,7 +88,7 @@
           <canvas id="body-canvas" width="120" height="360" role="img" aria-label="Whole-body image, not yet drawn"></canvas>
           <button type="button" class="hs hs-sleep st-grey" data-card="sleep" aria-pressed="false" aria-label="Head: sleep check, No data"><span class="hs-dot" aria-hidden="true"></span><span class="hs-lead" aria-hidden="true"></span><span class="hs-label" aria-hidden="true"><span class="hs-name">Sleep</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span></button>
           <button type="button" class="hs hs-cardio st-grey" data-card="cardio" aria-pressed="false" aria-label="Chest: heart and breathing check, No data"><span class="hs-dot" aria-hidden="true"></span><span class="hs-lead" aria-hidden="true"></span><span class="hs-label" aria-hidden="true"><span class="hs-name">Heart</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span></button>
-          <button type="button" class="hs hs-radiation st-grey" data-card="radiation" aria-pressed="false" aria-label="Whole body: radiation check, No data"><span class="hs-label" aria-hidden="true"><span class="hs-name">Radiation</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span></button>
+          <button type="button" class="hs hs-radiation st-grey" data-card="radiation" aria-pressed="false" aria-label="Whole body: radiation check, No data"><span class="hs-dot" aria-hidden="true"></span><span class="hs-lead" aria-hidden="true"></span><span class="hs-label" aria-hidden="true"><span class="hs-name">Radiation</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span></button>
           <button type="button" class="hs hs-muscle st-grey" data-card="muscle" aria-pressed="false" aria-label="Calves: muscle check, No data"><span class="hs-dot" aria-hidden="true"></span><span class="hs-lead" aria-hidden="true"></span><span class="hs-label" aria-hidden="true"><span class="hs-name">Muscle</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span></button>
         </div>
         <p class="canvas-empty" id="canvas-empty">Image not drawn yet</p>
@@ -147,6 +145,11 @@
       <p id="rad-measured"></p>
       <p id="rad-donki" hidden></p>
     </div>
+    <!-- Below the figure and the cards, so the first screen keeps the figure and the four checks above the time bar. -->
+    <div class="brief-note" id="brief-note">
+      <p id="data-source" class="data-source">An assumed sensor panel in the sleep station measures while the crew sleep. Nothing is worn and it takes no crew time.</p>
+      <p id="hrp-line" class="hrp-line muted">Each check is tied to a NASA Human Research Program risk: musculoskeletal fitness, sleep, cardiovascular adaptations and radiation. <a id="hrp-link" class="ev-link" href="#evidence">V44</a></p>
+    </div>
   </section>
 
   <!-- 3. Timeline -->
@@ -182,7 +185,7 @@
         <p id="projection" class="projection" hidden></p>
         <figure id="rose-fig" class="rose-fig" hidden>
           <svg id="rose" class="rose" role="img" aria-label="Direction rose, not yet drawn"></svg>
-          <figcaption class="caption"><span id="rose-reading"></span> The rose shows the share of tracks by arrival direction, not the amount of radiation: a night with a much higher dose can look the same here. Seen from above, as in the body image. In this simulated scenario one side of the sleep station is less shielded. Tracks summed over the mission so far <span id="rose-span"></span></figcaption>
+          <figcaption class="caption"><span id="rose-reading"></span> The rose shows the share of tracks by arrival direction, not the amount of radiation: a night with a much higher dose can look the same here. Seen from above, as in the body image. In this simulated scenario one side of the sleep station is less shielded. Tracks summed over the mission so far <span id="rose-span"></span> The assumed trackers accept particles within 20 degrees of vertical, so the rose mostly describes the roof; side walls would need wider acceptance.</figcaption>
         </figure>
       </section>
 
@@ -279,23 +282,26 @@
     </article>
     <article class="panel limits" id="limits" tabindex="-1">
       <h3>What this version does not account for, and the next step</h3>
+      <!-- The same twelve items, in the same order, as "What this version does not account for" in docs/SUBMISSION.md. -->
       <ol class="limits-list">
-        <li class="space-only"><p><strong>Not accounted for:</strong> The momentum of each particle. Deflection depends on momentum as much as on thickness, and momenta span orders of magnitude.</p><p><strong>Next step:</strong> Measure a block of known thickness beside the sleeper every night and use the ratio; then assess a momentum-measuring layer.</p></li>
-        <li class="space-only"><p><strong>Not accounted for:</strong> Movement during the night and the long tails from nuclear interactions. We expect that the statistics support trends over large regions and several weeks, not small features (expected, not computed).</p><p><strong>Next step:</strong> Sort tracks by posture using the pressure image, start with calf, thigh and trunk, and run a particle-transport simulation.</p></li>
-        <li class="space-only"><p><strong>Not accounted for:</strong> Habitat shielding. Shielding removes low-energy particles and adds secondaries. We expect that the best-protected sleep stations give the weakest image (expected, not computed).</p><p><strong>Next step:</strong> Simulate the usable tracks behind different shielding and find the habitats where the method works.</p></li>
-        <li class="space-only"><p><strong>Not accounted for:</strong> Any real measurement of the density image.</p><p><strong>Next step:</strong> Repeat the published ground test with sea-level muons and a body phantom before proposing a flight experiment.</p></li>
-        <li><p><strong>Not accounted for:</strong> Human impedance data <span class="space-only">in space, in bed rest, or </span>at the back of the calf, and any test of bed-integrated dry electrodes.</p><p><strong>Next step:</strong> Run the panel beside standard strength tests and MRI in a bed-rest study and set the thresholds from the measured night-to-night noise.</p></li>
-        <li class="space-only"><p><strong>Not accounted for:</strong> Fluid shifts in partial gravity, which move the impedance reading.</p><p><strong>Next step:</strong> Fix the measurement to the last hour before waking and characterise the arrival step.</p></li>
-        <li class="space-only"><p><strong>Not accounted for:</strong> Radar vital signs in space.</p><p><strong>Next step:</strong> Test in a mock sleep station and in an analogue.</p></li>
+        <li class="space-only"><p><strong>Not accounted for:</strong> The momentum of each cosmic-ray particle. Deflection depends on momentum as much as on thickness, and momenta span orders of magnitude.</p><p><strong>Next step:</strong> Measure a reference block beside the sleeper every night, then add a layer that measures momentum.</p></li>
+        <li class="space-only"><p><strong>Not accounted for:</strong> Movement during the night and the tails from nuclear interactions. We expect that the statistics support trends over large regions and several weeks, not small features (expected, not computed).</p><p><strong>Next step:</strong> Sort tracks by posture using the pressure map, and run a particle-transport simulation.</p></li>
+        <li class="space-only"><p><strong>Not accounted for:</strong> Habitat shielding changes which particles arrive, and thick body regions filter out low-momentum particles, so scattering does not scale linearly with thickness. One reference block calibrates one thickness only.</p><p><strong>Next step:</strong> Simulate the tracks behind the habitat and through the body.</p></li>
+        <li class="space-only"><p><strong>Not accounted for:</strong> Scattering measures all the material along each path. Bedding, body fluid, fat and muscle all add to it, and water and muscle differ by under 3% in radiation length, so fluid loss and muscle loss look alike.</p><p><strong>Next step:</strong> Compare the signal summed over the whole limb, with the bedding fixed or measured, and read it beside the impedance.</p></li>
+        <li class="space-only"><p><strong>Not accounted for:</strong> Any real density image of a body made this way: we found none published.</p><p><strong>Next step:</strong> Repeat the published ground test with sea-level muons and a body phantom.</p></li>
+        <li><p><strong>Not accounted for:</strong> Human impedance data <span class="space-only">from space, </span>from bed rest or from the back of the calf, and any study of bed-integrated dry electrodes: we found none published.</p><p><strong>Next step:</strong> Run the panel beside standard strength tests and MRI in a bed-rest study.</p></li>
+        <li class="space-only"><p><strong>Not accounted for:</strong> The impedance baseline is taken on Earth, where the calf presses on the strip about six times harder than on the Moon (2.6 times harder than on Mars), and fluid shifts move the reading. The size of the step on arrival is our assumption.</p><p><strong>Next step:</strong> Measure in the last hour before waking, re-baseline in the first surface week, and measure the arrival step in a partial-gravity analogue.</p></li>
+        <li class="space-only"><p><strong>Not accounted for:</strong> Radar vital signs in space: we found no published test.</p><p><strong>Next step:</strong> Test in a mock sleep station and in an analogue.</p></li>
+        <li class="space-only"><p><strong>Not accounted for:</strong> Radiation. The card shows absorbed dose (in silicon on Mars, water-corrected at the Moon), not effective dose, and neutrons are not measured. The Moon nights replay a lightly shielded detector on an orbiter; behind thick habitat shielding a crew would receive much less from a solar particle event.</p><p><strong>Next step:</strong> Run the measured proton spectrum through a validated transport model of the habitat, and add a neutron channel.</p></li>
         <li><p><strong>Not accounted for:</strong> Detection accuracy. The simulated nights and the plan come from the same model, so this page shows the workflow, not how well a real decline would be caught.</p><p><strong>Next step:</strong> Test the rules on recorded bed-rest data.</p></li>
         <li class="space-only"><p><strong>Not accounted for:</strong> The transit. In weightlessness the sleeper does not rest on the panel, so MyoTwin starts at arrival.</p><p><strong>Next step:</strong> Pair it with a worn sensor for the transit.</p></li>
-        <li class="space-only"><p><strong>Not accounted for:</strong> Effective dose. The radiation card shows absorbed dose: in silicon on Mars, water-corrected by the instrument team on the Moon.</p><p><strong>Next step:</strong> Add the conversion with a validated transport model.</p></li>
+        <li class="space-only"><p><strong>Not accounted for:</strong> Mood, air, noise and light are not read.</p><p><strong>Next step:</strong> Show the habitat's environmental sensors beside the brief.</p></li>
       </ol>
       <p class="limits-close">All data here are simulated<span class="space-only"> except the replayed radiation measurements and the rat data in the gravity check below</span>, the sensor panel has not been built, and the status rules are interim and unvalidated.</p>
     </article>
     <article class="panel gcheck space-only" id="gcheck" aria-labelledby="gcheck-title">
       <h3 id="gcheck-title">Does partial gravity protect muscle? The model against NASA open data</h3>
-      <p class="muted">The muscle model assumes how much of the weightlessness loss remains at partial gravity. NASA's Open Science Data Repository holds a test of exactly that in rats.</p>
+      <p class="muted">The muscle model assumes how much of the weightlessness loss remains at partial gravity. NASA's Open Science Data Repository holds a related test in rats: 40% weight bearing in a harness, an analog of partial gravity.</p>
       <figure class="gcheck-fig">
         <svg id="gcheck-chart" class="dot-chart" role="img" aria-label="Share of the fully unloaded loss that remained at 40% weight bearing"></svg>
         <ul class="legend gcheck-legend">

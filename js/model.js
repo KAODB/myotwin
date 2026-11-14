@@ -131,7 +131,7 @@
       below < n / 2 ? 'sits in the lower part of a wide spread, below its median: it assumes more protection than most measures showed' :
       'sits in the upper part of a wide spread, above its median: it assumes less protection than most measures showed';
     var caveats = [
-      'Rats in a harness for ' + day + ' days: ' + wb + ' weight bearing is an analog of partial gravity, not reduced gravity, and these are not human data.',
+      'Rats in a harness for ' + day + ' days at ' + wb + ' of normal weight bearing: an analog of partial gravity, not a flight in reduced gravity, and not human data.',
       'Grip, plantarflexion torque and calf girth measure strength and girth, not muscle volume, which is what the model tracks.'
     ];
     var mg = c.measures.filter(function (m) { return m.measure === 'grip' && m.sex === 'M'; })[0];
@@ -150,6 +150,7 @@
       caveats.push('Unstable (the 0 g and 1 g changes differ by less than ' + GRAVITY_CHECK.unstablePoints.value + ' points): ' +
         shaky.map(function (m) { return name(m).toLowerCase(); }).join('; ') + '.');
     }
+    caveats.push('At lunar gravity, mouse studies point to less loss than this linear term predicts: one-sixth g prevented soleus atrophy (V40) and 0.33 g preserved soleus size (V6).');
     return {
       marks: c.measures.map(function (m) { return { measure: m.measure, sex: m.sex, label: name(m), share: m.share }; }),
       sentences: [

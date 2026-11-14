@@ -124,25 +124,31 @@ button, input, select { font: inherit; color: inherit; }
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: 14px 28px;
-  padding: 14px var(--gap);
+  gap: 10px 24px;
+  padding: 10px var(--gap);
   border-bottom: 1px solid var(--line);
   background: var(--surface);
 }
 .brand { display: flex; align-items: center; gap: 12px; }
 .logo { width: 34px; height: 34px; color: var(--accent); flex: none; }
 .brand-name { font-family: var(--font-display); font-size: 1.45em; font-weight: 600; letter-spacing: 0.01em; line-height: 1.1; }
-.tagline { color: var(--muted); font-size: 0.86em; }
-.controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 16px; }
+.tagline { color: var(--muted); font-size: 0.86em; white-space: nowrap; }
+.controls { display: flex; flex-wrap: nowrap; align-items: center; justify-content: center; gap: 10px 14px; }
 .field { display: inline-flex; align-items: center; gap: 8px; }
 .field-label { color: var(--muted); font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.08em; }
 select {
   background: var(--surface-2); border: 1px solid var(--line-strong); border-radius: var(--radius-s);
   padding: 6px 10px; min-height: 36px; max-width: 24em;
 }
+/* One row for the top bar on wide screens: the select's own label is enough there (it stays the accessible name). */
+@media (max-width: 1599px) and (min-width: 1181px) {
+  .controls select { max-width: 16em; }
+  .controls .field > .field-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+}
+@media (max-width: 1599px) and (min-width: 1400px) { .controls select { max-width: 19em; } }
 .env-badge { display: inline-flex; align-items: baseline; gap: 6px; padding: 5px 12px; border: 1px solid var(--line-strong); border-radius: 999px; font-weight: 600; }
-.badges { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; list-style: none; padding: 0; justify-self: end; }
-.badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; font-size: 0.82em; border: 1px solid var(--line-strong); white-space: nowrap; }
+.badges { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; list-style: none; padding: 0; justify-self: end; }
+.badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-size: 0.78em; border: 1px solid var(--line-strong); white-space: nowrap; }
 .badge svg { width: 14px; height: 14px; flex: none; }
 .badge-sim { border-color: var(--accent); color: var(--text); font-weight: 600; }
 .badge-offline { color: var(--muted); }
@@ -181,14 +187,14 @@ main { max-width: 1400px; margin: 0 auto; padding: var(--gap); display: grid; ga
 /* ---- morning brief ---------------------------------------------------------- */
 .brief {
   display: grid;
-  grid-template-columns: minmax(260px, 360px) minmax(0, 1fr);
+  grid-template-columns: minmax(260px, 440px) minmax(0, 1fr);
   grid-template-areas: "head head" "image cards";
   gap: var(--gap);
 }
-.brief-head { grid-area: head; padding-top: 6px; }
-.eyebrow { font-size: 0.8em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent-text); margin-bottom: 6px; }
+.brief-head { grid-area: head; }
+.eyebrow { font-size: 0.8em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent-text); margin-bottom: 4px; }
 .eyebrow .muted { margin-left: 8px; text-transform: none; letter-spacing: 0; font-weight: 500; }
-.headline { font-family: var(--font-display); font-size: clamp(1.45em, 2.6vw, 2.2em); line-height: 1.22; max-width: 46ch; text-wrap: balance; }
+.headline { font-family: var(--font-display); font-size: clamp(1.4em, 2.3vw, 2em); line-height: 1.2; max-width: 46ch; text-wrap: balance; }
 .notice { margin-top: 10px; color: var(--accent-text); }
 .headline-attn { color: var(--attention-text); }   /* the one place the accent is used as text outside a status */
 /* A restrained glow in the working blue behind the brief header (stays blue on Watch or Report). */
@@ -198,16 +204,17 @@ main { max-width: 1400px; margin: 0 auto; padding: var(--gap); display: grid; ga
   background: radial-gradient(ellipse closest-side at 35% 50%, var(--glow), transparent);   /* fades out before every edge */
 }
 
-.body-image { grid-area: image; display: grid; gap: 12px; align-content: start; }
-.panel-bar { display: flex; flex-wrap: wrap; gap: 8px; }
-.panel-bar .seg { padding: 5px 10px; font-size: 0.88em; }
+.body-image { grid-area: image; display: grid; gap: 10px; align-content: start; padding: 14px; }
+.panel-bar { display: flex; flex-wrap: wrap; gap: 6px; }
+.panel-bar .segmented { padding: 2px; }
+.panel-bar .seg { padding: 3px 7px; min-height: 30px; font-size: 0.8em; }
 .canvas-wrap {
   position: relative; display: grid; place-items: center;
-  background: var(--img-bg); border-radius: var(--radius-s); padding: 14px;
-  min-height: 300px;
+  background: var(--img-bg); border-radius: var(--radius-s); padding: 12px;
+  min-height: 200px;
 }
 /* --fig-h: height of the body figure; the phantom is 1:3 (64 x 192 cm). --hs-room: space for hotspot labels on its right. */
-.canvas-wrap { --fig-h: min(48vh, 380px); --hs-room: 96px; }
+.canvas-wrap { --fig-h: clamp(200px, calc(100vh - 470px), 380px); --hs-room: 96px; }
 .body-fig { position: relative; height: var(--fig-h); width: calc(var(--fig-h) / 3); margin-right: var(--hs-room); }
 #body-canvas {
   display: block; width: 100%; height: 100%;
@@ -219,12 +226,12 @@ main { max-width: 1400px; margin: 0 auto; padding: var(--gap); display: grid; ga
 .colorbar-labels { display: flex; justify-content: space-between; font-size: 0.8em; color: var(--muted); }
 .colorbar-unit { font-size: 0.78em; color: var(--muted); text-align: center; }
 
-.cards { grid-area: cards; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: var(--gap); }
+.cards { grid-area: cards; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 14px; align-self: start; }
 .card {
-  display: grid; gap: 8px; align-content: start; text-align: left;
+  display: grid; gap: 5px; align-content: start; text-align: left;
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
-  padding: clamp(16px, 2vw, 22px); padding-top: calc(clamp(16px, 2vw, 22px) + 4px);
-  position: relative; overflow: hidden; cursor: pointer; min-height: 188px;
+  padding: 12px 18px 14px; padding-top: 16px;
+  position: relative; overflow: hidden; cursor: pointer; min-height: 0;
   transition: border-color 0.15s ease;
 }
 .card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 4px; background: var(--st); }
@@ -236,10 +243,11 @@ main { max-width: 1400px; margin: 0 auto; padding: var(--gap); display: grid; ga
 .card-name { font-weight: 600; font-size: 1.02em; }
 .status { display: inline-flex; align-items: center; gap: 6px; color: var(--st-text); font-weight: 700; font-size: 0.88em; }
 .status-word { color: var(--st-text); }
-.card-value { font-size: clamp(2em, 3.4vw, 2.8em); font-weight: 600; line-height: 1.05; letter-spacing: -0.01em; }
+.card-value { font-size: clamp(1.8em, 2.6vw, 2.4em); font-weight: 600; line-height: 1.05; letter-spacing: -0.01em; }
 .card-value .unit { font-size: 0.42em; font-weight: 500; color: var(--muted); letter-spacing: 0; }
-.card-delta { font-size: 0.9em; }
-.card-reason { color: var(--muted); font-size: 0.9em; }
+.card-delta { font-size: 0.88em; line-height: 1.45; }
+/* Two lines on the card; the full text is under "What it means". */
+.card-reason { color: var(--muted); font-size: 0.88em; line-height: 1.45; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
 
 /* ---- timeline: a compact bar fixed to the bottom of the viewport ------------ */
 /* --bar-h is the room kept free under the page so the bar never covers content. */
@@ -428,7 +436,8 @@ body.mode-eldercare .space-only, body:not(.mode-eldercare) .home-only { display:
 /* ---- body figure hotspots (one per check) ------------------------------------ */
 /* Vertical positions from the phantom geometry in js/phantom.js (192 cm tall, cm from the top):
    head 1 to 23 (centre 12); chest = first quarter of the torso 29 to 92 (44.75);
-   calves 148 to 184 (centre 166). Radiation is a whole-body tag beside the figure. test/figure.test.js checks these. */
+   calves 148 to 184 (centre 166). Radiation is a whole-body check: its dashed ring sits on the body centre
+   (106 cm, where its tag was) and selecting it outlines the whole figure. test/figure.test.js checks these. */
 .hs {
   position: absolute; left: calc(50% - 16px); transform: translateY(-50%);
   display: flex; align-items: center; min-height: 32px;
@@ -437,7 +446,8 @@ body.mode-eldercare .space-only, body:not(.mode-eldercare) .home-only { display:
 .hs-sleep { top: calc(100% * 12 / 192); }
 .hs-cardio { top: calc(100% * 44.75 / 192); }
 .hs-muscle { top: calc(100% * 166 / 192); }
-.hs-radiation { left: calc(100% + 8px); top: calc(100% * 106 / 192); }
+.hs-radiation { top: calc(100% * 106 / 192); }
+.hs-radiation .hs-dot::before { border-style: dashed; }
 .hs-dot { position: relative; flex: none; width: 32px; height: 32px; }
 .hs-dot::before {
   content: ""; position: absolute; inset: 6px; border-radius: 50%;
@@ -452,15 +462,17 @@ body.mode-eldercare .space-only, body:not(.mode-eldercare) .home-only { display:
 .hs-name { font-weight: 600; }
 .hs .status { font-size: 1em; }
 .hs:hover .hs-label { border-color: var(--accent); }
-.hs[aria-pressed="true"] .hs-label { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.hs[aria-pressed="true"] .hs-label { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); background: var(--surface-2); }
 .hs[aria-pressed="true"] .hs-dot::before { border-width: 3px; border-color: var(--accent); background: rgba(2, 7, 10, 0.35); box-shadow: 0 0 0 2px #f4f6f9; }
 .hs[aria-pressed="true"] .hs-lead { border-top: 2px solid var(--accent); opacity: 1; }
 .body-fig:has(.hs-radiation[aria-pressed="true"])::after {
   content: ""; position: absolute; inset: -6px; border: 2px dashed var(--accent); border-radius: 18px; pointer-events: none;
 }
+/* Keyboard focus is a dashed ring in the text colour around the label and the dot; the selected
+   hotspot is a solid blue border and a filled blue ring. The two can be told apart when both apply. */
 .hs:focus-visible { outline: none; }
-.hs:focus-visible .hs-label { outline: 3px solid var(--accent); outline-offset: 2px; }
-.hs:focus-visible .hs-dot::before { box-shadow: 0 0 0 3px var(--accent); }
+.hs:focus-visible .hs-label { outline: 2px dashed var(--text); outline-offset: 3px; }
+.hs:focus-visible .hs-dot { outline: 2px dashed var(--text); outline-offset: 0; border-radius: 50%; }
 .hs-hint { font-size: 0.86em; margin-top: -4px; }
 
 /* ---- NASA context in "What it means" ----------------------------------------- */
@@ -489,7 +501,10 @@ body.mode-eldercare .space-only, body:not(.mode-eldercare) .home-only { display:
 .status-row li { display: inline-flex; align-items: center; gap: 6px; color: var(--st-text); font-weight: 700; }
 
 /* ---- eldercare tweaks ------------------------------------------------------- */
-body.mode-eldercare .card-value { font-size: clamp(2.1em, 3.6vw, 3em); }
+body.mode-eldercare .card-value { font-size: clamp(1.8em, 2.6vw, 2.4em); }
+/* The home presentation reads at 19 px; the top bar and the figure keep the space sizes so the first screen still fits. */
+body.mode-eldercare .topbar { font-size: 16px; }
+body.mode-eldercare .canvas-wrap { --fig-h: clamp(200px, calc(100vh - 500px), 380px); }
 body.mode-eldercare .chart { height: 320px; }
 body.mode-eldercare .ax-label, body.mode-eldercare .ax-title { font-size: 13.5px; }
 body.mode-eldercare .mk { stroke: #fff; }
@@ -497,7 +512,7 @@ body.mode-eldercare .mk { stroke: #fff; }
 /* ---- responsive ------------------------------------------------------------- */
 @media (max-width: 1180px) {
   .topbar { grid-template-columns: 1fr auto; }
-  .controls { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; }
+  .controls { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; flex-wrap: wrap; }
   .badges { flex-direction: row; flex-wrap: wrap; }
 }
 @media (max-width: 1000px) {
@@ -543,7 +558,9 @@ body.mode-eldercare .mk { stroke: #fff; }
 
 /* ---- measured radiation data (data/*.js): source line, tags, flux chart, data panel ---- */
 .card-tags { display: flex; gap: 6px; flex-wrap: wrap; }
-.brief { grid-template-areas: "head head" "image cards" "image radsrc"; }
+.brief { grid-template-areas: "head head" "image cards" "image radsrc" "note note"; row-gap: 18px; }
+.brief-note { grid-area: note; }
+.brief-note .data-source { margin-top: 0; }
 .rad-source { grid-area: radsrc; font-size: 0.9em; display: grid; gap: 4px; }
 .rad-source p { margin: 0; }
 .rad-source[hidden] { display: none; }
@@ -554,7 +571,7 @@ body.mode-eldercare .mk { stroke: #fff; }
 .measured-list a { overflow-wrap: anywhere; }
 .measured > p { margin-top: 12px; }
 @media (max-width: 760px) {
-  .brief { grid-template-areas: "head" "cards" "radsrc" "image"; }
+  .brief { grid-template-areas: "head" "cards" "radsrc" "image" "note"; }
 }
 
 /* ---- gravity check: rat partial-weight-bearing data against the model (#gcheck) ---- */
