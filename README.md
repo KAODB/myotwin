@@ -12,12 +12,16 @@ takes no crew time, every night: an assumed sensor panel in the sleep station
 of a lunar or Mars surface habitat measures the crew while they sleep, and each
 morning MyoTwin shows one whole-body image, four status cards (muscle, sleep,
 heart and breathing, radiation), the trend against the person's own baseline
-and the mission plan, and what to do next. The status colours are interim
+and the mission plan, and what to do next. Each check names the NASA Human
+Research Program risk it relates to (V44), and the page shows where MyoTwin
+sits in NASA's five hazards of human spaceflight (V43). The status colours are interim
 screening flags; a flight surgeon decides. An eldercare wording of the same
 engine follows an older adult at home. Ids such as (V1) are entries in
 [docs/EVIDENCE.md](docs/EVIDENCE.md).
 
 Live page: https://kaodb.github.io/myotwin/
+
+Demo, seven slides: [PDF](https://kaodb.github.io/myotwin/demo/slides/MyoTwin-demo.pdf), or the editable [PowerPoint file](demo/slides/MyoTwin-demo.pptx).
 
 Screenshots (simulated data):
 

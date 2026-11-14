@@ -25,7 +25,8 @@ voice generator was used.
   produces every night record shown in the software. There are no real
   measurements of any person in this repository.
 - **Text.** Drafting the README, these documents and the project page text.
-- **Demo.** Assembling the demo.
+- **Demo.** Building the seven-slide deck in `demo/slides/` from screenshots of
+  the running page.
 
 ## What people did
 
