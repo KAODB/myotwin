@@ -631,7 +631,216 @@
     return { x: X, rowY: rowY, gutter: x0 };
   }
 
+  // ---- the plate: the sleeper drawn as a stipple ----------------------------------
+  /** Bounding box, in cells, of the body cells (those with a region) of a phantom. */
+  function bodyBox(ph) {
+    var b = { x0: ph.w, x1: -1, y0: ph.h, y1: -1 };
+    for (var y = 0; y < ph.h; y++) {
+      for (var x = 0; x < ph.w; x++) {
+        if (!ph.region[y * ph.w + x]) continue;
+        if (x < b.x0) b.x0 = x; if (x > b.x1) b.x1 = x;
+        if (y < b.y0) b.y0 = y; if (y > b.y1) b.y1 = y;
+      }
+    }
+    return b;
+  }
+
+  /**
+   * Where the body sits on a plate W x H px: `fill` (default 0.78) of the height, centred.
+   * cx(col), cy(row) give the centre of a cell; px(xCm), py(yCm) map body centimetres
+   * (x from the midline, patient's left positive; y from the top of the head) to plate pixels.
+   */
+  function plateLayout(ph, W, H, fill) {
+    var b = bodyBox(ph), figH = H * (fill || 0.78);
+    var cell = figH / (b.y1 - b.y0 + 1), figW = cell * (b.x1 - b.x0 + 1);
+    var ox = (W - figW) / 2, oy = (H - figH) / 2, half = ph.w * ph.cellCm / 2;
+    return {
+      cell: cell, ox: ox, oy: oy, figW: figW, figH: figH, box: b, W: W, H: H,
+      cx: function (col) { return ox + (col - b.x0 + 0.5) * cell; },
+      cy: function (row) { return oy + (row - b.y0 + 0.5) * cell; },
+      px: function (xCm) { return ox + ((xCm + half) / ph.cellCm - b.x0) * cell; },
+      py: function (yCm) { return oy + (yCm / ph.cellCm - b.y0) * cell; }
+    };
+  }
+
+  /**
+   * One dot of the stipple for a cell value: { r (px), tone, alpha } or null for no dot.
+   * mode 'raw': size and brightness rise with the value from min to max (ink).
+   * mode 'diff': size follows the size of the change; a loss is blue, a gain ink.
+   * code: overlay code of the cell, 1 = below the noise (smallest quiet dot), 2 = outline of a
+   * region that is not measured (hollow dot). The radius runs from 0.16 to 0.5 of a cell, by the
+   * square root, so the dot's area follows the value.
+   */
+  function stippleDot(v, min, max, mode, code, cell) {
+    if (code === 2) return { r: cell * 0.2, tone: 'hollow', alpha: 0.8 };
+    if (code === 1) return { r: cell * 0.11, tone: 'quiet', alpha: 0.75 };
+    if (v == null || !isFinite(v)) return null;
+    var t, tone = 'ink';
+    if (mode === 'diff') {
+      var m = Math.max(Math.abs(min), Math.abs(max)) || 1;
+      t = clamp01(Math.abs(v) / m);
+      tone = v < 0 ? 'blue' : 'ink';
+    } else {
+      t = max > min ? clamp01((v - min) / (max - min)) : 0.5;
+    }
+    return { r: cell * (0.16 + 0.34 * Math.sqrt(t)), tone: tone, alpha: 0.22 + 0.72 * t };
+  }
+
+  /** '#rrggbb' as [r, g, b], or null. */
+  function hexRgb(s) {
+    var m = /#([0-9a-f]{6})\b/i.exec(String(s || ''));
+    return m ? [0, 2, 4].map(function (i) { return parseInt(m[1].slice(i, i + 2), 16); }) : null;
+  }
+  var TONES = { ink: [234, 242, 247], blue: [2, 151, 222], quiet: [143, 163, 177] };
+  /** Dot tones from the stylesheet (--ink, --blue, --quiet), with these copies as the fallback. */
+  function themeTones() {
+    var doc = root.document;
+    if (!doc || !doc.body || !root.getComputedStyle) return TONES;
+    var cs = root.getComputedStyle(doc.body);
+    return {
+      ink: hexRgb(cs.getPropertyValue('--ink')) || TONES.ink,
+      blue: hexRgb(cs.getPropertyValue('--blue')) || TONES.blue,
+      quiet: hexRgb(cs.getPropertyValue('--quiet')) || TONES.quiet
+    };
+  }
+
+  /**
+   * Draw an image as a stipple onto a canvas sized W x H CSS px: one dot per body cell.
+   * img: { values, min, max }; lay: plateLayout(); opts: { mode: 'raw'|'diff', overlay: Uint8Array|null, dpr }.
+   * Returns the number of dots drawn.
+   */
+  function stipple(canvas, img, ph, lay, opts) {
+    opts = opts || {};
+    var dpr = opts.dpr || 1, tones = themeTones(), n = 0;
+    canvas.width = Math.round(lay.W * dpr); canvas.height = Math.round(lay.H * dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, lay.W, lay.H);
+    var b = lay.box, ov = opts.overlay;
+    for (var y = b.y0; y <= b.y1; y++) {
+      for (var x = b.x0; x <= b.x1; x++) {
+        var i = y * ph.w + x;
+        if (!ph.region[i]) continue;
+        var d = stippleDot(img.values[i], img.min, img.max, opts.mode, ov ? ov[i] : 0, lay.cell);
+        if (!d) continue;
+        ctx.beginPath();
+        ctx.arc(lay.cx(x), lay.cy(y), d.r, 0, Math.PI * 2);
+        var c = tones[d.tone === 'hollow' ? 'ink' : d.tone];
+        var rgba = 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + d.alpha.toFixed(3) + ')';
+        if (d.tone === 'hollow') { ctx.lineWidth = 1; ctx.strokeStyle = rgba; ctx.stroke(); } else { ctx.fillStyle = rgba; ctx.fill(); }
+        n++;
+      }
+    }
+    return n;
+  }
+
+  /**
+   * The classical frame of the plate, into an <svg> W x H: a hairline square and circle around the
+   * figure, a dotted centre line and dotted cosmic-ray tracks crossing the plate.
+   * tracks: [[x0, x1], ...] as fractions of the width at the top and the bottom edge.
+   */
+  function plateFrame(svg, lay, tracks) {
+    var W = lay.W, H = lay.H;
+    clear(svg);
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    var sq = lay.figH, cx = W / 2, top = lay.oy;
+    el('rect', { x: cx - sq / 2, y: top, width: sq, height: sq, 'class': 'frame' }, svg);
+    el('circle', { cx: cx, cy: top + sq / 2, r: sq / 2, 'class': 'frame' }, svg);
+    el('line', { x1: cx, y1: top - 14, x2: cx, y2: top + sq + 14, 'class': 'frame-axis' }, svg);
+    (tracks || []).forEach(function (t, k) {
+      el('line', { x1: W * t[0], y1: 0, x2: W * t[1], y2: H, 'class': 'track track-' + (k % 3) }, svg);
+    });
+  }
+
+  /**
+   * Small legend of dot sizes into a container: three dots from small to large with the value at
+   * each, or for a change view a blue dot (loss), an ink dot (gain) and the smallest quiet dot
+   * (below the noise). scale: { mode: 'raw'|'diff', min, max, unit, noise: bool }
+   */
+  function dotLegend(container, scale) {
+    while (container.firstChild) container.removeChild(container.firstChild);
+    if (!scale) { container.setAttribute('aria-label', 'No dot scale'); return; }
+    var items = [], f = function (v) { return fmt(v); };
+    if (scale.mode === 'diff') {
+      var m = Math.max(Math.abs(scale.min), Math.abs(scale.max));
+      items.push({ r: 5.5, cls: 'lg-blue', text: 'loss to −' + f(m) + '%' }, { r: 5.5, cls: 'lg-ink', text: 'gain to +' + f(m) + '%' });
+      if (scale.noise) items.push({ r: 1.6, cls: 'lg-quiet', text: 'below noise' });
+    } else {
+      items.push({ r: 2.2, cls: 'lg-ink lg-dim', text: f(scale.min) }, { r: 3.9, cls: 'lg-ink lg-mid', text: f((scale.min + scale.max) / 2) },
+        { r: 5.5, cls: 'lg-ink', text: f(scale.max) + (scale.unit ? ' ' + scale.unit : '') });
+      if (scale.outline) items.push({ r: 2.6, cls: 'lg-hollow', text: 'not measured' });
+    }
+    var svg = el('svg', { 'class': 'dot-legend', 'aria-hidden': 'true', focusable: 'false', height: 16 });
+    var x = 0, parts = [];
+    items.forEach(function (it) {
+      el('circle', { cx: x + 6, cy: 8, r: it.r, 'class': 'lg-dot ' + it.cls }, svg);
+      var t = text(svg, x + 16, 12, it.text, 'lg-text', 'start');
+      x += 16 + widthOf(t) + 16;
+      parts.push(it.text);
+    });
+    svg.setAttribute('width', Math.ceil(x));
+    svg.setAttribute('viewBox', '0 0 ' + Math.ceil(x) + ' 16');
+    container.appendChild(svg);
+    container.setAttribute('aria-label', 'Dot size scale: ' + parts.join(', '));
+  }
+
+  // ---- the night ruler -----------------------------------------------------------
+  var RULER_PAD = 6;
+  /** x of night index i on a ruler `width` px wide holding n nights. */
+  function rulerX(i, width, n) { return RULER_PAD + i * (width - 2 * RULER_PAD) / Math.max(1, n - 1); }
+  /** Night index nearest to x on the same ruler, clamped to the nights there are. */
+  function rulerIndex(x, width, n) {
+    if (n < 2 || !(width > 2 * RULER_PAD)) return 0;
+    var i = Math.round((x - RULER_PAD) / (width - 2 * RULER_PAD) * (n - 1));
+    return i < 0 ? 0 : i > n - 1 ? n - 1 : i;
+  }
+  /** Labelled step in nights (10, 20, 30, 50 or 100) so that labels sit at least minGap px apart. */
+  function rulerStep(width, n, minGap) {
+    var per = (width - 2 * RULER_PAD) / Math.max(1, n - 1);
+    var steps = [10, 20, 30, 50, 100];
+    for (var k = 0; k < steps.length; k++) if (steps[k] * per >= (minGap || 34)) return steps[k];
+    return 100;
+  }
+
+  /**
+   * The night ruler into an <svg>: one tick per night, taller every ten mission nights; baseline
+   * nights quiet, nights up to the selected one brighter; labels "Arrival", 10, 20...; a blue marker
+   * on the selected night. opts: { days: [missionDay], selected: index }
+   */
+  function ruler(svg, opts) {
+    var size = sizeOf(svg, 800, 46), W = size.w, H = 46, n = opts.days.length, base = 22;
+    clear(svg);
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    el('line', { x1: 0, y1: base, x2: W, y2: base, 'class': 'tick-base-line' }, svg);
+    var step = rulerStep(W, n), arrivalX = null;
+    opts.days.forEach(function (d, i) {
+      var x = rulerX(i, W, n), tall = d >= 0 && d % 10 === 0;
+      var cls = d < 0 ? 'tick tick-baseline' : i <= opts.selected ? 'tick tick-past' : 'tick tick-future';
+      el('line', { x1: x, y1: base - (tall ? 9 : 4), x2: x, y2: base, 'class': cls }, svg);
+      if (d >= 0 && d % step === 0) {
+        if (d === 0) arrivalX = x;
+        else if (arrivalX != null && x - arrivalX < 46) return;
+        text(svg, x, 41, d === 0 ? 'Arrival' : String(d), 'ruler-label');
+      }
+    });
+    var sx = rulerX(opts.selected, W, n);
+    el('line', { x1: sx, y1: 4, x2: sx, y2: base + 4, 'class': 'ruler-mark' }, svg);
+    el('circle', { cx: sx, cy: 4, r: 3.5, 'class': 'ruler-mark-dot' }, svg);
+    return { x: function (i) { return rulerX(i, W, n); }, width: W };
+  }
+
   var api = {
+    bodyBox: bodyBox,
+    plateLayout: plateLayout,
+    stippleDot: stippleDot,
+    stipple: stipple,
+    plateFrame: plateFrame,
+    dotLegend: dotLegend,
+    hexRgb: hexRgb,
+    rulerX: rulerX,
+    rulerIndex: rulerIndex,
+    rulerStep: rulerStep,
+    ruler: ruler,
     dotScale: dotScale,
     STATUS: STATUS,
     ROSE_DIRECTIONS: ROSE_DIRECTIONS,
