@@ -355,6 +355,49 @@
       url: 'https://doi.org/10.26030/e0yx-ta10'
     },
 
+    // ---- Sarcopenia on Earth: the clinical tools MyoTwin is modelled on ----------
+    // Consensus statements for finding muscle loss (sarcopenia) in older adults, and
+    // one systematic review of bioimpedance phase angle. Earth clinical practice,
+    // not spaceflight data.
+    {
+      id: 'V94', topic: 'muscle', status: 'verified', level: 'full-text',
+      claim: 'The European consensus on sarcopenia (EWGSOP2, 2019) sets a Find-Assess-Confirm-Severity pathway: the SARC-F questionnaire to find cases, grip strength or the chair stand test for low strength, DXA or BIA to confirm low muscle quantity, and gait speed, SPPB, TUG or the 400-m walk for severity. Calf circumference (cut-off <31 cm) may serve as a proxy only where no other muscle mass method is available. The main text names DXA and BIA for usual clinical care; its key-points box names DXA for clinical practice and lists BIA among research methods.',
+      values: {
+        lowGripMenBelowKg: 27, lowGripWomenBelowKg: 16,
+        lowChairStandFiveRisesAboveSec: 15,
+        lowAsmMenBelowKg: 20, lowAsmWomenBelowKg: 15,
+        lowAsmPerHeight2MenBelowKgM2: 7.0, lowAsmPerHeight2WomenBelowKgM2: 5.5,
+        severeGaitSpeedAtMostMs: 0.8, lowSppbAtMostPoints: 8, lowTugAtLeastSec: 20, lowWalk400mAtLeastMin: 6,
+        calfCircumferenceProxyBelowCm: 31
+      },
+      quote: 'Specifically, we recommend a pathway of Find-Assess-Confirm-Severity (F-A-C-S; Figure 1) for use across clinical practices and in research studies. ... In clinical practice, EWGSOP2 advises use of the SARC-F questionnaire to find individuals with probable sarcopenia. We advise use of grip strength and chair stand measures to identify low muscle strength. To generate evidence that confirms muscle of low quantity or quality, we recommend evaluation of muscle by DXA and BIA methods in usual clinical care, and by DXA, MRI or CT in research and in specialty care for individuals at high risk of adverse outcomes. We advise measures of physical performance (SPPB, TUG and 400-m walk tests) to assess severity of sarcopenia. ... Calf circumference has been shown to predict performance and survival in older people (cut-off point <31 cm) [79]. As such, calf circumference measures may be used as a diagnostic proxy for older adults in settings where no other muscle mass diagnostic methods are available. ... Confirm: To confirm sarcopenia by detection of low muscle quantity and quality, DXA is advised in clinical practice, and DXA, BIA, CT or MRI in research studies. Determine Severity: Severity can be evaluated by performance measures; gait speed, SPPB, TUG and 400-m walk tests can be used.',
+      source: 'Cruz-Jentoft AJ et al. Sarcopenia: revised European consensus on definition and diagnosis. Age Ageing 2019;48:16-31 (PMC6322506; correction doi:10.1093/ageing/afz046 sets the women ASM/height2 cut-off to <5.5 kg/m2, as in the PMC text). Cut-off values from Table 3. Read in the full text from PubMed Central',
+      url: 'https://doi.org/10.1093/ageing/afy169'
+    },
+    {
+      id: 'V95', topic: 'muscle', status: 'verified', level: 'abstract',
+      claim: 'The Asian consensus on sarcopenia (AWGS 2019) starts case finding with calf circumference (<34 cm in men, <33 cm in women), SARC-F (4 or more) or SARC-CalF (11 or more); low strength is handgrip <28 kg (men) or <18 kg (women); low physical performance is a 6-m walk <1.0 m/s, SPPB 9 or less, or a 5-time chair stand of 12 s or more; muscle mass is measured by DXA or bioimpedance.',
+      values: {
+        calfCircumferenceMenBelowCm: 34, calfCircumferenceWomenBelowCm: 33,
+        sarcFAtLeast: 4, sarcCalFAtLeast: 11,
+        lowGripMenBelowKg: 28, lowGripWomenBelowKg: 18,
+        lowGaitSpeed6mBelowMs: 1.0, lowSppbAtMostPoints: 9, lowChairStandFiveTimesAtLeastSec: 12,
+        lowMuscleDxaMenBelowKgM2: 7.0, lowMuscleDxaWomenBelowKgM2: 5.4,
+        lowMuscleBiaMenBelowKgM2: 7.0, lowMuscleBiaWomenBelowKgM2: 5.7
+      },
+      quote: 'AWGS 2019 retains the previous definition of sarcopenia but revises the diagnostic algorithm, protocols, and some criteria: low muscle strength is defined as handgrip strength <28 kg for men and <18 kg for women; criteria for low physical performance are 6-m walk <1.0 m/s, Short Physical Performance Battery score ≤9, or 5-time chair stand test ≥12 seconds. AWGS 2019 retains the original cutoffs for height-adjusted muscle mass: dual-energy X-ray absorptiometry, <7.0 kg/m2 in men and <5.4 kg/m2 in women; and bioimpedance, <7.0 kg/m2 in men and <5.7 kg/m2 in women. In addition, the AWGS 2019 update proposes separate algorithms for community vs hospital settings, which both begin by screening either calf circumference (<34 cm in men, <33 cm in women), SARC-F (≥4), or SARC-CalF (≥11), to facilitate earlier identification of people at risk for sarcopenia.',
+      source: 'Chen LK et al. Asian Working Group for Sarcopenia: 2019 Consensus Update on Sarcopenia Diagnosis and Treatment. J Am Med Dir Assoc 2020;21:300-307.e2 (PMID 32033882). Abstract read in PubMed and Europe PMC',
+      url: 'https://doi.org/10.1016/j.jamda.2019.12.012'
+    },
+    {
+      id: 'V96', topic: 'muscle', status: 'verified', level: 'abstract',
+      claim: 'A systematic review of 13 studies (7668 people) found bioimpedance phase angle lower in people with sarcopenia (seven of eight studies), with cut-offs from 4.05 to 5.05 degrees derived for identifying sarcopenia.',
+      values: { studies: 13, participants: 7668, studiesLowerPhaseAngle: 7, studiesComparingPhaseAngle: 8, cutoffLowDeg: 4.05, cutoffHighDeg: 5.05 },
+      quote: 'Thirteen studies (7668 subjects) met the inclusion criteria. The overall risk of bias was low. Sarcopenia was associated with a significant lower PhA in seven studies out of eight, while five studies out of six reported a high prevalence of sarcopenia was in patients with low PhA. Different cut-off point values from 4.05 to 5.05° have been derived for the identification of sarcopenia. ... Data from the selected papers demonstrate that PhA is decreased in sarcopenic subjects and the prevalence of sarcopenia is higher in subjects with low PhA.',
+      source: 'Di Vincenzo O et al. Bioelectrical impedance analysis (BIA) -derived phase angle in sarcopenia: A systematic review. Clin Nutr 2021;40:3052-3061 (PMID 33183880). Abstract read in PubMed',
+      url: 'https://doi.org/10.1016/j.clnu.2020.10.048'
+    },
+
     // ---- NASA standards and statements -------------------------------------
     {
       id: 'V1', topic: 'muscle', status: 'verified', level: 'official-document',
