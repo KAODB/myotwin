@@ -190,7 +190,7 @@
       day: h ? 'Day' : 'Mission day',
       start: h ? 'Start' : 'Arrival',
       plan: h ? 'Care plan' : 'Plan',
-      diff: h ? 'Change since the first week' : 'Change since arrival',
+      diff: h ? 'Change since week 1' : 'Change since arrival',
       baselineLegend: h ? 'Days below 0 are the 14 baseline nights.' : 'Days below 0 are the 14 pre-departure baseline nights.',
       dataSource: h ? 'An assumed sensor panel in the bed measures during sleep. Nothing is worn and it takes no time.' :
         'An assumed sensor panel in the sleep station measures while the crew sleep. Nothing is worn and it takes no crew time.',
