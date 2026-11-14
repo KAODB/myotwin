@@ -119,7 +119,9 @@ One record per night. Pre-departure baseline nights have a negative `missionDay`
       meaning: 'short sentence',  // what it means
       actions: ['...', '...'],    // what to do now
       decides: 'flight surgeon',  // who decides
-      sourceIds: ['V10', 'V1']    // evidence ids behind the rule
+      sourceIds: ['V10', 'V1'],   // evidence ids behind the rule
+      expectedDeltaPct: -9.1,     // muscle only: what the plan expects (null otherwise)
+      extra: { }                  // numbers the UI needs, per card (see "Card extras")
     }
     // exactly four cards, always in the order muscle, sleep, cardio, radiation
   ],
@@ -127,6 +129,15 @@ One record per night. Pre-departure baseline nights have a negative `missionDay`
   headline: 'one sentence for the top of the brief'
 }
 ```
+
+### Card extras
+
+- muscle: `{ dropPct, expectedDropPct, amberLimitPct, redLimitPct }` (all in percent of the baseline median).
+- sleep: `{ amberHours, redHours, nights }`.
+- cardio: `{ hr, rr, hrLimit, rrLimit, sustained }`. `sustained` is true when both were above their limits on each of the last 3 nights.
+- radiation: `{ ratio, usualUGy, cumulativeUGy }`. `cumulativeUGy` is the sum of the sleep-period doses of all mission nights up to tonight.
+
+On a grey card `extra` holds whatever is known and null for the rest.
 
 ## Function signatures
 
@@ -156,6 +167,10 @@ One record per night. Pre-departure baseline nights have a negative `missionDay`
   mission plan expects that night (0 on baseline nights). The plan is the scenario flown as
   intended (planned exercise, no lapses, normal activity); it uses the same gravity shape as
   the records. Each scenario lists its `planPhases` next to its `phases`.
+  Each scenario also has `person = { baselinePhaseDeg, hrBpm, rrBpm }` and its own default
+  `seed`, so the four scenarios do not show the same person. `opts.seed` overrides the default.
+  `opts.eimNoiseSdFraction` overrides the night-to-night EIM noise (a what-if for a noisier sensor).
+  An unknown scenario id (including inherited names such as `__proto__`) throws a clear error.
 - `sim.NOISE` : declared night-to-night noise levels (assumptions).
 
 ### rules (`js/rules.js`) and engine (`js/engine.js`)
@@ -171,6 +186,8 @@ One record per night. Pre-departure baseline nights have a negative `missionDay`
   `opts = { mode = 'astronaut', expectedChangePct? }`. `expectedChangePct` is the plan array
   from `sim.generate` (aligned with `records`); when it is absent the plan is "no change".
 - `engine.project(records, index) -> { cardId: 'muscle', daysToRed, slopePctPerWeek } | null`
+  Uses only complete weekly windows of mission nights; returns null when fewer than 3 such
+  windows exist, when the trend is not falling, or when the result would be under 1 day.
 - `engine.series(records, key) -> [{ missionDay, value }]`
   Convenience for charts. `key` is one of `eim`, `sleep`, `rr`, `hr`, `dose`.
 
@@ -208,7 +225,7 @@ All comparisons are against the person's own baseline (the 14 pre-departure nigh
 |---|---|---|---|---|
 | muscle | 7-night median of `eim.phase50_deg` | worse than the mission plan by more than max(2 x noise7, 4.2%) | below baseline by more than max(3 x noise7, 16.8%) | fewer than 3 nights with a usable scan in the last 7 |
 | sleep | mean `radar.sleep_h` over the last 7 nights | 6 to under 7 h | under 6 h | fewer than 4 nights of data in the last 7 |
-| cardio | `radar.rr_bpm` and `radar.hr_bpm`, 3-night medians | one of them above baseline median + 2 SD | both above on each of the last 3 nights | fewer than 2 nights of data in the last 3 |
+| cardio | `radar.rr_bpm` and `radar.hr_bpm`, 3-night medians | one of them above baseline median + 2 SD | never (two tiers only) | fewer than 2 nights of data in the last 3 |
 | radiation | tonight's `rad.dose_uGy` versus the median of up to 30 earlier nights | above 2x | above 10x, or `rad.spe` is true | fewer than 7 earlier nights |
 
 `noise7` is the expected spread of a 7-night median, as a percentage of the
@@ -224,3 +241,19 @@ and was removed on 2026-11-14.
 4.2% and 16.8% are evidence V10; 7 h is V25; 6 h is the ISS average in V11 rounded down.
 
 Green is anything that is neither amber, red nor grey.
+
+Windows never mix phases. For a surface night (missionDay >= 0) every window contains only
+surface nights; for a baseline night only baseline nights. So the first surface nights are grey
+("only n nights since arrival") until enough nights exist: this matters most after a long
+transit, when the last baseline night is months old.
+
+Revisions after the review on 2026-11-14:
+- cardio has no red tier. A heart rate and breathing rate above the person's own range for three
+  nights is a reason to check for illness, not an alarm. When it is sustained the card stays
+  amber and uses the `amberSustained` text ("tell the crew medical officer").
+- radiation red is a record, not a warning: the brief is read the morning after. The text says
+  that real-time warnings come from space-weather alerts and flight rules, and the card reports
+  the logged dose, the ratio to the usual level and the cumulative sleep-period dose.
+- The headline never says "Urgent". Red reads "Report to the {clinician} today: ...";
+  amber reads "N check(s) to watch: ...".
+- Status words shown by the UI: In range, Watch, Report, No data.

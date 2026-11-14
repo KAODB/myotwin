@@ -35,7 +35,7 @@ another citation without opening the original; **fitted** means estimated from e
 
 - Status: verified (abstract)
 - Source: Trappe TA et al. Acta Physiol 2007;191:147-159 (WISE-2005 bed rest). PMID 17655736. <https://pubmed.ncbi.nlm.nih.gov/17655736/>
-- Quote: "Calf (triceps surae) muscle volume was decreased (P < 0.05) to a similar extent (P > 0.05) in BR (-29 +/- 1%) and BRN (-28 +/- 1%), and this decrease was attenuated (P < 0.05) in BRE (-8 +/- 2%). ... The nutrition countermeasure was not effective in offsetting lower limb muscle volume or strength loss, and actually promoted thigh muscle volume loss."
+- Quote: "Calf (triceps surae) muscle volume was decreased ... in BR (-29 +/- 1%) and BRN (-28 +/- 1%), and this decrease was attenuated (P < 0.05) in BRE (-8 +/- 2%). ... The nutrition countermeasure was not effective in offsetting lower limb muscle volume or strength loss, and actually promoted thigh muscle volume loss."
 - Values: `days` = 60; `n` = 24; `calfControlPct` = -29; `calfExercisePct` = -8; `calfNutritionPct` = -28; `thighControlPct` = -21; `thighExercisePct` = 0; `thighNutritionPct` = -24
 
 **V5**. Six months on the ISS with exercise: calf muscle volume -13 +/- 2%, peak power -32% (n = 9).
