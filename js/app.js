@@ -167,8 +167,8 @@
       plan: h ? 'Care plan' : 'Plan',
       diff: h ? 'Change since the first week' : 'Change since arrival',
       baselineLegend: h ? 'Days below 0 are the 14 baseline nights.' : 'Days below 0 are the 14 pre-departure baseline nights.',
-      dataSource: h ? 'Measured by a sensor panel in the bed during sleep. Nothing is worn and it takes no time.' :
-        'Measured by a sensor panel in the sleep station while the crew sleep. Nothing is worn and it takes no crew time.',
+      dataSource: h ? 'An assumed sensor panel in the bed measures during sleep. Nothing is worn and it takes no time.' :
+        'An assumed sensor panel in the sleep station measures while the crew sleep. Nothing is worn and it takes no crew time.',
       noImage: h ? 'Images start on day 0, after the 14 baseline nights.' :
         'Baseline nights are recorded on Earth before departure; images start at arrival.'
     };

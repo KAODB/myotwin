@@ -65,8 +65,6 @@
     <div class="brief-head">
       <h1 id="brief-title" class="eyebrow" tabindex="-1">Morning brief <span id="brief-date" class="muted">no night selected</span></h1>
       <p id="headline" class="headline" aria-live="polite">The brief appears here once the simulated mission loads.</p>
-      <p id="data-source" class="data-source">Measured by a sensor panel in the sleep station while the crew sleep. Nothing is worn and it takes no crew time.</p>
-      <p id="hrp-line" class="hrp-line muted">Each check is tied to a NASA Human Research Program risk: musculoskeletal fitness, sleep, cardiovascular adaptations and radiation. <a id="hrp-link" class="ev-link" href="#evidence">V44</a></p>
       <p id="notice" class="notice" role="status" hidden>This link could not be opened; showing the default view.</p>
       <p id="scenario-summary" class="scenario-summary muted"></p>
       <noscript><p class="notice">MyoTwin needs JavaScript to build the brief. Nothing is sent anywhere; it runs entirely in this page.</p></noscript>
@@ -90,7 +88,7 @@
           <canvas id="body-canvas" width="120" height="360" role="img" aria-label="Whole-body image, not yet drawn"></canvas>
           <button type="button" class="hs hs-sleep st-grey" data-card="sleep" aria-pressed="false" aria-label="Head: sleep check, No data"><span class="hs-dot" aria-hidden="true"></span><span class="hs-lead" aria-hidden="true"></span><span class="hs-label" aria-hidden="true"><span class="hs-name">Sleep</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span></button>
           <button type="button" class="hs hs-cardio st-grey" data-card="cardio" aria-pressed="false" aria-label="Chest: heart and breathing check, No data"><span class="hs-dot" aria-hidden="true"></span><span class="hs-lead" aria-hidden="true"></span><span class="hs-label" aria-hidden="true"><span class="hs-name">Heart</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span></button>
-          <button type="button" class="hs hs-radiation st-grey" data-card="radiation" aria-pressed="false" aria-label="Whole body: radiation check, No data"><span class="hs-label" aria-hidden="true"><span class="hs-name">Radiation</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span></button>
+          <button type="button" class="hs hs-radiation st-grey" data-card="radiation" aria-pressed="false" aria-label="Whole body: radiation check, No data"><span class="hs-dot" aria-hidden="true"></span><span class="hs-lead" aria-hidden="true"></span><span class="hs-label" aria-hidden="true"><span class="hs-name">Radiation</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span></button>
           <button type="button" class="hs hs-muscle st-grey" data-card="muscle" aria-pressed="false" aria-label="Calves: muscle check, No data"><span class="hs-dot" aria-hidden="true"></span><span class="hs-lead" aria-hidden="true"></span><span class="hs-label" aria-hidden="true"><span class="hs-name">Muscle</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span></button>
         </div>
         <p class="canvas-empty" id="canvas-empty">Image not drawn yet</p>
@@ -146,6 +144,11 @@
     <div class="rad-source" id="rad-source" hidden>
       <p id="rad-measured"></p>
       <p id="rad-donki" hidden></p>
+    </div>
+    <!-- Below the figure and the cards, so the first screen keeps the figure and the four checks above the time bar. -->
+    <div class="brief-note" id="brief-note">
+      <p id="data-source" class="data-source">An assumed sensor panel in the sleep station measures while the crew sleep. Nothing is worn and it takes no crew time.</p>
+      <p id="hrp-line" class="hrp-line muted">Each check is tied to a NASA Human Research Program risk: musculoskeletal fitness, sleep, cardiovascular adaptations and radiation. <a id="hrp-link" class="ev-link" href="#evidence">V44</a></p>
     </div>
   </section>
 
@@ -295,7 +298,7 @@
     </article>
     <article class="panel gcheck space-only" id="gcheck" aria-labelledby="gcheck-title">
       <h3 id="gcheck-title">Does partial gravity protect muscle? The model against NASA open data</h3>
-      <p class="muted">The muscle model assumes how much of the weightlessness loss remains at partial gravity. NASA's Open Science Data Repository holds a test of exactly that in rats.</p>
+      <p class="muted">The muscle model assumes how much of the weightlessness loss remains at partial gravity. NASA's Open Science Data Repository holds a related test in rats: 40% weight bearing in a harness, an analog of partial gravity.</p>
       <figure class="gcheck-fig">
         <svg id="gcheck-chart" class="dot-chart" role="img" aria-label="Share of the fully unloaded loss that remained at 40% weight bearing"></svg>
         <ul class="legend gcheck-legend">
