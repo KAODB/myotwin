@@ -155,7 +155,7 @@
 
   // Engine and rules text is written for the mission; at home the same facts read in care words.
   function scrub(s) {
-    s = String(s).replace(/\buGy\b/g, 'µGy').replace(/expects about -?0\.0% at this point/g, 'expects no change at this point');
+    s = String(s).replace(/\buGy\b/g, 'µGy').replace(/expects a drop of about -?0\.0% at this point/g, 'expects no change at this point');
     if (!isHome()) return s;
     return s.replace(/\bmission plan\b/gi, 'care plan').replace(/\bsince arrival\b/gi, 'since the start')
       .replace(/\bmission\b/gi, 'period');
@@ -230,7 +230,7 @@
     $('timeline-legend').textContent = w.baselineLegend;
     $('view-diff').textContent = w.diff;
     $('sensor-trackers').hidden = isHome();
-    $('hrp-line').hidden = state.mode === 'eldercare';
+    $('hrp-line').hidden = isHome();
     $('hrp-link').href = evidenceHref('V44');
     $('knob-shape').hidden = isHome();
     $('knob-shield').hidden = isHome();
@@ -493,7 +493,8 @@
   function startMarkers() {
     var sc = data.gen.scenario, w = words();
     var label = sc.transitDays > 0 ? 'Arrival after a ' + sc.transitDays + '-day transit (not monitored)' : w.start;
-    return [{ missionDay: 0, label: label }].concat(sc.events.map(function (e) { return { missionDay: e.from, label: e.label }; }));
+    var shortLabel = sc.transitDays > 0 ? 'Arrival (transit not monitored)' : null;
+    return [{ missionDay: 0, label: label, shortLabel: shortLabel }].concat(sc.events.map(function (e) { return { missionDay: e.from, label: e.label }; }));
   }
 
   function trendSpec(cardId) {
@@ -583,6 +584,7 @@
 
     var p = cardId === 'muscle' ? engine.project(data.gen.records, idx()) : null;
     var proj = $('projection');
+    if (p && Math.round(p.slopePctPerWeek * 10) === 0) p = null;
     proj.hidden = !p;
     proj.textContent = p ? 'Weekly trend: ' + fmtPct(p.slopePctPerWeek) + ' per week. At this rate the weekly median reaches the Report line ' +
       (p.daysToRed <= 7 ? 'within about a week' : 'in about ' + p.daysToRed + ' days') + '; the nightly check can change sooner.' : '';
@@ -691,7 +693,7 @@
   var COVERAGE_MARK = { covered: '\u25CF', partly: '\u25D0', 'not covered': '\u25CB' };
   var COVERAGE_CHIP = { covered: 'chip chip-supported', partly: 'chip chip-under-study', 'not covered': 'chip' };
   function renderHazards() {
-    $('hazards').hidden = state.mode === 'eldercare';
+    $('hazards').hidden = isHome();
     var ul = $('hazard-list');
     clear(ul);
     rules.HAZARDS.forEach(function (h) {
@@ -791,14 +793,14 @@
       ol2.appendChild(li);
     });
     box.appendChild(ol2);
-    $('evidence-count').textContent = evidence.items.length + ' sources and ' + rows.length + ' declared assumptions';
+    $('evidence-count').textContent = evidence.items.length + ' sources; every assumption is listed below';
   }
 
   function openEvidence(id) {
+    Array.prototype.forEach.call(document.querySelectorAll('.ev-target'), function (n) { n.classList.remove('ev-target'); });
     var target = $('ev-' + id);
     if (!target) return;
     target.closest('details').open = true;
-    Array.prototype.forEach.call(document.querySelectorAll('.ev-target'), function (n) { n.classList.remove('ev-target'); });
     target.classList.add('ev-target');
     target.scrollIntoView({ block: 'center', behavior: reducedMotion ? 'auto' : 'smooth' });
     target.focus({ preventScroll: true });

@@ -25,13 +25,13 @@ another citation without opening the original; **fitted** means estimated from e
 - Quote: "Weightlessness alters blood circulation and how the heart and blood vessels function, potentially increasing the risk of cardiovascular events. ... All astronauts perform exercise during their mission to counteract losses in bone density, muscle strength, and heart and blood vessel performance. ... Stressors include chronic sleep loss, constant work demands, and irregularities in their internal biological clocks. ... Crews exposed to radiation from space may be more likely to develop cancer."
 - Values: `muscleRisk` = Risk of Reduced Cardiorespiratory and Musculoskeletal Fitness; `sleepRisk` = Risk of Inadequate Sleep and Irregular Schedules; `cardioRisk` = Risk of Cardiovascular Adaptations; `radiationRisk` = Risk of Radiation-Induced Cancers
 
-**V45**. Current NASA studies monitor crew well-being, activity and sleep in deep space (ARCHeR, on Artemis II) and collect a consistent set of physiological and psychological measurements from crew members (Standard Measures).
+**V45**. NASA's ARCHeR study monitored crew well-being, activity and sleep on Artemis II, and Standard Measures collects a consistent set of physiological and psychological measurements from crew members.
 
 - Status: verified (agency-web-page)
 - Source: NASA Human Research Program, Ongoing HRP Research in Space (entries ARCHeR and Standard Measures). <https://www.nasa.gov/hrp/ongoing-hrp-research/>
 - Quote: "A study on Artemis II monitored astronauts' well-being, activity, and sleep patterns to learn more about human health and performance in deep space. ... Collecting a consistent set of physiological and psychological measurements to better understand how spaceflight affects the bodies and minds of crew members"
 
-**V46**. The Canadian Space Agency is funding CANS, a compact neutron spectrometer that works continuously and autonomously, as plans advance for missions to the Moon and Mars. Neutrons contribute about 30% of the radiation on the ISS.
+**V46**. The Canadian Space Agency is funding the continued development of CANS, a compact neutron spectrometer designed to work continuously and autonomously, as plans advance for missions to the Moon and Mars. Neutrons contribute about 30% of total radiation on the ISS.
 
 - Status: verified (agency-web-page)
 - Source: Canadian Space Agency, Monitoring radiation for astronaut health (2026-02-26). <https://www.asc-csa.gc.ca/eng/news/articles/2026/2026-02-26-monitoring-radiation-astronaut-health.asp>
