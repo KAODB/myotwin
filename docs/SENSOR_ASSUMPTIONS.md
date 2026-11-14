@@ -157,9 +157,9 @@ s per sr; no habitat shielding; the Mars atmosphere is ignored).
   detector (V34).
 - Sea-level cosmic-ray muons have imaged an anthropomorphic phantom in a
   24-hour exposure with signal to background of about 1:1 (V35).
-- Surface dose rates used by the simulator: 13.2 uGy/h in silicon on the Moon,
-  from the LND instrument on the Chang'E-4 lander (V12), and 8.60 uGy/h in
-  silicon on Mars, from the first of 45 MSL/RAD observations on sol 90 (V16).
+- Surface doses used by the simulator are replayed measurements: LRO CRaTER
+  nights from 2017 on the Moon (V61) and Curiosity RAD sols from 2012 on Mars
+  (V60).
 
 **What we found no published work on**
 

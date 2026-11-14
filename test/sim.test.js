@@ -8,6 +8,7 @@ const sim = require('../js/sim.js');
 
 const NIGHTS = { S1: 60, S2: 90, S3: 45, S4: 63 };
 const surface = (recs) => recs.filter((r) => r.missionDay >= 0);
+const median = (a) => { const s = a.slice().sort((x, y) => x - y); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 
 function assertNoNaN(v, path) {
   if (typeof v === 'number') assert.ok(Number.isFinite(v), 'non-finite at ' + path);
@@ -54,12 +55,85 @@ test('records follow the NightRecord shape', () => {
   assert.ok(r._truth.tracksPerCm2 > 0);
 });
 
-test('S3 has exactly one SPE night, on day 20, with a much higher dose', () => {
+// ---- replayed radiation measurements ----------------------------------------
+const msl = require('../data/msl-rad.js');
+const crater = require('../data/lro-crater.js');
+const donki = require('../data/donki-sep-2017.js');
+const engine = require('../js/engine.js');
+
+test('S2 replays one Curiosity RAD sol per night: median dose rate x 8 h, with provenance', () => {
+  const surf = surface(sim.generate('S2').records);
+  surf.forEach((r, k) => {
+    const [sol, date, b] = msl.rows[k];
+    assert.equal(r.rad.dose_uGy, Math.round(b * 8 * 10) / 10, 'night ' + k);
+    assert.deepStrictEqual(r.rad.measured, { dataset: 'msl-rad', sol: sol, date: date });
+    assert.equal(r.rad.spe, false);
+  });
+  assert.equal(surf[89].rad.measured.sol, 108);
+});
+
+test('S1 replays the quiet CRaTER window night by night (D5&6)', () => {
+  const surf = surface(sim.generate('S1').records);
+  surf.forEach((r, k) => {
+    assert.equal(r.rad.dose_uGy, crater.quiet[k][1], 'night ' + k);
+    assert.deepStrictEqual(r.rad.measured, { dataset: 'lro-crater', date: crater.quiet[k][0], pair: 'D5&6' });
+    assert.equal(r.rad.spe, false);
+  });
+});
+
+test('S3 replays the September 2017 CRaTER window; night 20 is 2017-09-10 and carries the DONKI record', () => {
   const surf = surface(sim.generate('S3').records);
-  const spe = surf.filter((r) => r.rad.spe);
-  assert.equal(spe.length, 1);
-  assert.equal(spe[0].missionDay, 20);
-  assert.ok(spe[0].rad.dose_uGy > 20 * surf[10].rad.dose_uGy);
+  surf.forEach((r, k) => {
+    assert.equal(r.rad.dose_uGy, crater.event[k][1], 'night ' + k);
+    assert.deepStrictEqual(r.rad.measured, { dataset: 'lro-crater', date: crater.event[k][0], pair: 'D5&6' });
+  });
+  const n20 = surf[20];
+  assert.equal(n20.rad.measured.date, '2017-09-10');
+  assert.ok(n20.rad.events.some((e) => e.id === '2017-09-10T16:45:00-SEP-001' && e.start === '2017-09-10T16:45Z'));
+  const quiet = median(crater.quiet.map((r) => r[1]));
+  assert.ok(n20.rad.dose_uGy / quiet > 400, String(n20.rad.dose_uGy / quiet));
+});
+
+test('S3 spe flags fall exactly where a DONKI record starts 16 h before to the end of the sleep window', () => {
+  const surf = surface(sim.generate('S3').records);
+  const H = 3600000;
+  const expected = surf.map((r) => {
+    const open = Date.parse(r.rad.measured.date + 'T22:00:00Z');
+    const lo = open - 16 * H, hi = open + 8 * H;
+    const covered = lo >= Date.parse(donki.coverage[0]) && hi <= Date.parse(donki.coverage[1]);
+    const ids = donki.rows.filter((e) => Date.parse(e[1]) >= lo && Date.parse(e[1]) < hi).map((e) => e[0]);
+    return { spe: ids.length > 0, ids: covered ? ids : null };
+  });
+  surf.forEach((r, k) => {
+    assert.equal(r.rad.spe, expected[k].spe, 'night ' + k);
+    assert.deepStrictEqual(r.rad.events && r.rad.events.map((e) => e.id), expected[k].ids, 'night ' + k);
+  });
+  assert.deepStrictEqual(surf.filter((r) => r.rad.spe).map((r) => r.missionDay), [14, 16, 20, 22, 27]);
+});
+
+test('S3 event labels cover exactly the nights above 2x the scenario median dose', () => {
+  const { scenario, records } = sim.generate('S3');
+  const surf = surface(records);
+  const usual = median(surf.map((r) => r.rad.dose_uGy));
+  const raised = surf.filter((r) => r.rad.dose_uGy > 2 * usual).map((r) => r.missionDay);
+  const labelled = [];
+  scenario.events.forEach((e) => { for (let d = e.from; d <= e.to; d++) labelled.push(d); });
+  assert.deepStrictEqual(labelled, raised);
+});
+
+test('track count scales with the night-to-usual dose ratio', () => {
+  const surf = surface(sim.generate('S3').records);
+  const usual = median(surf.map((r) => r.rad.dose_uGy));
+  const base = surf.find((r) => r.rad.dose_uGy === usual)._truth.tracksPerCm2;
+  assert.ok(Math.abs(surf[20]._truth.tracksPerCm2 / base - surf[20].rad.dose_uGy / usual) < 0.01 * surf[20].rad.dose_uGy / usual);
+});
+
+test('engine: S3 night 20 is red for radiation and the brief says Report', () => {
+  const { records } = sim.generate('S3');
+  const i = records.findIndex((r) => r.missionDay === 20);
+  const a = engine.assess(records, i);
+  assert.equal(a.cards.find((c) => c.id === 'radiation').status, 'red');
+  assert.match(a.headline, /^Report to the flight surgeon today: radiation/);
 });
 
 test('S2 first surface night carries the 180-day transit loss', () => {
@@ -81,7 +155,7 @@ test('what-if overrides change the outcome in the expected direction', () => {
   const end = (o) => surface(sim.generate('S1', o).records)[59]._truth.muscleChangePct;
   assert.ok(end({ exerciseAdherence: 0 }) < end({}));
   const dose = (o) => surface(sim.generate('S1', o).records)[5].rad.dose_uGy;
-  assert.ok(dose({ shieldingFactor: 0.5 }) < dose({}));
+  assert.equal(dose({ shieldingFactor: 0.5 }), Math.round(dose({}) * 0.5 * 10) / 10);
 });
 
 test('NOISE and ASSUMPTIONS are declared', () => {
@@ -128,7 +202,6 @@ test('exerciseAdherence override changes the truth but not the plan', () => {
   assert.deepStrictEqual(b.plan, a.plan);
 });
 
-const median = (a) => { const s = a.slice().sort((x, y) => x - y); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 const sd = (a) => { const m = a.reduce((x, y) => x + y, 0) / a.length; return Math.sqrt(a.reduce((x, y) => x + (y - m) ** 2, 0) / (a.length - 1)); };
 const baselineOf = (records, f) => records.filter((r) => r.missionDay < 0).map(f);
 
