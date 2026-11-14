@@ -133,7 +133,7 @@
 
     var reason = t('windowNights') + '-night median ' + f(value, 2) + ' deg, ' + f(Math.abs(deltaPct), 1) + '% ' +
       (deltaPct < 0 ? 'below' : 'above') + ' your baseline of ' + f(b.eim.median, 2) + ' deg.';
-    if (plan) reason += ' The mission plan expects about ' + f(expectedDrop, 1) + '% at this point.';
+    if (plan) reason += ' The mission plan expects a drop of about ' + f(expectedDrop, 1) + '% at this point.';
     var status = 'green', threshold = 'muscleAmberDropPct';
     if (drop > extra.redLimitPct) {
       status = 'red';

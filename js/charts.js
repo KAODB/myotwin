@@ -131,7 +131,7 @@
    * Draw a time series into an <svg>.
    * opts: { series: [{missionDay, value|null}], raw: [{missionDay, value|null}]|null,
    *   baseline: {median, low, high}|null, expected: [{missionDay, low, high}]|null,
-   *   thresholds: [{value, label, status}], markers: [{missionDay, label}],
+   *   thresholds: [{value, label, status}], markers: [{missionDay, label, shortLabel?}],
    *   exercise: [{missionDay, done}]|null, statusAt: (missionDay) => status,
    *   selectedDay, unit, yLabel, xTitle = 'Mission day', axisBreak: missionDay|null }
    * `series` is the line the status is judged on (status-shaped markers); `raw` are the
@@ -249,10 +249,12 @@
       var mx = X(mk.missionDay);
       if (mk.label) {
         // Keep the label inside the plot: estimated width about 6 px per character.
-        var est = mk.label.length * 6, rows = pw < 420 ? 3 : 2;
+        // A marker may carry a shortLabel for plots too narrow for the full one.
+        var lab = mk.shortLabel && mk.label.length * 6 > pw - 4 ? mk.shortLabel : mk.label;
+        var est = lab.length * 6, rows = pw < 420 ? 3 : 2;
         var lx = mx > m.l + pw * 0.75 ? mx - 4 - est : mx + 4;
         lx = Math.max(m.l + 2, Math.min(lx, W - m.r - est));
-        text(svg, lx, m.t + 12 + (k % rows) * 14, mk.label, 'event-label', 'start');
+        text(svg, lx, m.t + 12 + (k % rows) * 14, lab, 'event-label', 'start');
       }
     });
 

@@ -30,3 +30,19 @@ test('HAZARDS lists the five V43 hazards in order with a valid coverage', () => 
     assert.ok(typeof h.text === 'string' && h.text.length > 20, h.name + ' text');
   });
 });
+
+// Literal expectations, so a change to the evidence table or a reordering is caught.
+const HAZARD_LITERALS = ['Space Radiation', 'Isolation and Confinement', 'Distance from Earth', 'Gravity Fields', 'Hostile/Closed Environments'];
+const HAZARD_SUBJECTS = [/radiation|dose/i, /sleep/i, /crew|ground/i, /muscle/i, /\bair\b/i];
+
+test('V43 names the five hazards literally, in NASA order, and V46 gives a 30% neutron share', () => {
+  assert.deepStrictEqual(evidence.value('V43', 'hazards'), HAZARD_LITERALS);
+  assert.strictEqual(evidence.value('V46', 'neutronSharePct'), 30);
+});
+
+test('each HAZARDS row has the literal name and text about its own subject', () => {
+  rules.HAZARDS.forEach((h, i) => {
+    assert.strictEqual(h.name, HAZARD_LITERALS[i]);
+    assert.match(h.text, HAZARD_SUBJECTS[i], h.name + ' text');
+  });
+});
