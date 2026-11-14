@@ -275,33 +275,50 @@ shared and captured:
 - Within a page session each scenario remembers its own night, layer and view (memory only):
   switching to another scenario and back returns to them. The address stays the source of truth on
   load and for sharing.
-- First screen: at 1440 x 900 and 1366 x 768 the body figure, its four hotspots and the hint line,
-  and each card's name, status and number sit above the fixed time bar (all four cards completely at
-  1440 x 900). The sentence on the sensor panel and the NASA risk line (`#brief-note`) sit below the
-  figure and the cards.
+- First screen (Plate I): the sleeper drawn as a stipple (`charts.stipple`, one dot per phantom
+  cell, radius and brightness from the value; in the change view a loss is blue, a gain ink, cells
+  below the noise the smallest quiet dots; a left-out density night is hollow dots along the
+  outline) inside a hairline square and circle with dotted cosmic-ray tracks (`charts.plateFrame`).
+  Four hotspot rings sit on the body parts (`hotspotCm` in the presentation helpers block of
+  `js/app.js`, tested by `test/figure.test.js`) and are tied by hairline leaders to the four checks,
+  set as margin notes (`#cards .card`). The headline is split by `splitHeadline` (tested by
+  `test/presentation.test.js`). The night ruler (`charts.ruler`) is fixed to the bottom and is the
+  slider: a real `<input type="range" id="day">` for keyboard and screen readers, and pressing or
+  dragging anywhere on the ruler moves the night (`charts.rulerIndex`). At 1440 x 900, 1440 x 790 and
+  1366 x 657 the plate, its four hotspots and all four notes sit above the ruler. Under 1100 px the
+  layout stacks; under 600 px the notes are one column.
+- Plate II (`#checks`): text tabs for the four checks, the meaning as a statement, numbered actions,
+  who decides, the trend figure (Fig. 2), for radiation the proton chart and the direction rose
+  (Fig. 3 and 4) with `#rad-source` under them, then "NASA on this risk" in three columns.
 - Trend charts (`charts.line` with `upTo`) draw the readings, the judged line, its points and the
   exercise ticks only up to the selected night; the axes span the whole scenario and the plan band
   and thresholds stay. Event markers are drawn for events that started by the selected night; a
   marker may carry `shortLabel` and `tinyLabel`, and its label sits beside its own line inside the
   chart.
 
-Colour scheme (`css/style.css`, palette at the top; `test/palette.test.js` checks it):
+Colour scheme and type (`css/style.css`, palette at the top; `test/palette.test.js` checks it):
 
-- Midnight Black `#02070A`, working colour Electric Blue `#0297DE`, accent Cantaloupe Orange
-  `#FC734D`; every colour pair meets WCAG AA.
-- The accent (`--attention`) is reserved for Watch and Report (marks, card bars, status words,
-  chart points and threshold lines) and the headline when a shown check is on Watch or Report
-  (`.headline-attn`). Report is solid with a heavy bar; Watch is an outlined triangle with a dashed
-  bar. Everything neutral (badges, tags, chips, notes) uses neutral outlines or blue.
-- Canvas scales come from `--map-heat` (black, working blue, white) and `--map-diverging` (blue,
-  neutral, accent), read by `js/charts.js`; the density layer stays greyscale.
+- Two quiet colours and one loud one: night `#02070A` (ground), ink `#EAF2F7` (text and marks),
+  quiet `#8FA3B1` (secondary text), hairlines rule `#1B2C37` and rule-strong `#2E4859`; blue
+  `#0297DE` is the working colour (selection, the selected night, links, focus, cosmic-ray tracks,
+  a loss in the change view); every text pair meets WCAG AA.
+- The accent `#FC734D` (`--accent`) is reserved for Watch and Report (marks, words, leaders,
+  chart points and threshold lines) and the emphasised word of the headline when a shown check is
+  on Watch or Report (`.headline-attn`). Watch is an outlined triangle, Report a solid octagon,
+  In range a small ring.
+- Type: Cormorant Garamond (display) and EB Garamond (text), SIL OFL 1.1, served from `fonts/`
+  with their licence texts (`font-src 'self'` in the Content Security Policy). No sans-serif.
+- No cards, filled panels, shadows, gradients or rounded containers: structure is hairline rules
+  and space. Motion (tracks drifting, the halo of a flagged hotspot, value cross-fades, sections
+  fading up) is off under `prefers-reduced-motion`.
+- `--map-heat` and `--map-diverging` remain for `charts.image` (used by `demo/gallery.html`).
 
 Measured radiation data on the page:
 
 - `index.html` loads `data/msl-rad.js`, `data/lro-crater.js`, `data/donki-sep-2017.js`,
   `data/omni-protons.js` and `data/osdr-pwb.js` before `js/sim.js`, and `data/osdr-pwb.js` before
   `js/model.js` (checked by `test/page.test.js`).
-- Card tag: the radiation card carries "Measured by NASA" (on nights with `rad`). Under the cards, `#rad-source` says where tonight's dose comes from,
+- The radiation note says "measured by NASA" in its qualifier (on nights with a measured dose). In Plate II, under the radiation figures, `#rad-source` says where tonight's dose comes from,
   built from `rad.measured` (V60 for Curiosity RAD, V61 for LRO CRaTER), and, on a night with
   `rad.events`, one DONKI record: the record named in the evidence table (V62) is preferred when
   it is among the night's records (linked to V62); otherwise the first record, shown by its id.
@@ -313,7 +330,7 @@ Measured radiation data on the page:
   scale (`logY`, decade ticks shared with `charts.logSeries`) with tick labels in the card's units
   (`charts.doseTick`: µGy below 1,000, mGy from 1,000 up); the note and the chart's accessible
   label say the scale is logarithmic. Narrower ranges keep the linear axis.
-- `#gcheck`, in "How it works" after the limits list: the rat
+- `#gcheck`, in "How it works" after "Where the method comes from": the rat
   partial-weight-bearing check of the gravity term, drawn with `charts.dotScale` from
   `model.checkGravityTerm(data.osdrPwb, gs)` and worded by `model.describeGravityCheck`; caveats
   always visible; links V90 and V91. It follows the what-if shape `gs`. Each mark is centred on its

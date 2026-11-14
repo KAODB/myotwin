@@ -1,7 +1,9 @@
 <!doctype html>
 <!--
-  MyoTwin page shell: the morning brief (whole-body image, four status cards),
-  timeline, trend, guidance, what-if controls, how it works, evidence drawer.
+  MyoTwin page shell, set as an anatomical atlas of one night.
+  Plate I: the morning brief (the sleeper drawn as a stipple, four checks as margin notes, the night ruler).
+  Plate II: the selected check (meaning, actions, trend figure, NASA on this risk).
+  Then what-if, method, hazards, limits, measured data and the evidence drawer.
   Structure only; js/app.js fills it from the simulated data modules.
   Crew readings are simulated; the radiation numbers are measured NASA data.
 
@@ -11,248 +13,242 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src data:; base-uri 'none'; form-action 'none'; require-trusted-types-for 'script'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src data:; base-uri 'none'; form-action 'none'; require-trusted-types-for 'script'">
 <meta name="referrer" content="no-referrer">
-<meta name="color-scheme" content="dark light">
+<meta name="color-scheme" content="dark">
 <meta name="description" content="MyoTwin: a morning health brief built from passive sleep-station sensing on the Moon and Mars. Concept software with simulated data.">
 <link rel="icon" href="data:,">
 <title>MyoTwin: the health check that happens while you sleep</title>
+<link rel="preload" href="fonts/cormorant-garamond-latin-500-italic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/eb-garamond-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-<!-- Status icons: a shape for every status so colour is never the only cue. -->
+<!-- Status marks: a drawn shape with every status word, so colour is never the only cue.
+     In range: a small ring. Watch: an outlined triangle. Report: a solid octagon. No data: a dash. -->
 <svg class="sprite" aria-hidden="true" focusable="false">
-  <symbol id="st-green" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="currentColor"/><path d="M4.8 8.2l2.2 2.2 4.2-4.6" fill="none" class="ink-s" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-  <symbol id="st-amber" viewBox="0 0 16 16"><path d="M8 1.3l7 12.9H1z" fill="currentColor" class="st-shape"/><path d="M8 6v3.8" class="ink-s" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="12" r="1" class="ink-f"/></symbol>
-  <symbol id="st-red" viewBox="0 0 16 16"><path d="M5.3 1h5.4L15 5.3v5.4L10.7 15H5.3L1 10.7V5.3z" fill="currentColor"/><path d="M8 4.2v4.6" class="ink-s" stroke-width="1.9" stroke-linecap="round"/><circle cx="8" cy="11.5" r="1.1" class="ink-f"/></symbol>
-  <symbol id="st-grey" viewBox="0 0 16 16"><rect x="2" y="6.6" width="12" height="2.8" rx="1.4" fill="currentColor"/></symbol>
+  <symbol id="st-green" viewBox="0 0 16 16"><circle cx="8" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.3"/></symbol>
+  <symbol id="st-amber" viewBox="0 0 16 16"><path d="M8 2.3l6.3 11.2H1.7z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></symbol>
+  <symbol id="st-red" viewBox="0 0 16 16"><path d="M5.3 1h5.4L15 5.3v5.4L10.7 15H5.3L1 10.7V5.3z" fill="currentColor"/></symbol>
+  <symbol id="st-grey" viewBox="0 0 16 16"><path d="M3 8h10" stroke="currentColor" stroke-width="1.3"/></symbol>
 </svg>
 
 <a class="skip" href="#brief">Skip to the morning brief</a>
 
 <header class="topbar">
-  <div class="brand">
-    <svg class="logo" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><circle cx="16" cy="16" r="14.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5 18h5l2.5-6 4 11 3-8 2 3h5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <div>
-      <p class="brand-name">MyoTwin</p>
-      <p class="tagline">The health check that happens while you sleep.</p>
-    </div>
-  </div>
-  <div class="controls">
-    <label class="field">
-      <span class="field-label">Scenario</span>
+  <p class="mark"><span class="brand-name">MyoTwin</span> <i class="tagline">the health check that happens while you sleep</i></p>
+  <nav class="nav" aria-label="Page">
+    <label class="scenario-pick">
+      <span class="visually-hidden">Scenario</span>
       <select id="scenario" disabled>
         <option value="">Loading scenarios</option>
       </select>
     </label>
-    <p class="env-badge" id="env-badge"><span class="field-label" id="env-label">Habitat</span> <span id="env-name">Not loaded</span></p>
-  </div>
+    <a class="nav-link" href="#checks" data-goto="checks">The checks</a>
+    <a class="nav-link" href="#how" data-goto="how">Method</a>
+    <a class="nav-link" href="#evidence" data-goto="evidence">Sources</a>
+  </nav>
 </header>
 
 <main id="main">
 
-  <!-- 2. Morning brief -->
-  <section id="brief" class="brief" aria-labelledby="brief-title">
-    <div class="brief-head">
-      <h1 id="brief-title" class="eyebrow" tabindex="-1">Morning brief <span id="brief-date" class="muted">no night selected</span></h1>
+  <!-- Plate I: the morning brief -->
+  <section id="brief" class="plate-one" aria-labelledby="brief-title">
+    <div class="say">
+      <h1 id="brief-title" class="label label-blue" tabindex="-1">Morning brief<span id="brief-date"></span></h1>
       <p id="headline" class="headline" aria-live="polite">The brief appears here once the simulated mission loads.</p>
       <p id="notice" class="notice" role="status" hidden>This link could not be opened; showing the default view.</p>
-      <p id="scenario-summary" class="scenario-summary muted"></p>
+      <p id="scenario-summary" class="deck"></p>
       <noscript><p class="notice">MyoTwin needs JavaScript to build the brief. Nothing is sent anywhere; it runs entirely in this page.</p></noscript>
+      <p id="image-caption" class="fig-note">
+        <b>Fig. 1</b>
+        <span id="cap-label">The sleeper, seen from above.</span>
+        <span class="switches">
+          <span class="switch-row" role="group" aria-label="Image layer"><button type="button" class="seg" data-layer="density" aria-pressed="true">Density</button>, <button type="button" class="seg" data-layer="pressure" aria-pressed="false">Pressure</button>, <button type="button" class="seg" data-layer="impedance" aria-pressed="false">Impedance</button>;</span>
+          <span class="switch-row" role="group" aria-label="Image view"><button type="button" class="seg" data-view="raw" aria-pressed="true">Tonight</button>, <button type="button" class="seg" data-view="diff" aria-pressed="false" id="view-diff">Change since arrival</button>.</span>
+        </span>
+      </p>
     </div>
 
-    <figure class="panel body-image" aria-labelledby="image-caption">
-      <div class="panel-bar">
-        <div class="segmented" role="group" aria-label="Image layer">
-          <button type="button" class="seg" data-layer="density" aria-pressed="true">Density</button>
-          <button type="button" class="seg" data-layer="pressure" aria-pressed="false">Pressure</button>
-          <button type="button" class="seg" data-layer="impedance" aria-pressed="false">Impedance</button>
-        </div>
-        <div class="segmented" role="group" aria-label="Image view">
-          <button type="button" class="seg" data-view="raw" aria-pressed="true">Raw</button>
-          <button type="button" class="seg" data-view="diff" aria-pressed="false" id="view-diff">Change since arrival</button>
-        </div>
-      </div>
-      <div class="canvas-wrap">
-        <!-- Hotspots sit on the phantom's body parts (js/phantom.js); each selects its check like its card. -->
-        <div class="body-fig" id="body-fig">
-          <canvas id="body-canvas" width="120" height="360" role="img" aria-label="Whole-body image, not yet drawn"></canvas>
-          <button type="button" class="hs hs-sleep st-grey" data-card="sleep" aria-pressed="false" aria-label="Head: sleep check, No data"><span class="hs-dot" aria-hidden="true"></span><span class="hs-lead" aria-hidden="true"></span><span class="hs-label" aria-hidden="true"><span class="hs-name">Sleep</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span></button>
-          <button type="button" class="hs hs-cardio st-grey" data-card="cardio" aria-pressed="false" aria-label="Chest: heart and breathing check, No data"><span class="hs-dot" aria-hidden="true"></span><span class="hs-lead" aria-hidden="true"></span><span class="hs-label" aria-hidden="true"><span class="hs-name">Heart</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span></button>
-          <button type="button" class="hs hs-radiation st-grey" data-card="radiation" aria-pressed="false" aria-label="Whole body: radiation check, No data"><span class="hs-dot" aria-hidden="true"></span><span class="hs-lead" aria-hidden="true"></span><span class="hs-label" aria-hidden="true"><span class="hs-name">Radiation</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span></button>
-          <button type="button" class="hs hs-muscle st-grey" data-card="muscle" aria-pressed="false" aria-label="Calves: muscle check, No data"><span class="hs-dot" aria-hidden="true"></span><span class="hs-lead" aria-hidden="true"></span><span class="hs-label" aria-hidden="true"><span class="hs-name">Muscle</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span></button>
-        </div>
+    <figure class="plate body-image" id="plate" aria-labelledby="cap-label">
+      <div class="plate-art" id="plate-art">
+        <canvas id="body-canvas" width="600" height="600" role="img" aria-label="Whole-body image, not yet drawn"></canvas>
+        <svg id="plate-ink" class="plate-ink" aria-hidden="true" focusable="false"></svg>
+        <!-- One hotspot per check, placed on the phantom's body parts by js/app.js; each selects its check like its note. -->
+        <button type="button" class="hs hs-sleep st-grey" data-card="sleep" aria-pressed="false" aria-label="Head: sleep check, No data"></button>
+        <button type="button" class="hs hs-cardio st-grey" data-card="cardio" aria-pressed="false" aria-label="Chest: heart and breathing check, No data"></button>
+        <button type="button" class="hs hs-radiation st-grey" data-card="radiation" aria-pressed="false" aria-label="Whole body: radiation check, No data"></button>
+        <button type="button" class="hs hs-muscle st-grey" data-card="muscle" aria-pressed="false" aria-label="Calves: muscle check, No data"></button>
         <p class="canvas-empty" id="canvas-empty">Image not drawn yet</p>
       </div>
-      <p class="hs-hint muted" id="hs-hint">Select a body part to see its check.</p>
-      <div class="colorbar" id="colorbar" role="img" aria-label="Colour scale"></div>
-      <ul class="img-legend" id="img-legend" hidden>
-        <li id="img-legend-mask" hidden><span class="key key-mask" aria-hidden="true"></span>Below noise</li>
-        <li id="img-legend-outline" hidden><span class="key key-outline" aria-hidden="true"></span>Not measured</li>
-      </ul>
-      <figcaption id="image-caption" class="caption">
-        <span id="cap-label">Simplified supine body seen from above, head at the top.</span>
-        <span id="cap-extra"></span>
-      </figcaption>
+      <div class="colorbar" id="colorbar" role="img" aria-label="Dot size scale"></div>
     </figure>
 
-    <div class="cards" id="cards">
-      <button type="button" class="card st-grey" data-card="muscle" aria-pressed="true">
-        <span class="card-top"><span class="card-name">Muscle</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span>
-        <span class="card-value"><span class="num">—</span> <span class="unit">vs your own baseline</span></span>
-        <span class="card-delta">Change vs baseline: —</span>
-        <span class="card-extra"></span>
-        <span class="card-reason">Calf impedance phase, 7-night median.</span>
-      </button>
+    <div class="cards notes" id="cards">
       <button type="button" class="card st-grey" data-card="sleep" aria-pressed="false">
-        <span class="card-top"><span class="card-name">Sleep</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span>
-        <span class="card-value"><span class="num">—</span> <span class="unit">h</span></span>
-        <span class="card-delta">Change vs baseline: —</span>
-        <span class="card-extra"></span>
-        <span class="card-reason">Hours asleep, 7-night mean, from radar.</span>
+        <span class="card-name label">Sleep</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span>
+        <span class="card-value"><span class="num">&#8212;</span><span class="unit">h asleep</span></span>
+        <span class="card-sub" hidden></span>
       </button>
       <button type="button" class="card st-grey" data-card="cardio" aria-pressed="false">
-        <span class="card-top"><span class="card-name">Heart and breathing</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span>
-        <span class="card-value"><span class="num">—</span> <span class="unit">bpm</span></span>
-        <span class="card-delta">Change vs baseline: —</span>
-        <span class="card-extra"></span>
-        <span class="card-reason">Night heart and breathing rate, 3-night medians.</span>
+        <span class="card-name label">Heart and breathing</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span>
+        <span class="card-value"><span class="num">&#8212;</span><span class="unit">bpm</span></span>
+        <span class="card-sub" hidden></span>
       </button>
       <button type="button" class="card st-grey" data-card="radiation" aria-pressed="false">
-        <span class="card-top"><span class="card-name">Radiation</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span>
-        <span class="card-value"><span class="num">—</span> <span class="unit">µGy</span></span>
-        <span class="card-delta">Change vs recent nights: —</span>
-        <span class="card-extra"></span>
-        <span class="card-reason">Dose over the sleep period.</span>
-        <span class="card-tags" id="rad-tag" hidden><span class="tag">Measured by NASA</span></span>
+        <span class="card-name label">Radiation</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span>
+        <span class="card-value"><span class="num">&#8212;</span><span class="unit">µGy</span></span>
+        <span class="card-sub" hidden></span>
+      </button>
+      <button type="button" class="card st-grey" data-card="muscle" aria-pressed="true">
+        <span class="card-name label">Muscle</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span>
+        <span class="card-value"><span class="num">&#8212;</span><span class="unit">vs your own baseline</span></span>
+        <span class="card-sub" hidden></span>
       </button>
     </div>
-    <!-- Where tonight's radiation number comes from; outside the card button so the evidence links can be links. -->
-    <div class="rad-source" id="rad-source" hidden>
-      <p id="rad-measured"></p>
-      <p id="rad-donki" hidden></p>
-    </div>
-    <!-- Below the figure and the cards, so the first screen keeps the figure and the four checks above the time bar. -->
-    <div class="brief-note" id="brief-note">
+
+    <!-- Below the plate: the longer notes on the figure and on where the readings come from. -->
+    <div class="brief-note reveal" id="brief-note">
+      <p id="cap-extra" class="cap-extra"></p>
       <p id="data-source" class="data-source">An assumed sensor panel in the sleep station measures while the crew sleep. Nothing is worn and it takes no crew time.</p>
-      <p id="hrp-line" class="hrp-line muted">Each check is tied to a NASA Human Research Program risk: musculoskeletal fitness, sleep, cardiovascular adaptations and radiation. <a id="hrp-link" class="ev-link" href="#evidence">V44</a></p>
+      <p id="scenario-more" class="quiet"></p>
+      <p id="hrp-line" class="quiet">Each check is tied to a NASA Human Research Program risk: musculoskeletal fitness, sleep, cardiovascular adaptations and radiation. <a id="hrp-link" class="ev-link" href="#evidence" data-ev="V44">V44</a></p>
     </div>
   </section>
 
-  <!-- 3. Timeline -->
-  <!-- Fixed to the bottom of the viewport so the time controls are always in view; stays here in the tab order. -->
-  <section id="timeline" class="panel timeline" aria-labelledby="timeline-title">
-    <h2 id="timeline-title" class="section-title">Mission timeline</h2>
-    <div class="timeline-row">
-      <button type="button" id="play" class="btn btn-icon" aria-pressed="false" disabled>
-        <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path class="i-play" d="M4 2.5v11l9-5.5z" fill="currentColor"/><path class="i-pause" d="M3.5 2.5h3v11h-3zM9.5 2.5h3v11h-3z" fill="currentColor"/></svg>
-        <span class="btn-text">Play</span>
-      </button>
-      <label class="slider">
-        <span class="visually-hidden" id="day-label">Mission day</span>
+  <!-- The night ruler: fixed to the bottom of the viewport so the time controls are always in view; stays here in the tab order. -->
+  <section id="timeline" class="timeline" aria-labelledby="timeline-title">
+    <h2 id="timeline-title" class="visually-hidden">Mission timeline</h2>
+    <button type="button" id="play" class="play" aria-pressed="false" disabled><span class="btn-text">Play the mission</span></button>
+    <div class="ruler" id="ruler-wrap">
+      <svg id="ruler" class="ruler-art" aria-hidden="true" focusable="false"></svg>
+      <label class="ruler-input">
+        <span class="visually-hidden" id="day-label">Mission night</span>
         <input type="range" id="day" min="0" max="1" step="1" value="0" disabled>
       </label>
-      <p class="day-readout"><output id="day-out" for="day">Day —</output> <span id="date-out" class="muted">no date</span></p>
     </div>
-    <p class="timeline-legend muted" id="timeline-legend">Days below 0 are the 14 pre-departure baseline nights.</p>
+    <p class="day-readout"><output id="day-out" for="day">Night &#8212;</output> <span id="date-out" class="label">no date</span></p>
   </section>
 
-  <div class="split">
-    <div class="col-main">
-      <!-- 4. Trend -->
-      <section id="trend" class="panel trend" aria-labelledby="trend-title">
-        <h2 id="trend-title" class="section-title">Trend <span id="trend-card" class="muted">Muscle</span></h2>
-        <svg id="trend-chart" class="chart" role="img" aria-label="Trend chart, not yet drawn"></svg>
-        <ul class="legend" id="trend-legend" aria-label="Chart legend"></ul>
-        <p id="trend-note" class="trend-note muted"></p>
-        <figure id="flux-fig" class="flux-fig" hidden>
-          <svg id="flux-chart" class="chart chart-flux" role="img" aria-label="Proton flux chart, not yet drawn"></svg>
-          <figcaption class="caption">Hourly flux of protons above 10 MeV near Earth, 4 to 16 September 2017, from NASA's OMNI2 data (measured by GOES at geostationary orbit; flux, not dose). Logarithmic scale; the shaded band is the selected night's 22:00 to 06:00 UTC sleep window. <a id="flux-ev" class="ev-link" href="#evidence">V63</a></figcaption>
-        </figure>
+  <!-- Plate II: the selected check -->
+  <section id="checks" class="plate-two reveal" aria-labelledby="checks-title">
+    <h2 id="checks-title" class="label">Plate II &nbsp;·&nbsp; The checks</h2>
+    <div class="tabs" role="group" aria-label="Check">
+      <button type="button" class="tab st-grey" data-card="muscle" aria-pressed="true"><span class="tab-name">Muscle</span><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></button>
+      <button type="button" class="tab st-grey" data-card="sleep" aria-pressed="false"><span class="tab-name">Sleep</span><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></button>
+      <button type="button" class="tab st-grey" data-card="cardio" aria-pressed="false"><span class="tab-name">Heart and breathing</span><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></button>
+      <button type="button" class="tab st-grey" data-card="radiation" aria-pressed="false"><span class="tab-name">Radiation</span><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></button>
+    </div>
+
+    <div class="check-cols">
+      <section id="guidance" class="guidance" aria-labelledby="guidance-title">
+        <h3 id="guidance-title" class="visually-hidden">What it means: <span id="guidance-card">Muscle</span></h3>
+        <p id="g-status" class="g-status">Shown once a night is assessed.</p>
+        <p id="g-meaning" class="statement">Shown once a night is assessed.</p>
+        <h4 class="label">What to do now</h4>
+        <ol id="g-actions" class="actions"><li>Shown once a night is assessed.</li></ol>
+        <h4 class="label">Who decides</h4>
+        <p id="g-decides">Shown once a night is assessed.</p>
         <p id="projection" class="projection" hidden></p>
-        <figure id="rose-fig" class="rose-fig" hidden>
-          <svg id="rose" class="rose" role="img" aria-label="Direction rose, not yet drawn"></svg>
-          <figcaption class="caption"><span id="rose-reading"></span> The rose shows the share of tracks by arrival direction, not the amount of radiation: a night with a much higher dose can look the same here. Seen from above, as in the body image. In this simulated scenario one side of the sleep station is less shielded. Tracks summed over the mission so far <span id="rose-span"></span> The assumed trackers accept particles within 20 degrees of vertical, so the rose mostly describes the roof; side walls would need wider acceptance.</figcaption>
-        </figure>
       </section>
 
-      <!-- 6. What-if -->
-      <section id="whatif" class="panel whatif" aria-labelledby="whatif-title">
-        <h2 id="whatif-title" class="section-title">What if</h2>
-        <p class="muted section-lede">Change an assumption and the simulated nights are regenerated.</p>
-        <div class="whatif-grid">
-          <label class="knob" id="knob-adherence">
-            <span class="knob-label">Exercise adherence <output id="adherence-out" for="adherence">As planned</output></span>
-            <input type="range" id="adherence" min="0" max="1" step="0.05" value="1" disabled>
-            <span class="knob-hint">Share of planned countermeasure sessions done.</span>
-          </label>
-          <label class="knob" id="knob-shape">
-            <span class="knob-label">Partial-gravity shape <output id="shape-out" for="shape">1 (linear)</output></span>
-            <input type="range" id="shape" min="0.25" max="4" step="0.25" value="1" disabled>
-            <span class="knob-hint">1 means loss scales linearly with missing gravity (an assumption). Below 1, partial gravity protects muscle less than that; above 1, it protects more. Rat data are compared below, under How it works.</span>
-          </label>
-          <label class="knob" id="knob-shield">
-            <span class="knob-label">Habitat shielding <output id="shield-out" for="shield">1.0</output></span>
-            <input type="range" id="shield" min="0.6" max="1" step="0.1" value="1" disabled>
-            <span class="knob-hint">Share of cosmic-ray tracks that still cross the sleeper behind the habitat shielding. Cosmic-ray dose barely falls behind such shielding, so this setting does not change the dose.</span>
-          </label>
-          <label class="knob">
-            <span class="knob-label">Sensor noise <output id="noise-out" for="noise">2% (assumed)</output></span>
-            <input type="range" id="noise" min="0.01" max="0.08" step="0.01" value="0.02" disabled>
-            <span class="knob-hint">How much the nightly impedance reading varies. A bed-integrated sensor may be noisier than assumed.</span>
-          </label>
+      <section id="trend" class="trend" aria-labelledby="trend-title">
+        <figure class="fig">
+          <svg id="trend-chart" class="chart" role="img" aria-label="Trend chart, not yet drawn"></svg>
+          <figcaption class="fig-note"><b>Fig. 2</b> <span id="trend-title"><span id="trend-card">Muscle</span>, night by night.</span> <span id="trend-note"></span></figcaption>
+          <ul class="legend" id="trend-legend" aria-label="Chart legend"></ul>
+        </figure>
+        <figure id="flux-fig" class="fig flux-fig" hidden>
+          <svg id="flux-chart" class="chart chart-flux" role="img" aria-label="Proton flux chart, not yet drawn"></svg>
+          <figcaption class="fig-note"><b>Fig. 3</b> Hourly flux of protons above 10 MeV near Earth, 4 to 16 September 2017, from NASA's OMNI2 data (measured by GOES at geostationary orbit; flux, not dose). Logarithmic scale; the shaded band is the selected night's 22:00 to 06:00 UTC sleep window. <a id="flux-ev" class="ev-link" href="#evidence" data-ev="V63">V63</a></figcaption>
+        </figure>
+        <figure id="rose-fig" class="fig rose-fig" hidden>
+          <svg id="rose" class="rose" role="img" aria-label="Direction rose, not yet drawn"></svg>
+          <figcaption class="fig-note"><b>Fig. 4</b> <span id="rose-reading"></span> The rose shows the share of tracks by arrival direction, not the amount of radiation: a night with a much higher dose can look the same here. Seen from above, as in the body image. In this simulated scenario one side of the sleep station is less shielded. Tracks summed over the mission so far <span id="rose-span"></span> The assumed trackers accept particles within 20 degrees of vertical, so the rose mostly describes the roof; side walls would need wider acceptance.</figcaption>
+        </figure>
+        <!-- Where tonight's radiation number comes from. -->
+        <div class="rad-source" id="rad-source" hidden>
+          <p id="rad-measured"></p>
+          <p id="rad-donki" hidden></p>
         </div>
-        <button type="button" id="whatif-reset" class="btn" disabled>Reset to scenario defaults</button>
       </section>
     </div>
 
-    <!-- 5. Guidance -->
-    <section id="guidance" class="panel guidance" aria-labelledby="guidance-title">
-      <h2 id="guidance-title" class="section-title">What it means <span id="guidance-card" class="muted">Muscle</span></h2>
-      <dl class="guide">
-        <dt>Status</dt>
-        <dd id="g-status">Shown once a night is assessed.</dd>
-        <dt>What it means</dt>
-        <dd id="g-meaning">Shown once a night is assessed.</dd>
-        <dt>What to do now</dt>
-        <dd><ul id="g-actions" class="actions"><li>Shown once a night is assessed.</li></ul></dd>
-        <dt>Who decides</dt>
-        <dd id="g-decides">Shown once a night is assessed.</dd>
-        <dt id="g-context-title">NASA context for this check</dt>
-        <dd id="g-context">Shown once a night is assessed.</dd>
-        <dt>Evidence behind this</dt>
-        <dd><ul id="g-sources" class="sources"><li>Listed once a night is assessed.</li></ul></dd>
-        <dt id="g-cm-title" hidden>Countermeasures and their evidence</dt>
-        <dd id="g-cm-dd" hidden><ul id="g-cm" class="countermeasures"></ul></dd>
-      </dl>
+    <section class="nasa-strip" aria-labelledby="g-context-title">
+      <h3 id="g-context-title" class="label">NASA on this risk</h3>
+      <div id="g-context" class="nasa">Shown once a night is assessed.</div>
     </section>
-  </div>
 
-  <!-- 7. How it works -->
-  <section id="how" class="how" aria-labelledby="how-title">
+    <div class="check-lists">
+      <section aria-labelledby="g-sources-title">
+        <h3 id="g-sources-title" class="label">Evidence behind this</h3>
+        <ul id="g-sources" class="sources"><li>Listed once a night is assessed.</li></ul>
+      </section>
+      <section id="g-cm-dd" aria-labelledby="g-cm-title" hidden>
+        <h3 id="g-cm-title" class="label">Countermeasures and their evidence</h3>
+        <ul id="g-cm" class="countermeasures"></ul>
+      </section>
+    </div>
+  </section>
+
+  <!-- What if -->
+  <section id="whatif" class="whatif reveal" aria-labelledby="whatif-title">
+    <h2 id="whatif-title" class="section-title">What if</h2>
+    <p class="section-lede">Change an assumption and the simulated nights are regenerated.</p>
+    <div class="whatif-grid">
+      <label class="knob" id="knob-adherence">
+        <span class="knob-label">Exercise adherence</span>
+        <output id="adherence-out" for="adherence" class="knob-value">As planned</output>
+        <input type="range" id="adherence" min="0" max="1" step="0.05" value="1" disabled>
+        <span class="knob-hint">Share of planned countermeasure sessions done.</span>
+      </label>
+      <label class="knob" id="knob-shape">
+        <span class="knob-label">Partial-gravity shape</span>
+        <output id="shape-out" for="shape" class="knob-value">1 (linear)</output>
+        <input type="range" id="shape" min="0.25" max="4" step="0.25" value="1" disabled>
+        <span class="knob-hint">1 means loss scales linearly with missing gravity (an assumption). Below 1, partial gravity protects muscle less than that; above 1, it protects more. Rat data are compared below, under the method.</span>
+      </label>
+      <label class="knob" id="knob-shield">
+        <span class="knob-label">Habitat shielding</span>
+        <output id="shield-out" for="shield" class="knob-value">1.0</output>
+        <input type="range" id="shield" min="0.6" max="1" step="0.1" value="1" disabled>
+        <span class="knob-hint">Share of cosmic-ray tracks that still cross the sleeper behind the habitat shielding. Cosmic-ray dose barely falls behind such shielding, so this setting does not change the dose.</span>
+      </label>
+      <label class="knob">
+        <span class="knob-label">Sensor noise</span>
+        <output id="noise-out" for="noise" class="knob-value">2% (assumed)</output>
+        <input type="range" id="noise" min="0.01" max="0.08" step="0.01" value="0.02" disabled>
+        <span class="knob-hint">How much the nightly impedance reading varies. A bed-integrated sensor may be noisier than assumed.</span>
+      </label>
+    </div>
+    <button type="button" id="whatif-reset" class="text-btn" disabled>Reset to scenario defaults</button>
+  </section>
+
+  <!-- Method -->
+  <section id="how" class="how reveal" aria-labelledby="how-title">
     <h2 id="how-title" class="section-title">How it works</h2>
-    <p class="section-lede muted">An assumed sensor panel in the sleep station. Nothing is worn. The one requirement is bare calves on the sensor strip.</p>
+    <p class="section-lede">An assumed sensor panel in the sleep station. Nothing is worn. The one requirement is bare calves on the sensor strip.</p>
     <div class="how-grid">
-      <article class="panel sensor">
+      <article class="sensor">
         <svg class="sensor-art" viewBox="0 0 160 80" aria-hidden="true" focusable="false">
           <path class="art-body" d="M12 38c20-10 60-12 96-6 14 2 26 2 36-2v12c-12 6-24 6-38 4-34-6-74-2-94 6z"/>
-          <rect class="art-strip" x="60" y="56" width="70" height="6" rx="3"/>
+          <path class="art-plane" d="M60 59h70"/>
           <path class="art-accent" d="M72 52v-6M88 52v-6M104 52v-6M120 52v-6"/>
         </svg>
         <h3>Impedance strip under the calves</h3>
         <p>Dry electrodes in the mattress pass a tiny 50 kHz current through the calf. In people with a leg in a cast, this reading was 28% lower than in the other leg and recovered after the cast came off (measured on the shin). We found no published measurement in space or through a mattress: that is what this panel is for.</p>
       </article>
-      <article class="panel sensor">
+      <article class="sensor">
         <svg class="sensor-art" viewBox="0 0 160 80" aria-hidden="true" focusable="false">
-          <rect class="art-strip" x="16" y="10" width="20" height="12" rx="2"/>
+          <path class="art-plane" d="M16 16h20"/>
           <path class="art-accent" d="M44 22c8 6 8 18 0 24M54 18c12 9 12 27 0 36M64 14c16 12 16 36 0 48"/>
           <path class="art-body" d="M80 52c20-6 44-6 68-2v10c-24-4-48-4-68 2z"/>
         </svg>
         <h3>60 GHz radar above the bunk</h3>
         <p>A low-power radar reads chest movement from a distance: breathing rate and heart rate. Sleep time is estimated from movement and breathing, which is an assumption here. No contact, no camera. Radar reads breathing and heart rate on Earth; we found no test in space.</p>
       </article>
-      <article class="panel sensor" id="sensor-trackers">
+      <article class="sensor" id="sensor-trackers">
         <svg class="sensor-art" viewBox="0 0 160 80" aria-hidden="true" focusable="false">
           <path class="art-plane" d="M14 12h132M14 18h132M14 62h132M14 68h132"/>
           <path class="art-body" d="M24 36c30-6 80-6 112 0v8c-32 6-82 6-112 0z"/>
@@ -262,13 +258,47 @@
         <p>Tracker planes record the path of each cosmic-ray particle crossing the sleeper. That gives the night's dose and the direction it came from. Summed over many tracks, the small deflections also give a coarse density image of the body with no added dose.</p>
       </article>
     </div>
-    <article class="panel hazards" id="hazards" aria-labelledby="hazards-title">
-      <h3 id="hazards-title">Where this sits in NASA's five hazards of human spaceflight</h3>
-      <ul id="hazard-list" class="countermeasures"><li>Listed when the page loads.</li></ul>
-      <p id="hazard-source" class="muted hazard-source">Source: V43</p>
+
+    <article class="origin" id="origin" aria-labelledby="origin-title">
+      <h3 id="origin-title" class="sub-title">Where the method comes from</h3>
+      <p class="origin-lead">On Earth, clinics look for muscle loss in older adults in three steps. MyoTwin takes those steps to a bunk on the Moon or Mars.</p>
+      <table class="origin-table">
+        <thead><tr><th scope="col"><span class="visually-hidden">Step</span></th><th scope="col">In a clinic on Earth</th><th scope="col">In a bunk on the Moon or Mars</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Find</th><td>A tape around the calf, or a five-question form. <a class="ev-link" href="#evidence" data-ev="V95">V95</a></td><td>The calf is read by impedance every night. Phase angle from bioimpedance is lower in people with muscle loss. <a class="ev-link" href="#evidence" data-ev="V96">V96</a></td></tr>
+          <tr><th scope="row">Assess</th><td>A grip test, or five rises from a chair. <a class="ev-link" href="#evidence" data-ev="V94">V94</a> <a class="ev-link" href="#evidence" data-ev="V95">V95</a></td><td>A strength test on the exercise device, asked for when the nightly reading falls behind the mission plan. <a class="ev-link" href="#evidence" data-ev="V82">V82</a></td></tr>
+          <tr><th scope="row">Confirm</th><td>Muscle mass by DXA or bioimpedance. <a class="ev-link" href="#evidence" data-ev="V94">V94</a> <a class="ev-link" href="#evidence" data-ev="V95">V95</a></td><td>The flight surgeon, with the impedance trend and the density image.</td></tr>
+        </tbody>
+      </table>
+      <p class="origin-close">The Canadian Space Agency describes the effects seen in astronauts as <q>similar to accelerated aging and health problems caused by a sedentary lifestyle</q>. <a class="ev-link" href="#evidence" data-ev="V47">V47</a> The clinic tools read the whole body or the hand. Reading one calf by impedance in a bunk is this project's adaptation of them.</p>
     </article>
-    <article class="panel limits" id="limits" tabindex="-1">
-      <h3>What this version does not account for, and the next step</h3>
+
+    <article class="gcheck" id="gcheck" aria-labelledby="gcheck-title">
+      <h3 id="gcheck-title" class="sub-title">Does partial gravity protect muscle? The model against NASA open data</h3>
+      <p class="quiet">The muscle model assumes how much of the weightlessness loss remains at partial gravity. NASA's Open Science Data Repository holds a related test in rats: 40% weight bearing in a harness, an analog of partial gravity.</p>
+      <figure class="gcheck-fig">
+        <svg id="gcheck-chart" class="dot-chart" role="img" aria-label="Share of the fully unloaded loss that remained at 40% weight bearing"></svg>
+        <ul class="legend gcheck-legend">
+          <li><span class="key key-circle" aria-hidden="true"></span>Grip</li>
+          <li><span class="key key-square" aria-hidden="true"></span>Plantarflexion torque</li>
+          <li><span class="key key-triangle" aria-hidden="true"></span>Calf girth</li>
+          <li><span class="key key-ref" aria-hidden="true"></span>Model at 0.4 g with the current shape</li>
+        </ul>
+      </figure>
+      <div id="gcheck-text" class="gcheck-text"><p>Shown when the page loads.</p></div>
+      <h4 class="label">Read with care</h4>
+      <ul id="gcheck-caveats" class="gcheck-caveats"><li>Shown when the page loads.</li></ul>
+      <p id="gcheck-close" class="gcheck-close"></p>
+    </article>
+
+    <article class="hazards" id="hazards" aria-labelledby="hazards-title">
+      <h3 id="hazards-title" class="sub-title">Where this sits in NASA's five hazards of human spaceflight</h3>
+      <ul id="hazard-list" class="countermeasures hazard-list"><li>Listed when the page loads.</li></ul>
+      <p id="hazard-source" class="quiet hazard-source">Source: V43</p>
+    </article>
+
+    <article class="limits" id="limits" tabindex="-1" aria-labelledby="limits-title">
+      <h3 id="limits-title" class="sub-title">What this version does not account for, and the next step</h3>
       <!-- The same twelve items, in the same order, as "What this version does not account for" in docs/SUBMISSION.md. -->
       <ol class="limits-list">
         <li><p><strong>Not accounted for:</strong> The momentum of each cosmic-ray particle. Deflection depends on momentum as much as on thickness, and momenta span orders of magnitude.</p><p><strong>Next step:</strong> Measure a reference block beside the sleeper every night, then add a layer that measures momentum.</p></li>
@@ -285,46 +315,27 @@
         <li><p><strong>Not accounted for:</strong> Mood, air, noise and light are not read.</p><p><strong>Next step:</strong> Show the habitat's environmental sensors beside the brief.</p></li>
       </ol>
     </article>
-    <article class="panel gcheck" id="gcheck" aria-labelledby="gcheck-title">
-      <h3 id="gcheck-title">Does partial gravity protect muscle? The model against NASA open data</h3>
-      <p class="muted">The muscle model assumes how much of the weightlessness loss remains at partial gravity. NASA's Open Science Data Repository holds a related test in rats: 40% weight bearing in a harness, an analog of partial gravity.</p>
-      <figure class="gcheck-fig">
-        <svg id="gcheck-chart" class="dot-chart" role="img" aria-label="Share of the fully unloaded loss that remained at 40% weight bearing"></svg>
-        <ul class="legend gcheck-legend">
-          <li><span class="key key-circle" aria-hidden="true"></span>Grip</li>
-          <li><span class="key key-square" aria-hidden="true"></span>Plantarflexion torque</li>
-          <li><span class="key key-triangle" aria-hidden="true"></span>Calf girth</li>
-          <li><span class="key key-ref" aria-hidden="true"></span>Model at 0.4 g with the current shape</li>
-        </ul>
-      </figure>
-      <div id="gcheck-text" class="gcheck-text"><p>Shown when the page loads.</p></div>
-      <h4 class="gcheck-sub">Read with care</h4>
-      <ul id="gcheck-caveats" class="gcheck-caveats"><li>Shown when the page loads.</li></ul>
-      <p id="gcheck-close" class="gcheck-close"></p>
-    </article>
   </section>
 
-  <!-- 7b. Real measurements replayed on this page -->
-  <section id="measured" class="panel measured" aria-labelledby="measured-title">
+  <!-- Real measurements replayed on this page -->
+  <section id="measured" class="measured reveal" aria-labelledby="measured-title">
     <h2 id="measured-title" class="section-title">Measured data used on this page</h2>
     <ul id="measured-list" class="measured-list"><li>Listed when the page loads.</li></ul>
-    <p>Everything else on this page is simulated.</p>
   </section>
 
-  <!-- 8. Evidence drawer -->
+  <!-- Evidence drawer -->
   <section id="evidence" class="evidence" aria-labelledby="evidence-title">
-    <details class="panel drawer">
-      <summary><h2 id="evidence-title" class="section-title">Evidence behind every number</h2><span class="muted" id="evidence-count">Sources and their checking status</span></summary>
-      <p class="muted">Each entry is marked verified (checked against the source text), secondary (taken from another citation) or assumption (a modelling choice).</p>
+    <details class="drawer">
+      <summary><h2 id="evidence-title" class="section-title">Evidence behind every number</h2><span class="quiet" id="evidence-count">Sources and their checking status</span></summary>
+      <p class="quiet">Each entry is marked verified (checked against the source text), secondary (taken from another citation) or assumption (a modelling choice).</p>
       <div id="evidence-list" class="evidence-groups">
-        <p class="muted">The list is built from the evidence table when the page loads.</p>
+        <p class="quiet">The list is built from the evidence table when the page loads.</p>
       </div>
     </details>
   </section>
 
 </main>
 
-<!-- 9. Footer -->
 <footer class="footer">
   <p>Concept demo for the 2026 NASA Space Apps Challenge. Crew readings are simulated; the radiation numbers are measured NASA data. Built with an SI tool (Claude) and reviewed by the team.</p>
   <p class="footer-links"><a href="https://github.com/KAODB/myotwin">Source code</a> <span aria-hidden="true">·</span> <a href="demo/slides/MyoTwin-demo.pdf">Demo slides (PDF)</a> <span aria-hidden="true">·</span> Licence: <a href="LICENSE">Apache-2.0</a></p>
