@@ -16,9 +16,10 @@ spends lying still. An assumed sensor panel in the bunk reads the calf muscle, s
 and breathing rate, and radiation overnight. In the morning one screen shows a
 body figure you can click, four checks in plain words, what NASA says about
 each risk, and what to do today. A flight surgeon decides; the software only
-flags. The method comes from the tools clinics use to find muscle loss in
-older adults: a tape around the calf, a bioimpedance reading and a strength
-test.
+flags. The method comes from the way clinics find muscle loss in
+older adults: a tape around the calf or a short form, a strength test, then
+muscle mass by DXA or bioimpedance (V94, V95). MyoTwin takes those steps to a
+bunk on the Moon or Mars.
 
 Ids such as (V85) are entries in [docs/EVIDENCE.md](docs/EVIDENCE.md).
 

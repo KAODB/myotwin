@@ -17,7 +17,7 @@ MyoTwin
 
 On the Moon or Mars a crew member has to notice changes in their own body. From Mars a message can take up to 20 minutes one way, and NASA rates the risk of operating with little real-time help from Earth 5x5 for a Mars mission, the top of its scale. NASA requires crews to keep muscle strength at or above 80% of baseline. The strength tests used on the ISS need specialized equipment in a fixed place, and in 2023 NASA's evidence report said "Currently, no standard in-flight measurement of strength exists."
 
-MyoTwin is a morning health brief built from the hours a crew member already spends lying still. A sensor panel in the bunk, which I assume and have not built, measures the calf muscle, sleep, heart and breathing rate, and radiation overnight. Nothing is worn and it takes no crew time. In the morning one screen shows a body figure you can click, four checks in plain words, what NASA says about each risk, and what to do today.
+MyoTwin takes the tools clinics use to find muscle loss in older adults and rebuilds them for a crew member asleep on the Moon or Mars. It is a morning health brief built from the hours a crew member already spends lying still. A sensor panel in the bunk, which I assume and have not built, measures the calf muscle, sleep, heart and breathing rate, and radiation overnight. Nothing is worn and it takes no crew time. In the morning one screen shows a body figure you can click, four checks in plain words, what NASA says about each risk, and what to do today.
 
 The radiation numbers are real measurements replayed night by night: Curiosity's RAD on Mars and LRO's CRaTER at the Moon, including the solar storms of September 2017. The crew member's own readings are simulated, and the radiation card says where its number was measured.
 
@@ -88,11 +88,11 @@ In four ways, and the page keeps them apart.
 
 ### Where the method comes from
 
-On Earth, clinics look for muscle loss in older adults with a few simple tools: a tape around the calf, a bioimpedance reading and a strength test. The Canadian Space Agency describes the effects seen in astronauts as "similar to accelerated aging and health problems caused by a sedentary lifestyle". MyoTwin takes those tools to the Moon and Mars. The calf is read by impedance every night instead of once in a clinic visit, and a strength test is asked for when the nightly reading falls behind the mission plan.
+On Earth, clinics look for muscle loss in older adults in three steps. They find it with a tape around the calf or a five-question form, assess strength with a grip test or five rises from a chair, and confirm low muscle mass by DXA or bioimpedance (V94, V95). Phase angle from bioimpedance is lower in people with muscle loss (V96). The Canadian Space Agency describes the effects seen in astronauts as "similar to accelerated aging and health problems caused by a sedentary lifestyle". MyoTwin takes those steps to the Moon and Mars. The calf is read by impedance every night instead of once in a clinic visit, a strength test is asked for when the nightly reading falls behind the mission plan, and the flight surgeon confirms. The clinic tools read the whole body or the hand. Reading one calf by impedance in a bunk is my adaptation of them.
 
 ### Tools and languages
 
-Plain HTML, CSS and JavaScript with no build step and no server; Node.js tests; Python scripts (standard library only) that rebuild the data files from the NASA downloads; GitHub Pages; pptxgenjs for the slides; Claude through Claude Code.
+Plain HTML, CSS and JavaScript with no build step and no server; two open-licence typefaces (Cormorant Garamond and EB Garamond) served from the repository; Node.js tests; Python scripts (standard library only) that rebuild the data files from the NASA downloads; GitHub Pages; pptxgenjs for the slides; Claude through Claude Code.
 
 ## Use of Super Intelligence (SI)
 
@@ -161,6 +161,9 @@ Other references. "Computes" means the code uses the number; "cites" means the t
 - Pinsky L et al. 2014 and related NASA reports (V17). Timepix radiation monitors on the ISS; cites. https://pmc.ncbi.nlm.nih.gov/articles/PMC3941488/
 - Zeitlin C et al., Geophys Res Lett 2018 (V92). Curiosity's RAD on Mars during the September 2017 event; cites. https://doi.org/10.1029/2018GL077760
 - Spence HE et al., Space Sci Rev 2010 (V93). Layout of the CRaTER detectors; cites. https://doi.org/10.1007/s11214-009-9584-8
+- Cruz-Jentoft AJ et al., Age Ageing 2019 (V94). The revised European consensus on sarcopenia: find, assess, confirm, severity; cites. https://doi.org/10.1093/ageing/afy169
+- Chen LK et al., J Am Med Dir Assoc 2020 (V95). The Asian Working Group for Sarcopenia 2019 consensus: calf circumference, a five-question form, grip strength and the chair stand; cites. https://doi.org/10.1016/j.jamda.2019.12.012
+- Di Vincenzo O et al., Clin Nutr 2021 (V96). Systematic review: bioimpedance phase angle is lower in sarcopenia; cites. https://doi.org/10.1016/j.clnu.2020.10.048
 
 Earlier work of my own:
 
