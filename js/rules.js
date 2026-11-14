@@ -57,7 +57,7 @@
     muscle: {
       green: { meaning: 'Calf muscle signal is in line with your baseline and the mission plan.', actions: ['Keep the current exercise plan.'] },
       amber: { meaning: 'The calf muscle signal is lower than the mission plan expects. This is a screening flag, not a strength measurement.', actions: ['Review the last two weeks of the {exerciseLog}.', 'Schedule an active strength check.', 'Tell the {clinician} at the next contact.'] },
-      red: { meaning: 'The calf muscle signal has fallen well below your own baseline.', actions: ['Notify the {clinician}.', 'Confirm with {strengthCheck}.', 'Do not increase training loads on your own until this is confirmed.'] },
+      red: { meaning: 'The calf muscle signal is more than ' + THRESHOLDS.muscleRedDropPct.value + '% below your own baseline, the largest test-retest variability reported for this measurement. It is a reporting line, not a strength threshold.', actions: ['Notify the {clinician}.', 'Confirm with {strengthCheck}.', 'Do not increase training loads on your own until this is confirmed.'] },
       grey: { meaning: 'Not enough usable scans this week.', actions: ['Check that bare calves rest on the electrode strip.', 'Check the position of the sleep liner.'] }
     },
     sleep: {
@@ -69,13 +69,13 @@
     cardio: {
       green: { meaning: 'Night-time heart rate and breathing rate are within your own normal range.', actions: ['No change needed.'] },
       amber: { meaning: 'Night-time heart rate or breathing rate is above your own normal range.', actions: ['Take your temperature and note any symptoms.', "Watch tonight's reading."] },
-      red: { meaning: 'Night-time heart rate and breathing rate have both been above your own normal range for three nights.', actions: ['Notify the {medic} and the {clinician}.'] },
+      amberSustained: { meaning: 'Night-time heart rate and breathing rate have both been above your own normal range for three nights. This can be an early sign of illness.', actions: ['Take your temperature and note any symptoms.', 'Tell the {medic} today.'] },
       grey: { meaning: 'Not enough radar data.', actions: ['Check the radar unit.'] }
     },
     radiation: {
       green: { meaning: "Last night's dose in the sleep station was in the usual range.", actions: ['No change needed.'] },
-      amber: { meaning: "Last night's dose was more than twice the usual level.", actions: ['Check the space weather bulletin.'] },
-      red: { meaning: "Last night's dose was more than ten times the usual level, or the detector flagged a solar particle event.", actions: ['Follow the flight rules for shelter.', 'Use the direction map to see which side is less shielded.'] },
+      amber: { meaning: "Last night's dose was more than twice the usual level.", actions: ['Check the space weather bulletin.', 'Mention it at the next contact with the {clinician}.'] },
+      red: { meaning: "Last night's dose in the sleep station was more than ten times the usual level, or the detector flagged a solar particle event. This is a record of what happened overnight: real-time warnings come from space-weather alerts and the flight rules.", actions: ['Report the logged dose to the {clinician}.', 'Use the direction map to review which side of the sleep station is less shielded.'] },
       grey: { meaning: 'Not enough dose history to judge, or no particle detector at this bed.', actions: ['No action.'] }
     }
   };
