@@ -277,7 +277,9 @@ input[type="range"] { width: 100%; accent-color: var(--accent); min-height: 32px
 .how .section-lede { margin: -8px 0 0; }
 .how-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap); }
 .sensor h3, .limits h3 { font-size: 1.05em; margin: 12px 0 6px; }
-.limits h3 { margin-top: 0; }
+.limits h3, .hazards h3 { margin-top: 0; }
+.hazards h3 { font-size: 1.05em; margin-bottom: 10px; }
+.hazard-source { margin-top: 10px; font-size: 0.9em; }
 .sensor p { color: var(--muted); font-size: 0.94em; }
 .sensor-art { width: 100%; max-width: 220px; height: auto; display: block; }
 .art-body { fill: var(--surface-2); stroke: var(--line-strong); stroke-width: 1.2; }
@@ -335,12 +337,14 @@ input[type="range"] { width: 100%; accent-color: var(--accent); min-height: 32px
 .ev-quote { display: block; font-size: 0.86em; color: var(--muted); font-style: italic; margin: 4px 0; quotes: "\201C" "\201D"; }
 .evidence-list > li:focus { outline: none; }
 .ev-target { background: var(--surface-2); box-shadow: inset 3px 0 0 var(--accent); }
+.evidence-list > li.ev-target { padding-left: 12px; }
 .assumption-list > li { grid-template-columns: 9em minmax(0, 1fr) auto; }
 .assumption-list .ev-id { font-family: var(--font); font-size: 0.86em; }
 .assumption-list code { font-family: var(--font-mono); font-size: 0.92em; color: var(--text); }
 
 /* ---- review fixes ----------------------------------------------------------- */
 .data-source { margin-top: 8px; max-width: 80ch; font-weight: 600; }
+.hrp-line { margin-top: 4px; font-size: 0.86em; }
 .notice { margin-top: 8px; color: var(--amber); font-weight: 600; }
 .cards-3 .card:nth-child(3) { grid-column: span 2; }
 .card-extra { font-size: 0.85em; color: var(--muted); }
