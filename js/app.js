@@ -199,7 +199,7 @@
   }
   // One unit and one rounding per number, in the cards and in the engine's reason text alike.
   function fmtRatio(x) { return (x >= 100 ? Math.round(x) : x.toFixed(1)) + 'x'; }
-  function doseParts(uGy) { return uGy >= 1000 ? [(uGy / 1000).toFixed(1), 'mGy'] : [String(Math.round(uGy)), 'µGy']; }
+  var doseParts = charts.doseParts;
   function fmtDose(uGy) { return doseParts(uGy).join(' '); }
   function median(xs) {
     var s = xs.slice().sort(function (a, b) { return a - b; }), m = s.length >> 1;
@@ -668,12 +668,20 @@
         ];
       }
       o.unit = 'µGy'; o.yLabel = 'Dose per night';
+      // Doses spanning more than 50x (a solar event) go on a log axis; ticks then carry the card's units.
+      var logY = charts.useLogScale(o.series.concat(o.raw).map(function (p) { return p.value; }));
+      if (logY) {
+        o.logY = true; o.yFormat = charts.doseTick; o.unit = '';
+        // On a narrow plot the full labels would run into the event nights; short ones stay over the quiet nights.
+        o.thresholds.forEach(function (t, k) { t.shortLabel = (k ? 'Report: ' + T.radiationRedRatio.value : 'Watch: ' + T.radiationAmberRatio.value) + 'x'; });
+      }
       legend.push(['line', 'Dose the card judges']);
       if (x.usualUGy != null) legend.push(['watch', 'Watch line'], ['report', 'Report line']);
       legend.push(['event', 'Event'], ['selected', 'Selected night']);
-      note = x.usualUGy != null ? 'Measured dose over each sleep period (' + doseMedium() + '), replayed night by night. Usual level before tonight: ' + fmtDose(x.usualUGy) +
+      note = (logY ? 'Logarithmic scale: each grid line is 10 times the one below. ' : '') +
+        (x.usualUGy != null ? 'Measured dose over each sleep period (' + doseMedium() + '), replayed night by night. Usual level before tonight: ' + fmtDose(x.usualUGy) +
         ' (median of up to ' + T.radiationHistoryNights.value + ' earlier nights). The brief is read the morning after: real-time warnings come from space-weather alerts and the flight rules.' :
-        'Not enough earlier nights to set a usual level, so no lines are drawn.';
+        'Not enough earlier nights to set a usual level, so no lines are drawn.');
     }
     if (o.axisBreak != null) legend.push(['break', 'Break: the transit is not monitored']);
     return { opts: o, legend: legend, note: note };

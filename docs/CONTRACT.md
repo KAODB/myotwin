@@ -270,6 +270,11 @@ Measured radiation data on the page (space scenarios only; none of it appears wh
 - Trend panel, radiation card, solar-event scenario (S3): `#flux-fig` draws the OMNI2 hourly
   proton flux above 10 MeV, 4 to 16 September 2017, on a log10 axis (`charts.logSeries`), with the
   selected night's 22:00 to 06:00 UTC window shaded; caption links V63.
+- Trend panel, radiation card: when the plotted doses span more than a factor of 50 (largest over
+  smallest positive value, `charts.useLogScale`), `charts.line` draws the vertical axis on a log10
+  scale (`logY`, decade ticks shared with `charts.logSeries`) with tick labels in the card's units
+  (`charts.doseTick`: µGy below 1,000, mGy from 1,000 up); the note and the chart's accessible
+  label say the scale is logarithmic. Narrower ranges keep the linear axis.
 - `#gcheck`, in "How it works" after the limits list (space scenarios only): the rat
   partial-weight-bearing check of the gravity term, drawn with `charts.dotScale` from
   `model.checkGravityTerm(data.osdrPwb, gs)` and worded by `model.describeGravityCheck`; caveats
