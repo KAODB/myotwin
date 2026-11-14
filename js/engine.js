@@ -85,40 +85,40 @@
     return Math.max(t('muscleRedNoiseMultiple') * noise7(b), t('muscleRedDropPct'));
   }
 
-  function muscleCard(records, index, b, words) {
-    var usable = values(windowAt(records, index, t('windowNights'), 0), 'eim');
+  // `plan` is the optional expectedChangePct array; only indices in the window are read.
+  function muscleCard(records, index, b, words, plan) {
+    var idx = [];
+    for (var i = Math.max(0, index - t('windowNights') + 1); i <= index; i++) if (eimOf(records[i]) !== null) idx.push(i);
     var unit = 'deg';
+    var card;
     if (b.eim.median === null) {
-      return makeCard('muscle', 'grey', words, { unit: unit, threshold: 'baselineMinNights', reason: 'No baseline yet: fewer than ' + t('baselineMinNights') + ' baseline nights with a usable scan.' });
+      card = makeCard('muscle', 'grey', words, { unit: unit, threshold: 'baselineMinNights', reason: 'No baseline yet: fewer than ' + t('baselineMinNights') + ' baseline nights with a usable scan.' });
+    } else if (idx.length < t('muscleMinUsableNights')) {
+      card = makeCard('muscle', 'grey', words, { unit: unit, threshold: 'muscleMinUsableNights', reason: 'Only ' + idx.length + ' nights with a usable scan in the last ' + t('windowNights') + ' (need ' + t('muscleMinUsableNights') + ').' });
     }
-    if (usable.length < t('muscleMinUsableNights')) {
-      return makeCard('muscle', 'grey', words, { unit: unit, threshold: 'muscleMinUsableNights', reason: 'Only ' + usable.length + ' nights with a usable scan in the last ' + t('windowNights') + ' (need ' + t('muscleMinUsableNights') + ').' });
-    }
-    var value = median(usable);
+    if (card) { card.expectedDeltaPct = null; return card; }
+
+    var value = median(idx.map(function (j) { return eimOf(records[j]); }));
     var deltaPct = (value - b.eim.median) / b.eim.median * 100;
     var drop = -deltaPct;
+    // A missing plan value counts as "no change expected" (the stricter reading).
+    var expectedDrop = plan ? median(idx.map(function (j) { return -plan[j] || 0; })) : 0;
     var amberLimit = Math.max(t('muscleAmberNoiseMultiple') * noise7(b), t('muscleAmberDropPct'));
-    var redLimit = redDropPct(b);
-
-    // Trend: w0 < w1 < ... < w(weeks) with total drop above the amber percentage.
-    var w = [];
-    for (var k = 0; k <= t('muscleTrendWeeks'); k++) w.push(weeklyMedian(records, index, k));
-    var falling = w.every(function (x) { return x !== null; });
-    for (k = 0; falling && k < w.length - 1; k++) falling = w[k] < w[k + 1];
-    var trendDrop = falling ? (w[w.length - 1] - w[0]) / b.eim.median * 100 : 0;
-    var trend = falling && trendDrop > t('muscleAmberDropPct');
 
     var reason = t('windowNights') + '-night median ' + f(value, 2) + ' deg, ' + f(Math.abs(deltaPct), 1) + '% ' +
       (deltaPct < 0 ? 'below' : 'above') + ' your baseline of ' + f(b.eim.median, 2) + ' deg.';
+    if (plan) reason += ' The mission plan expects about ' + f(expectedDrop, 1) + '% at this point.';
     var status = 'green', threshold = 'muscleAmberDropPct';
-    if (drop > redLimit || trend) {
+    if (drop > redDropPct(b)) {
       status = 'red';
-      threshold = drop > redLimit ? 'muscleRedDropPct' : 'muscleAmberDropPct';
-      if (trend) reason += ' Weekly medians fell three weeks in a row (total drop ' + f(trendDrop, 1) + '%).';
-    } else if (drop > amberLimit) {
+      threshold = 'muscleRedDropPct';
+    } else if (drop - expectedDrop > amberLimit) {
       status = 'amber';
+      if (plan) reason += ' That is ' + f(drop - expectedDrop, 1) + '% worse than the plan.';
     }
-    return makeCard('muscle', status, words, { value: value, unit: unit, deltaPct: deltaPct, threshold: threshold, reason: reason });
+    card = makeCard('muscle', status, words, { value: value, unit: unit, deltaPct: deltaPct, threshold: threshold, reason: reason });
+    card.expectedDeltaPct = plan ? 0 - expectedDrop : null;
+    return card;
   }
 
   // ---- sleep -----------------------------------------------------------------
@@ -206,7 +206,7 @@
     if (!rec) throw new Error('No record at index ' + index);
     var b = baseline(recs);
     var cards = [
-      muscleCard(recs, index, b, words),
+      muscleCard(recs, index, b, words, opts && opts.expectedChangePct),
       sleepCard(recs, index, words),
       cardioCard(recs, index, b, words),
       radiationCard(recs, index, words)

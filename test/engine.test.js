@@ -52,11 +52,51 @@ test('muscle red beyond 16.8%', () => {
   assert.equal(c.status, 'red');
 });
 
-test('muscle red by three falling weekly medians', () => {
-  // w3 = baseline week (8.95), then 8.8, 8.65, 8.55: level drop only 5% (amber), trend fires.
-  const c = card(assessDay((d) => ({ eim: { phase50_deg: d < 7 ? 8.8 : d < 14 ? 8.65 : 8.55 } })), 'muscle');
-  assert.equal(c.status, 'red');
-  assert.match(c.reason, /three weeks in a row/);
+// ---- muscle against the mission plan ----------------------------------------
+const planOf = (fn) => build().map((r) => (r.missionDay < 0 ? 0 : fn(r.missionDay)));
+const muscleWith = (phase, plan) => card(engine.assess(build({ shape: () => ({ eim: { phase50_deg: phase } }) }), at(20), { expectedChangePct: plan }), 'muscle');
+
+test('muscle: with no plan a 5% drop is amber', () => {
+  assert.equal(muscleWith(8.55).status, 'amber');
+});
+test('muscle: with a plan expecting 5%, a 5% drop is green', () => {
+  const c = muscleWith(8.55, planOf(() => -5));
+  assert.equal(c.status, 'green');
+  assert.match(c.reason, /The mission plan expects about 5\.0% at this point\./);
+});
+test('muscle: with a plan expecting 5%, a 10% drop is amber', () => {
+  const c = muscleWith(8.1, planOf(() => -5));
+  assert.equal(c.status, 'amber');
+  assert.match(c.reason, /5\.0% worse than the plan\.$/);
+});
+test('muscle: an 18% drop is red with or without a plan', () => {
+  assert.equal(muscleWith(7.38).status, 'red');
+  assert.equal(muscleWith(7.38, planOf(() => -18)).status, 'red');
+});
+test('muscle: a steady 1.2%/week decline that matches the plan stays green', () => {
+  const perDay = 1.2 / 7;
+  const recs = build({ shape: (d) => ({ eim: { phase50_deg: 9 * (1 - perDay * d / 100) } }) });
+  const plan = planOf((d) => -perDay * d);
+  for (let i = at(0); i < recs.length; i++) {
+    assert.equal(card(engine.assess(recs, i, { expectedChangePct: plan }), 'muscle').status, 'green', 'index ' + i);
+  }
+  // Same data without the plan does turn amber by the end, so the plan is what keeps it green.
+  assert.equal(card(engine.assess(recs, recs.length - 1), 'muscle').status, 'amber');
+});
+test('muscle: expectedDeltaPct is null without a plan and equals the plan with one', () => {
+  assert.equal(muscleWith(8.55).expectedDeltaPct, null);
+  close(muscleWith(8.55, planOf(() => -5)).expectedDeltaPct, -5);
+  assert.equal(muscleWith(8.55, planOf(() => 0)).expectedDeltaPct, 0);
+  assert.equal(card(assessDay(() => ({ eim: null })), 'muscle').expectedDeltaPct, null);
+});
+test('muscle: the plan is only read at indices up to index', () => {
+  const read = [];
+  const plan = new Proxy(planOf(() => -5), {
+    get(target, key) { if (/^\d+$/.test(String(key))) read.push(Number(key)); return target[key]; }
+  });
+  engine.assess(build(), at(20), { expectedChangePct: plan });
+  assert.ok(read.length > 0);
+  assert.ok(Math.max(...read) <= at(20));
 });
 
 test('muscle grey with only 2 usable nights in the last 7', () => {
