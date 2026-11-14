@@ -60,7 +60,7 @@ One record per night goes into an assessment engine. Its rules are written as da
 
 The first nights after arrival show No data, because I do not mix nights from before departure with nights on the surface.
 
-The simulated muscle follows a first-order model with a gravity term and an exercise term. I fitted it to two published results: 60 days of bed rest (the model gives -28.9% and -8.1% against the published -29% and -8%) and six months on the ISS (-10.5% against -13 +/- 2%, so it underestimates). The simulator and the mission plan use the same model, so the page shows the workflow, not how well a real decline would be caught.
+The simulated muscle follows a first-order model with a gravity term and an exercise term. I fitted it to two published results: 60 days of bed rest (the model gives -28.9% and -8.1% against the published -29% and -8%) and six months on the ISS (-10.5% against -13 +/- 2%, so it underestimates). The gravity term is linear by assumption, and the page sets that assumption against rats kept for 28 days at 40% weight bearing, from NASA's Open Science Data Repository: across six measures they lost between 0.25 and 1.05 of what fully unloaded rats lost, median 0.56, where the model assumes 0.60. That is a plausibility check of one assumption, not a fit. The simulator and the mission plan use the same model, so the page shows the workflow, not how well a real decline would be caught.
 
 ### How NASA data and resources are used
 
@@ -69,7 +69,7 @@ In four ways, and the page keeps them apart.
 1. **Measured data that drive numbers.** Mars nights replay the dose rate Curiosity's RAD measured on 94 sols in 2012, from NASA's Planetary Data System. Moon nights replay the dose LRO's CRaTER measured in 2017, summed over a 22:00 to 06:00 UTC sleep window, behind about 8 cm of plastic and scaled to the surface by the instrument team. In the solar-event scenario, mission night 20 is the night of 10 September 2017: 43.5 mGy, about 500 times a quiet night, after the smaller events of 4 to 7 September. NASA's DONKI records mark the nights with a solar energetic particle event, and a chart shows NASA's OMNI proton flux for those days. Surface gravity for the muscle model and the pressure map comes from NASA's planetary fact sheets.
 2. **NASA's words and ratings on every check.** All five resources on the challenge page are used, and so are twelve of the pages they link to. Each check quotes NASA's page on its risk and shows the Human Research Roadmap rating for the mission selected. For muscle that is 5x4, Requires Mitigation, on a Mars planetary mission and 5x3 on a long lunar-surface mission.
 3. **NASA standards as the lines and the reasons.** NASA-STD-3001 gives the 80% strength line, the recommended 8.5-hour sleep period, the requirement to record and trend vital signs in mission, the dose-rate limit for surface habitats, and the requirement to alert the crew to radiation even without ground contact. It also requires horizontal sleep surfaces in partial gravity, which is why a panel built into the bed is a reasonable place to measure on the Moon or Mars.
-4. **NASA research that makes the measurement plausible.** NASA funds impedance myography in astronauts before and after flight, and used it every week in a study of rats under partial weight bearing.
+4. **NASA research that makes the measurement plausible, and NASA open data that check the model.** NASA funds impedance myography in astronauts before and after flight, and used it every week in a study of rats under partial weight bearing. Open data from that line of rat studies, in NASA's Open Science Data Repository, are what the muscle model's gravity term is checked against.
 
 ### What this version does not account for, and the next step
 
@@ -99,13 +99,14 @@ The disclosure is in [docs/SI_USE.md](SI_USE.md). In short: one SI tool, Claude 
 
 ## NASA Data
 
-Measured data that drive numbers on the page (files in `data/`, rebuilt by `tools/data/`):
+Measured data that drive numbers on the page or check the model (files in `data/`, rebuilt by `tools/data/`):
 
 - **NASA Planetary Data System, MSL-M-RAD-3-RDR-V1.0** (V60). Curiosity RAD dose rate in silicon, per-sol median for 94 sols (sols 13 to 112, 2012). Drives every Mars night. https://pds-ppi.igpp.ucla.edu/data/MSL-M-RAD-3-RDR-V1.0/
 - **LRO CRaTER dose rates** (V61), instrument team at the University of New Hampshire, NASA Lunar Reconnaissance Orbiter mission. Drives every Moon night, including the September 2017 solar particle events. https://crater-web.sr.unh.edu/data/craterProducts/doserates/doserates_nospe.txt
 - **NASA CCMC DONKI**, solar energetic particle records for September 2017 (V62). Marks the nights with an event on record. https://api.nasa.gov/DONKI/SEP?startDate=2017-09-01&endDate=2017-09-30&api_key=DEMO_KEY
 - **NASA GSFC SPDF OMNI2**, hourly proton flux above 10 MeV (V63). The proton chart in the solar-event scenario. https://spdf.gsfc.nasa.gov/pub/data/omni/low_res_omni/omni2_2017.dat
 - **NASA NSSDC Moon and Mars Fact Sheets** (V14). Surface gravity in the muscle model and the pressure map. https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html
+- **NASA Open Science Data Repository, OSD-652 and OSD-616** (V90, V91). Rats at full, 40% and zero weight bearing for 28 days: grip force, plantarflexion torque and calf girth. Checks the muscle model's gravity term in its own panel. https://doi.org/10.26030/z92y-7b97
 
 Resources listed on the challenge page:
 
