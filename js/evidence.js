@@ -65,6 +65,106 @@
       url: 'https://www.asc-csa.gc.ca/eng/iss/science/why-do-we-conduct-science-experiments-in-space.asp'
     },
 
+    // ---- NASA pages linked from the challenge resources ----------------------
+    // The hazard, risk and research pages that the three NASA resources link to.
+    // Quotes are in page order; " ... " marks text left out between sentences.
+    {
+      id: 'V48', topic: 'linked from the challenge resources', status: 'verified', level: 'agency-web-page',
+      claim: "On the ISS, average losses of strength and aerobic fitness are 10-12% of pre-mission levels, and between 12% and 38% of crew members lose more than 20%. Crews exercise 1.5 hours a day; spacecraft bound for the Moon and Mars will likely have less room for exercise equipment.",
+      values: { avgLossPctLow: 10, avgLossPctHigh: 12, crewOver20PctLow: 12, crewOver20PctHigh: 38, lossLinePct: 20, exerciseHoursPerDay: 1.5 },
+      quote: "Six to seven days a week, astronauts on the International Space Station perform resistance training and aerobic exercises for 1.5 hours per day to maintain their fitness and protect against muscle and bone loss. ... Crew members also undergo periodic fitness self-evaluations to help researchers monitor their health and fitness and to optimize the astronauts’ training regimen. ... Spacecraft set to carry astronauts to the Moon and Mars, however, will likely have less space for exercise equipment. ... However, data from International Space Station missions indicates that average losses to strength and aerobic fitness are 10-12% of pre-mission levels. ... Depending on how it’s measured, between 12-38% of space station crew members lose more than 20% of their pre-mission fitness.",
+      source: "NASA, Risk of Reduced Cardiorespiratory and Musculoskeletal Fitness (linked from Risks of Human Spaceflight)",
+      url: 'https://www.nasa.gov/reference/risk-of-reduced-cardiorespiratory-and-musculoskeletal-fitness/'
+    },
+    {
+      id: 'V49', topic: 'linked from the challenge resources', status: 'verified', level: 'agency-web-page',
+      claim: "NASA names work overload, irregular light-dark cycles and sleep-pattern disruptions as stressors of spaceflight. On the ISS, LED lighting simulates Earth's light-dark cycle, and crews are given designated time for relaxation and self-care.",
+      values: {},
+      quote: "Astronauts are exposed to numerous stressors during spaceflight, such as work overload, irregular light-dark cycles, and sleep-pattern disruptions. ... To help minimize some of the stresses of spaceflight on the International Space Station, light-emitting diodes, or LEDs, simulate Earth’s light-dark cycle to help astronauts sleep better. ... Astronauts are also given designated times for relaxation and self-care as part of their routine to help prevent burnout.",
+      source: "NASA, Risk from Inadequate Sleep and Irregular Schedules (linked from Risks of Human Spaceflight)",
+      url: 'https://www.nasa.gov/reference/risk-from-inadequate-sleep-and-irregular-schedules/'
+    },
+    {
+      id: 'V50', topic: 'linked from the challenge resources', status: 'verified', level: 'agency-web-page',
+      claim: "NASA lists blood clots, heart arrhythmias, cardiovascular disease, and low blood pressure with fainting at landing as possible results of low gravity. Regular exercise and a healthy diet help crews maintain cardiovascular fitness.",
+      values: {},
+      quote: "potentially leading to blood clots, heart arrythmias, cardiovascular disease, and low blood pressure which elevates the chances of fainting at landing. ... Regular exercise and healthy diets help crews maintain cardiovascular fitness. ... For future Mars missions, astronauts will also receive enhanced training to respond to cardiovascular emergencies.",
+      source: "NASA, Risk of Cardiovascular Adaptations (linked from Risks of Human Spaceflight)",
+      url: 'https://www.nasa.gov/reference/risk-of-cardiovascular-adaptations/'
+    },
+    {
+      id: 'V51', topic: 'linked from the challenge resources', status: 'verified', level: 'agency-web-page',
+      claim: "Instruments that measure radiation exposure are in place on the ISS, and NASA is working toward a personal cancer risk assessment for each astronaut based on radiation dose and genetic factors. Missions to the Moon and Mars leave the protection of Earth's magnetosphere.",
+      values: {},
+      quote: "In addition, various instruments that measure radiation exposure are in place aboard the International Space Station. ... Scientists are also conducting tissue research on Earth aimed at developing personalized cancer risk assessments for each astronaut, based on radiation dose and genetic factors. ... While missions to the space station are entirely within the magnetosphere, missions to the Moon and Mars will extend beyond this protective bubble.",
+      source: "NASA, Risk of Radiation-Induced Cancers (linked from Risks of Human Spaceflight)",
+      url: 'https://www.nasa.gov/reference/risk-of-radiation-induced-cancers/'
+    },
+    {
+      id: 'V52', topic: 'linked from the challenge resources', status: 'verified', level: 'agency-web-page',
+      claim: "Isolation and confinement can affect a crew member's sleep, morale and decision making. NASA encourages self-care, including keeping a regular journal.",
+      values: {},
+      quote: "These factors may impact a crew member’s sleep, morale, and decision making ... To improve mental health, NASA encourages astronauts to explore self-care options including keeping a regular journal.",
+      source: "NASA, Risk of Behavioral Conditions and Psychiatric Disorders (linked from Risks of Human Spaceflight)",
+      url: 'https://www.nasa.gov/reference/risk-of-behavioral-conditions-and-psychiatric-disorders/'
+    },
+    {
+      id: 'V53', topic: 'linked from the challenge resources', status: 'verified', level: 'agency-web-page',
+      claim: "On Mars crews will live in about one-third of Earth's gravity and may need time to adjust after landing. In spaceflight, weight-bearing bones lose on average 1% to 1.5% of mineral density per month.",
+      values: { boneLossPctPerMonthLow: 1, boneLossPctPerMonthHigh: 1.5 },
+      quote: "Astronauts may also need time to adjust to new gravity fields after landing on the Moon or Mars before they conduct mission-critical tasks. ... While living and working on Mars, crews will be in approximately one-third of Earth’s gravity. ... Without the continuous load of Earth’s gravity, weight-bearing bones lose on average 1% to 1.5% of mineral density per month during spaceflight.",
+      source: "NASA Human Research Program, Hazard: Gravity Fields (linked from 5 Hazards of Human Spaceflight)",
+      url: 'https://www.nasa.gov/hrp/hazard-gravity-fields/'
+    },
+    {
+      id: 'V54', topic: 'linked from the challenge resources', status: 'verified', level: 'agency-web-page',
+      claim: "On a Mars mission, with a communication delay of up to 20 minutes one way, astronauts must handle situations, including medical emergencies, with minimal support from Earth.",
+      values: { commDelayMinutesOneWay: 20 },
+      quote: "Given this distance, planning and self-sufficiency will be essential to successful missions to Mars. ... Facing a communication delay of up to 20 minutes one way, the possibility of equipment failures or medical emergencies, and a critical need to ration food and supplies, astronauts must be capable of confronting an array of situations with minimal support from teams on Earth.",
+      source: "NASA Human Research Program, Hazard: Distance From Earth (linked from 5 Hazards of Human Spaceflight)",
+      url: 'https://www.nasa.gov/hrp/hazard-distance-from-earth/'
+    },
+    {
+      id: 'V55', topic: 'linked from the challenge resources', status: 'verified', level: 'agency-web-page',
+      claim: "Sleep loss, circadian desynchronization and work overload compound isolation and confinement. NASA is developing methods to monitor behavioural health and detect early risk factors, and treats journaling as a tool for assessing mental and emotional states.",
+      values: {},
+      quote: "Sleep loss, circadian desynchronization, and work overload compound this issue and may lead to decreased performance, adverse health outcomes, and compromised mission objectives. ... To address this hazard, experts are developing methods for monitoring behavioral health and adapting/refining various tools and technologies for use in the spaceflight environment to detect and treat early risk factors. ... Journaling will always play an important role in any journey. It’s an invaluable tool behavioral scientists use to assess the mental and emotional states associated with life in long-term isolation and confinement.",
+      source: "NASA Human Research Program, Hazard: Isolation and Confinement (linked from 5 Hazards of Human Spaceflight)",
+      url: 'https://www.nasa.gov/hrp/hazard-isolation-and-confinement/'
+    },
+    {
+      id: 'V56', topic: 'linked from the challenge resources', status: 'verified', level: 'agency-web-page',
+      claim: "Galactic cosmic rays and solar particle events cannot be seen or felt. NASA continuously monitors space radiation and astronauts' radiation exposure.",
+      values: {},
+      quote: "High-energy galactic cosmic rays, which are remnants from supernovas, and solar storms like solar particle events and coronal mass ejections can harm the body and spacecraft. ... When astronauts travel in space, they can’t see or even feel radiation. ... NASA follows specific procedures to continuously monitor space radiation and astronauts' radiation exposure.",
+      source: "NASA Human Research Program, Hazard: Space Radiation (linked from 5 Hazards of Human Spaceflight)",
+      url: 'https://www.nasa.gov/hrp/hazard-space-radiation/'
+    },
+    {
+      id: 'V57', topic: 'linked from the challenge resources', status: 'verified', level: 'agency-web-page',
+      claim: "ARCHeR (Artemis Research for Crew Health & Readiness) collects actigraphy during the mission, and behavioural performance surveys before and after it, to measure well-being, activity and sleep.",
+      values: {},
+      quote: "Data will be collected using actigraphy and behavioral performance surveys before and after the mission. Actigraphy data will also be collected during the mission.",
+      source: "NASA, ARCHeR (linked from Ongoing HRP Research in Space)",
+      url: 'https://www.nasa.gov/reference/archer/'
+    },
+    {
+      id: 'V58', topic: 'linked from the challenge resources', status: 'verified', level: 'agency-web-page',
+      claim: "NASA is testing a commercial telemedicine device because, as communication delays grow on missions to Mars, crews may benefit from medical devices that are lightweight, compact, energy efficient and versatile.",
+      values: {},
+      quote: "As missions extend to Mars and beyond, communication delays will become more significant. Crews may benefit from medical devices that are lightweight, compact, energy efficient, and versatile.",
+      source: "NASA, Tempus Pro (linked from Ongoing HRP Research in Space)",
+      url: 'https://www.nasa.gov/reference/tempus-pro/'
+    },
+    {
+      id: 'V59', topic: 'linked from the challenge resources', status: 'verified', level: 'agency-web-page',
+      claim: "Spaceflight Standard Measures has collected a standardized set of measurements from more than 30 astronauts since 2018, and a new branch extends it to Artemis II.",
+      values: { astronautsMoreThan: 30, startYear: 2018 },
+      quote: "It will similarly collect a standardized set of measurements spanning multiple physiological systems to provide a comprehensive snapshot of how spaceflight affects the human body. ... The Spaceflight Standard Measures experiment, which began in 2018, has collected a comprehensive suite of data from more than 30 astronauts completing missions in low Earth orbit aboard the space station.",
+      source: "NASA, Artemis II Standard Measures (linked from Ongoing HRP Research in Space)",
+      url: 'https://www.nasa.gov/reference/artemis-ii-standard-measures/'
+    },
+
     // ---- NASA standards and statements -------------------------------------
     {
       id: 'V1', topic: 'muscle', status: 'verified', level: 'official-document',
