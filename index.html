@@ -65,6 +65,7 @@
     <div class="brief-head">
       <h1 id="brief-title" class="eyebrow">Morning brief <span id="brief-date" class="muted">no night selected</span></h1>
       <p id="headline" class="headline" aria-live="polite">The brief appears here once the simulated mission loads.</p>
+      <p id="scenario-summary" class="scenario-summary muted"></p>
       <noscript><p class="notice">MyoTwin needs JavaScript to build the brief. Nothing is sent anywhere; it runs entirely in this page.</p></noscript>
     </div>
 
@@ -84,8 +85,12 @@
         <canvas id="body-canvas" width="120" height="360" role="img" aria-label="Whole-body image, not yet drawn"></canvas>
         <p class="canvas-empty" id="canvas-empty">Image not drawn yet</p>
       </div>
-      <div class="colorbar" id="colorbar"></div>
-      <figcaption id="image-caption" class="caption">Simplified supine body seen from above, head at the top. Simulated image.</figcaption>
+      <div class="colorbar" id="colorbar" role="img" aria-label="Colour scale"></div>
+      <figcaption id="image-caption" class="caption">
+        <span id="cap-label">Simplified supine body seen from above, head at the top.</span>
+        <span id="cap-extra"></span>
+        <span class="cap-tags"><span class="tag">Simulated image</span><a class="tag tag-exp" id="cap-exp" href="#limits" hidden>Experimental</a></span>
+      </figcaption>
     </figure>
 
     <div class="cards" id="cards">
@@ -140,14 +145,15 @@
       <svg id="trend-chart" class="chart" role="img" aria-label="Trend chart, not yet drawn"></svg>
       <ul class="legend" aria-label="Chart legend">
         <li><span class="key key-baseline" aria-hidden="true"></span>Own baseline range</li>
-        <li><span class="key key-expected" aria-hidden="true"></span>Model expectation</li>
+        <li><span class="key key-expected" aria-hidden="true"></span>Mission plan (muscle)</li>
         <li><span class="key key-threshold" aria-hidden="true"></span>Threshold</li>
         <li><span class="key key-selected" aria-hidden="true"></span>Selected night</li>
       </ul>
-      <p id="projection" class="projection muted">Projection appears when enough nights are available.</p>
+      <p id="trend-note" class="trend-note muted"></p>
+      <p id="projection" class="projection" hidden></p>
       <figure id="rose-fig" class="rose-fig" hidden>
         <svg id="rose" class="rose" role="img" aria-label="Direction rose, not yet drawn"></svg>
-        <figcaption class="caption">Where tonight's particles came from. Sector at the top points toward the head.</figcaption>
+        <figcaption class="caption"><span id="rose-reading"></span> <span id="rose-span"></span> The sector at the top points toward the head; sectors run clockwise.</figcaption>
       </figure>
     </section>
 
@@ -155,6 +161,8 @@
     <section id="guidance" class="panel guidance" aria-labelledby="guidance-title">
       <h2 id="guidance-title" class="section-title">What it means <span id="guidance-card" class="muted">Muscle</span></h2>
       <dl class="guide">
+        <dt>Status</dt>
+        <dd id="g-status">Shown once a night is assessed.</dd>
         <dt>What it means</dt>
         <dd id="g-meaning">Shown once a night is assessed.</dd>
         <dt>What to do now</dt>
@@ -163,8 +171,10 @@
         <dd id="g-decides">Shown once a night is assessed.</dd>
         <dt>Evidence behind this</dt>
         <dd><ul id="g-sources" class="sources"><li>Listed once a night is assessed.</li></ul></dd>
+        <dt id="g-cm-title" hidden>Countermeasures and their evidence</dt>
+        <dd id="g-cm-dd" hidden><ul id="g-cm" class="countermeasures"></ul></dd>
       </dl>
-      <p class="disclaimer"><strong>Not a medical device.</strong> Thresholds are interim and unvalidated. MyoTwin flags; a flight surgeon or clinician decides.</p>
+      <p class="disclaimer"><strong>Not a medical device.</strong> <span id="g-disclaimer">Screening flag from simulated data. Not a diagnosis.</span> Thresholds are interim and unvalidated.</p>
     </section>
   </div>
 
@@ -174,19 +184,19 @@
     <p class="muted section-lede">Change an assumption and the simulated mission is regenerated.</p>
     <div class="whatif-grid">
       <label class="knob">
-        <span class="knob-label">Exercise adherence <output id="adherence-out" for="adherence">—</output></span>
-        <input type="range" id="adherence" min="0" max="100" step="5" value="100" disabled>
+        <span class="knob-label">Exercise adherence <output id="adherence-out" for="adherence">Scenario</output></span>
+        <input type="range" id="adherence" min="0" max="1" step="0.05" value="1" disabled>
         <span class="knob-hint">Share of planned countermeasure sessions done.</span>
       </label>
       <label class="knob">
-        <span class="knob-label">Partial-gravity shape <output id="shape-out" for="shape">—</output></span>
-        <input type="range" id="shape" min="0.5" max="2" step="0.1" value="1" disabled>
-        <span class="knob-hint">How strongly partial gravity protects muscle. 1 is linear; an assumption.</span>
+        <span class="knob-label">Partial-gravity shape <output id="shape-out" for="shape">1 (linear)</output></span>
+        <input type="range" id="shape" min="1" max="4" step="0.5" value="1" disabled>
+        <span class="knob-hint">Higher values mean partial gravity protects muscle more. 1 means loss scales linearly with missing gravity; an assumption.</span>
       </label>
       <label class="knob">
-        <span class="knob-label">Habitat shielding <output id="shield-out" for="shield">—</output></span>
-        <input type="range" id="shield" min="0.2" max="1" step="0.05" value="1" disabled>
-        <span class="knob-hint">Relative shielding around the sleep station; 1 is the scenario default.</span>
+        <span class="knob-label">Habitat shielding <output id="shield-out" for="shield">1.0</output></span>
+        <input type="range" id="shield" min="0.1" max="1" step="0.1" value="1" disabled>
+        <span class="knob-hint">Share of particles that reach the sleep station; 1 is as measured on the surface, lower is more shielding.</span>
       </label>
     </div>
     <button type="button" id="whatif-reset" class="btn" disabled>Reset to scenario defaults</button>
@@ -204,7 +214,7 @@
           <path class="art-accent" d="M72 52v-6M88 52v-6M104 52v-6M120 52v-6"/>
         </svg>
         <h3>Impedance strip under the calves</h3>
-        <p>Dry electrodes in the mattress pass a tiny 50 kHz current through the calf. The phase angle falls as muscle is lost, so a nightly reading tracks muscle without anyone doing a test.</p>
+        <p>Dry electrodes in the mattress pass a tiny 50 kHz current through the calf. In people, this reading fell after weeks in a cast and came back with recovery (measured on the shin). Nobody has measured it in space or through a mattress yet: that is what this panel is for.</p>
       </article>
       <article class="panel sensor">
         <svg class="sensor-art" viewBox="0 0 160 80" aria-hidden="true" focusable="false">
@@ -213,7 +223,7 @@
           <path class="art-body" d="M80 52c20-6 44-6 68-2v10c-24-4-48-4-68 2z"/>
         </svg>
         <h3>60 GHz radar above the bunk</h3>
-        <p>A low-power radar reads chest movement from a distance: breathing rate, heart rate, sleep time and restlessness. No contact, no camera.</p>
+        <p>A low-power radar reads chest movement from a distance: breathing rate, heart rate, sleep time. No contact, no camera. Radar vital signs work on Earth; they have not been tested in space.</p>
       </article>
       <article class="panel sensor">
         <svg class="sensor-art" viewBox="0 0 160 80" aria-hidden="true" focusable="false">
@@ -222,21 +232,22 @@
           <path class="art-accent" d="M40 4l14 72M92 4l-8 72M120 4l10 72"/>
         </svg>
         <h3>Particle trackers above and below</h3>
-        <p>Tracker planes record the path of each cosmic-ray particle passing through the sleeper. That gives the night's dose, the direction it came from, and, summed over many tracks, a density image of the body.</p>
+        <p>Tracker planes record the path of each cosmic-ray particle crossing the sleeper. That gives the night's dose and the direction it came from. Summed over many tracks, the small deflections also give a coarse density image of the body with no added dose. This image is experimental.</p>
       </article>
     </div>
-    <article class="panel limits">
+    <article class="panel limits" id="limits" tabindex="-1">
       <h3>What this version does not account for, and the next step</h3>
-      <ul>
-        <li>All data are simulated. No sensor in this design has been built or flown.</li>
-        <li>The link between calf impedance phase and muscle loss is an assumption based on cast and bed-rest studies on Earth, not on spaceflight data.</li>
-        <li>Bed-integrated dry-electrode impedance has not been studied; contact and fluid shifts after lying down can move the reading.</li>
-        <li>Radar vital signs have not been tested in space.</li>
-        <li>Dose is absorbed dose in silicon over the sleep period, not effective dose to the person.</li>
-        <li>The body image comes from a simplified phantom on a 2 cm grid.</li>
-        <li>Thresholds are interim and unvalidated.</li>
-      </ul>
-      <p><strong>Next step:</strong> run the panel alongside standard tests in a ground bed-rest study, and fit the thresholds to the measured night-to-night noise.</p>
+      <ol class="limits-list">
+        <li><p><strong>Not accounted for:</strong> The momentum of each particle. Deflection depends on momentum as much as on thickness, and momenta differ several-fold.</p><p><strong>Next step:</strong> Measure a block of known thickness beside the sleeper every night and use the ratio; then assess a momentum-measuring layer.</p></li>
+        <li><p><strong>Not accounted for:</strong> Movement during the night and the long tails from nuclear interactions. The statistics support trends over large regions and several weeks, not small features.</p><p><strong>Next step:</strong> Sort tracks by posture using the pressure image, start with calf, thigh and trunk, and run a particle-transport simulation.</p></li>
+        <li><p><strong>Not accounted for:</strong> Habitat shielding. Shielding removes low-energy particles and adds secondaries, so the best-protected sleep stations give the weakest image.</p><p><strong>Next step:</strong> Simulate the usable tracks behind different shielding and find the habitats where the method works.</p></li>
+        <li><p><strong>Not accounted for:</strong> Any real measurement of the density image.</p><p><strong>Next step:</strong> Repeat the published ground test with sea-level muons and a body phantom before proposing a flight experiment.</p></li>
+        <li><p><strong>Not accounted for:</strong> Human impedance data in space, in bed rest, or at the back of the calf, and any test of bed-integrated dry electrodes.</p><p><strong>Next step:</strong> Run the panel beside standard strength tests and MRI in a bed-rest study and set the thresholds from the measured night-to-night noise.</p></li>
+        <li><p><strong>Not accounted for:</strong> Fluid shifts in partial gravity, which move the impedance reading.</p><p><strong>Next step:</strong> Fix the measurement to the last hour before waking and characterise the arrival step.</p></li>
+        <li><p><strong>Not accounted for:</strong> Radar vital signs in space.</p><p><strong>Next step:</strong> Test in a mock sleep station and in an analogue.</p></li>
+        <li><p><strong>Not accounted for:</strong> Effective dose. The radiation card shows absorbed dose in silicon.</p><p><strong>Next step:</strong> Add the conversion with a validated transport model.</p></li>
+      </ol>
+      <p class="limits-close">All data here are simulated, the sensor panel has not been built, and the status rules are interim and unvalidated.</p>
     </article>
   </section>
 
@@ -245,9 +256,9 @@
     <details class="panel drawer">
       <summary><h2 id="evidence-title" class="section-title">Evidence behind every number</h2><span class="muted" id="evidence-count">Sources and their checking status</span></summary>
       <p class="muted">Each entry is marked verified (checked against the source text), secondary (taken from another citation) or assumption (a modelling choice).</p>
-      <ol id="evidence-list" class="evidence-list">
-        <li class="muted">The list is built from the evidence table when the page loads.</li>
-      </ol>
+      <div id="evidence-list" class="evidence-groups">
+        <p class="muted">The list is built from the evidence table when the page loads.</p>
+      </div>
     </details>
   </section>
 
