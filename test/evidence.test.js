@@ -35,3 +35,14 @@ test('numbers the rules rely on are present', () => {
   assert.equal(evidence.value('V14', 'marsRatio'), 0.38);
   assert.equal(evidence.value('V31', 'muscleCm'), 35.14);
 });
+
+test('the five resources listed on the challenge page are present, verified and quoted', () => {
+  const items = evidence.items.filter((it) => it.topic === 'challenge resources');
+  assert.equal(items.length, 5);
+  for (const it of items) {
+    assert.equal(it.status, 'verified', it.id);
+    assert.ok(it.quote && it.quote.length > 40, it.id + ' needs a quote');
+  }
+  assert.equal(evidence.value('V44', 'muscleRisk'), 'Risk of Reduced Cardiorespiratory and Musculoskeletal Fitness');
+  assert.equal(evidence.value('V43', 'hazards').length, 5);
+});
