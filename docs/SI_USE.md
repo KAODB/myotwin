@@ -21,8 +21,10 @@ voice generator was used.
 - **Code and tests.** Writing the JavaScript modules, the page, the
   stylesheet, the automated tests and the tool that generates
   `docs/EVIDENCE.md`.
-- **Simulated data.** Writing the seeded simulator in `js/sim.js` that
-  produces every night record shown in the software. There are no real
+- **Simulated and measured data.** Writing the seeded simulator in `js/sim.js`
+  that produces the crew member's readings, and the scripts in `tools/data/`
+  that turn the NASA downloads into the small files in `data/` (the radiation
+  dose of each night is a replayed measurement, V60 and V61). There are no real
   measurements of any person in this repository.
 - **Text.** Drafting the README, these documents and the project page text.
 - **Demo.** Building the seven-slide deck in `demo/slides/` from screenshots of
@@ -31,7 +33,7 @@ voice generator was used.
 ## What people did
 
 The concept, the direction of the project and every clinical judgement are the
-team lead's. This includes the choice of the problem, the sensor panel, what
+team member's (this is a one-person team). This includes the choice of the problem, the sensor panel, what
 counts as a screening flag, the decision that the software never prescribes
 treatment, the wording of the countermeasure list, and which limits are
 stated.
@@ -70,6 +72,6 @@ simulated.
 
 The form of the muscle model (a first-order approach to a loss plateau, with a
 gravity term and an exercise term) comes from a private simulator the team
-wrote on 11-13 November 2026, before the hackathon. For MyoTwin it was
+member wrote on 11-13 November 2026, before the hackathon. For MyoTwin it was
 refitted to published anchors (V4, V5) and rewritten. Everything else in this
 repository was written during the hackathon, 14-15 November 2026.
