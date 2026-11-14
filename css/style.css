@@ -208,8 +208,8 @@ main { max-width: 1400px; margin: 0 auto; padding: var(--gap); display: grid; ga
 .panel-bar { display: flex; flex-wrap: wrap; gap: 6px; }
 .panel-bar .segmented { padding: 2px; }
 .panel-bar .seg { padding: 3px 7px; min-height: 30px; font-size: 0.8em; }
-/* Same weight pressed or not, so choosing a layer or view never changes the row's width and wraps it. */
-.panel-bar .seg, .panel-bar .seg[aria-pressed="true"] { font-weight: 500; }
+/* A pressed toggle is not bolder here, so choosing a layer or view never widens the row and wraps it. */
+.panel-bar .seg[aria-pressed="true"] { font-weight: inherit; }
 .canvas-wrap {
   position: relative; display: grid; place-items: center;
   background: var(--img-bg); border-radius: var(--radius-s); padding: 12px;
