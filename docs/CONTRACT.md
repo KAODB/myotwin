@@ -201,10 +201,12 @@ On a grey card `extra` holds whatever is known and null for the rest.
 - `rules.TEXT[cardId][status]` : `{ meaning, actions: [...] }`.
 - `rules.CONTEXT[cardId]` : `{ risk, note, sourceIds }`. `risk` is the NASA Human Research
   Program risk the check relates to, read from evidence V44; `note` is one sentence backed by `sourceIds`.
+  The page draws `note` as the last row ("More context") of the check's NASA block.
 - `rules.HAZARDS` : five `{ name, coverage: 'covered' | 'partly' | 'not covered', text }` rows,
   in the order and with the names of evidence V43 (NASA's five hazards of human spaceflight).
   The first four rows also carry `fact: { text, sourceIds }`, one statement from NASA's hazard page;
   "Distance from Earth" adds `worldFact: { moon, mars }` (NASA's ratings for that mission type, V74 and V75).
+  "Isolation and Confinement" adds `quote: { text, sourceIds }`, V52's verbatim `says` sentence, shown as a quotation.
 - `rules.MISSIONS` : `{ moon, mars }`, each `{ prefix, label }`: the Human Research Roadmap mission type used
   for that world (`lunarSurfaceLong`, a long lunar-surface mission; `marsPlanetary`, a Mars planetary mission).
 - `rules.NASA[cardId]` : NASA's material for each check, built from evidence values:
@@ -263,10 +265,28 @@ shared and captured:
   accumulates only the usable nights of its window and of the first week, and its label says
   how many nights were left out.
 - `mode` follows the scenario: `eldercare` exactly when `s=S4`, otherwise `astronaut`. It is
-  written to the address for readability; a valid `mode` in an older link is accepted and ignored.
-- Any value in the address that is unknown, rejected or changed to fit (for example a day outside
-  the scenario) falls back as before and shows the notice "This link could not be opened; showing
-  the default view." An unknown evidence id (`ev`) shows "That source is not in the evidence list."
+  written to the address for readability; a valid `mode` in an older link is accepted and ignored,
+  without the notice (for example `#s=S4&d=34&mode=astronaut&card=muscle`).
+- In the home scenario (`s=S4`) the what-ifs `ex`, `gs` and `sh` do not apply: values in the address
+  are ignored, without the notice, and are not written back.
+- Any value in the address that is unknown, repeated (for example `d=10&d=20`), rejected or changed
+  to fit (for example a day outside the scenario) falls back as before and shows the notice "This
+  link could not be opened; showing the default view." An unknown evidence id (`ev`) shows "That
+  source is not in the evidence list." The parser, `hashFor` and the per-scenario memory sit between
+  the markers `BEGIN view-state helpers` and `END view-state helpers` in `js/app.js` and are tested
+  in Node by `test/address.test.js`.
+- Within a page session each scenario remembers its own night, layer and view (memory only):
+  switching to another scenario and back returns to them. The address stays the source of truth on
+  load and for sharing.
+- First screen: at 1440 x 900 and 1366 x 768 the body figure, its four hotspots and the hint line,
+  and each card's name, status and number sit above the fixed time bar (all four cards completely at
+  1440 x 900). The sentence on the sensor panel and the NASA risk line (`#brief-note`) sit below the
+  figure and the cards.
+- Trend charts (`charts.line` with `upTo`) draw the readings, the judged line, its points and the
+  exercise ticks only up to the selected night; the axes span the whole scenario and the plan band
+  and thresholds stay. Event markers are drawn for events that started by the selected night; a
+  marker may carry `shortLabel` and `tinyLabel`, and its label sits beside its own line inside the
+  chart.
 
 Colour scheme (`css/style.css`, palette at the top; `test/palette.test.js` checks it):
 
@@ -301,7 +321,8 @@ Measured radiation data on the page (space scenarios only; none of it appears wh
 - `#gcheck`, in "How it works" after the limits list (space scenarios only): the rat
   partial-weight-bearing check of the gravity term, drawn with `charts.dotScale` from
   `model.checkGravityTerm(data.osdrPwb, gs)` and worded by `model.describeGravityCheck`; caveats
-  always visible; links V90 and V91. It follows the what-if shape `gs`.
+  always visible; links V90 and V91. It follows the what-if shape `gs`. Each mark is centred on its
+  own row; the row labels sit in a gutter left of the plot (two lines under 560 px).
 - `#measured`, just above the evidence drawer: one row per data module (`name`, what it drives,
   `source`, link to `url`, `retrieved`, `terms`) and the line "Everything else on this page is simulated."
 

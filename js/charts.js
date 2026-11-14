@@ -596,17 +596,20 @@
     var pw = W - x0 - m.r;
     function X(v) { return x0 + Math.max(0, Math.min(opts.max, v)) / opts.max * pw; }
     var y1 = m.t + opts.rows.length * ROW;
-    (opts.ticks || []).forEach(function (v) {
+    // On a narrow plot every second tick keeps its number, so the numbers do not run together.
+    (opts.ticks || []).forEach(function (v, k) {
       el('line', { x1: X(v), x2: X(v), y1: m.t, y2: y1, 'class': 'grid' }, svg);
-      text(svg, X(v), y1 + 16, fmt(v), 'ax-label');
+      if (pw >= 240 || k % 2 === 0) text(svg, X(v), y1 + 16, fmt(v), 'ax-label');
     });
     el('line', { x1: x0, x2: W - m.r, y1: y1, y2: y1, 'class': 'axis' }, svg);
-    // The axis title goes on two lines when it is wider than the plot (narrow screens).
+    // The axis title is centred on the plot; when it is wider than the plot it goes on two lines
+    // centred on the whole chart (narrow screens).
     var tt = text(svg, x0 + pw / 2, y1 + 36, opts.title || '', 'ax-title');
     if (widthOf(tt) > pw) {
       var words = tt.textContent.split(' '), half = Math.ceil(words.length / 2);
       tt.textContent = words.slice(0, half).join(' ');
-      text(svg, x0 + pw / 2, y1 + 51, words.slice(half).join(' '), 'ax-title');
+      tt.setAttribute('x', W / 2);
+      text(svg, W / 2, y1 + 51, words.slice(half).join(' '), 'ax-title');
     }
     opts.rows.forEach(function (r, i) {
       el('line', { x1: x0, x2: W - m.r, y1: rowY[i], y2: rowY[i], 'class': 'dot-track' }, svg);

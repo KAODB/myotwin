@@ -1,7 +1,7 @@
 // Scripted browser check: in the home scenario (S4, the Eldercare presentation) no
 // spaceflight word may be visible, except in the one deliberate row ("Why a spaceflight
-// tool applies at home"), the evidence drawer (source titles and claims) and the
-// scenario list. Fails with exit code 1 and lists every hit.
+// tool applies at home"), the evidence drawer (source titles and claims), the
+// scenario list and the Astronaut / Eldercare switch. Fails with exit code 1 and lists every hit.
 //
 // Not part of `node --test` (it needs a browser). Run against a local static server:
 //   PLAYWRIGHT=/path/to/node_modules/playwright node test/home-words.check.js http://127.0.0.1:PORT/
@@ -12,7 +12,7 @@ const { chromium } = require(process.env.PLAYWRIGHT || 'playwright');
 
 const BASE = process.argv[2];
 const BANNED = /sleep station|bunk|mission|habitat|countermeasure|flight surgeon|crew|\bmoon\b|\bmars\b|transit|astronaut|in space/gi;
-const EXEMPT = ['#g-context-title', '#g-context', '#evidence', '#scenario'];
+const EXEMPT = ['#g-context-title', '#g-context', '#evidence', '#scenario', '.segmented[aria-label="Display mode"]'];
 const VIEWS = [];
 for (const card of ['muscle', 'sleep', 'cardio']) {
   for (const layer of ['pressure', 'impedance']) {
