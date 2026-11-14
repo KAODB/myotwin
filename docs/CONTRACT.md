@@ -149,9 +149,13 @@ One record per night. Pre-departure baseline nights have a negative `missionDay`
 ### sim (`js/sim.js`)
 
 - `sim.SCENARIOS` : `{ S1, S2, S3, S4 }`, each `{ id, title, env, summary, baselineNights, phases, events }`.
-- `sim.generate(scenarioId, opts) -> { scenario, records }`
+- `sim.generate(scenarioId, opts) -> { scenario, records, plan }`
   `opts = { seed = 1, exerciseAdherence?, gravityShape?, sleepOpportunityH?, shieldingFactor? }`.
   Deterministic for a given seed. `records` is a `NightRecord[]` sorted by night.
+  `plan = { expectedChangePct: number[] }` has one value per record: the muscle change the
+  mission plan expects that night (0 on baseline nights). The plan is the scenario flown as
+  intended (planned exercise, no lapses, normal activity); it uses the same gravity shape as
+  the records. Each scenario lists its `planPhases` next to its `phases`.
 - `sim.NOISE` : declared night-to-night noise levels (assumptions).
 
 ### rules (`js/rules.js`) and engine (`js/engine.js`)
@@ -164,7 +168,8 @@ One record per night. Pre-departure baseline nights have a negative `missionDay`
   Uses the nights with `missionDay < 0`.
 - `engine.assess(records, index, opts) -> Assessment`
   Assesses the night at `records[index]` using only `records[0..index]`.
-  `opts = { mode = 'astronaut' }`.
+  `opts = { mode = 'astronaut', expectedChangePct? }`. `expectedChangePct` is the plan array
+  from `sim.generate` (aligned with `records`); when it is absent the plan is "no change".
 - `engine.project(records, index) -> { cardId: 'muscle', daysToRed, slopePctPerWeek } | null`
 - `engine.series(records, key) -> [{ missionDay, value }]`
   Convenience for charts. `key` is one of `eim`, `sleep`, `rr`, `hr`, `dose`.
@@ -201,13 +206,21 @@ All comparisons are against the person's own baseline (the 14 pre-departure nigh
 
 | Card | Indicator | Amber | Red | Grey |
 |---|---|---|---|---|
-| muscle | 7-night median of `eim.phase50_deg` | below baseline by more than max(2 x noise7, 4.2%) | below by more than max(3 x noise7, 16.8%), or three weekly medians falling in a row with a total drop above 4.2% | fewer than 3 nights with a usable scan in the last 7 |
+| muscle | 7-night median of `eim.phase50_deg` | worse than the mission plan by more than max(2 x noise7, 4.2%) | below baseline by more than max(3 x noise7, 16.8%) | fewer than 3 nights with a usable scan in the last 7 |
 | sleep | mean `radar.sleep_h` over the last 7 nights | 6 to under 7 h | under 6 h | fewer than 4 nights of data in the last 7 |
 | cardio | `radar.rr_bpm` and `radar.hr_bpm`, 3-night medians | one of them above baseline median + 2 SD | both above on each of the last 3 nights | fewer than 2 nights of data in the last 3 |
 | radiation | tonight's `rad.dose_uGy` versus the median of up to 30 earlier nights | above 2x | above 10x, or `rad.spe` is true | fewer than 7 earlier nights |
 
 `noise7` is the expected spread of a 7-night median, as a percentage of the
 baseline median: `1.2533 * sdNightly / sqrt(7) / median * 100`.
+
+Muscle, in detail: `drop` is how far the 7-night median is below the baseline median, in
+percent. `expectedDrop` is the median of `-expectedChangePct` over the same nights (0 when no
+plan is given). Amber when `drop - expectedDrop` exceeds the amber limit; red when `drop`
+itself exceeds the red limit. A slow decline that follows the plan stays green; a decline
+faster than the plan turns amber; a large decline is red whatever the plan says. An earlier
+draft also turned red after three falling weeks; that rule fired during normal adaptation
+and was removed on 2026-11-14.
 4.2% and 16.8% are evidence V10; 7 h is V25; 6 h is the ISS average in V11 rounded down.
 
 Green is anything that is neither amber, red nor grey.
