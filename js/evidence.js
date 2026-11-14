@@ -66,7 +66,7 @@
         calfControlPct: -29, calfExercisePct: -8, calfNutritionPct: -28,
         thighControlPct: -21, thighExercisePct: 0, thighNutritionPct: -24
       },
-      quote: 'Calf (triceps surae) muscle volume was decreased (P < 0.05) to a similar extent (P > 0.05) in BR (-29 +/- 1%) and BRN (-28 +/- 1%), and this decrease was attenuated (P < 0.05) in BRE (-8 +/- 2%). ... The nutrition countermeasure was not effective in offsetting lower limb muscle volume or strength loss, and actually promoted thigh muscle volume loss.',
+      quote: 'Calf (triceps surae) muscle volume was decreased ... in BR (-29 +/- 1%) and BRN (-28 +/- 1%), and this decrease was attenuated (P < 0.05) in BRE (-8 +/- 2%). ... The nutrition countermeasure was not effective in offsetting lower limb muscle volume or strength loss, and actually promoted thigh muscle volume loss.',
       source: 'Trappe TA et al. Acta Physiol 2007;191:147-159 (WISE-2005 bed rest). PMID 17655736',
       url: 'https://pubmed.ncbi.nlm.nih.gov/17655736/'
     },
