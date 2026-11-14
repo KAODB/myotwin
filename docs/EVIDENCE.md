@@ -45,17 +45,17 @@ another citation without opening the original; **fitted** means estimated from e
 - Quote: "Calf muscle volume decreased (P < 0.05) 13 +/- 2% with greater (P < 0.05) atrophy of the soleus (-15 +/- 2%) compared with the gastrocnemius (-10 +/- 2%). Peak power was 32% lower (P < 0.05) after spaceflight."
 - Values: `days` = 180; `n` = 9; `calfVolumePct` = -13; `calfVolumeSd` = 2; `soleusPct` = -15; `gastrocnemiusPct` = -10; `peakPowerPct` = -32
 
-**V6**. Mice on the ISS centrifuge (JAXA): 0.33 g preserved soleus cross-sectional area; 0.67 g was needed to maintain muscle function. Grip strength and EIM were among the functional measures.
+**V6**. Mice on the JAXA centrifuge aboard the ISS (a University of Tsukuba-led study with JAXA): 0.33 g preserved soleus cross-sectional area and 0.67 g was sufficient to maintain muscle function. Only these two partial-gravity levels were tested. Grip strength and EIM were among the functional measures.
 
 - Status: verified (abstract)
 - Source: Tsuji R et al. Sci Adv 2026;12(11):eaed2258. PMID 41824581. <https://doi.org/10.1126/sciadv.aed2258>
 - Quote: "In the gravity-sensitive soleus, the cross-sectional area was preserved at 0.33g ... Functional measures, including forelimb grip strength and electrical impedance myography, indicated that 0.67g was sufficient to maintain muscle performance."
-- Values: `csaPreservedAtG` = 0.33; `functionPreservedAtG` = 0.67
+- Values: `csaPreservedAtG` = 0.33; `functionSufficientAtG` = 0.67
 
-**V40**. NASA OSDR holds an RNA-seq dataset from the JAXA lunar-gravity mouse mission (OSD-714). It has no muscle-mass, grip or impedance files, so MyoTwin cites it but does not compute from it.
+**V40**. A separate JAXA mouse mission at one-sixth g (Hayashi et al., Commun Biol 2023; NASA OSDR dataset OSD-714): lunar gravity prevented soleus atrophy but not the fibre-type shift. The OSDR record holds RNA-seq files only, with no muscle-mass, grip or impedance files, so MyoTwin cites it and does not compute from it.
 
 - Status: verified (dataset-record)
-- Source: NASA Open Science Data Repository, OSD-714 (study title). <https://osdr.nasa.gov/bio/repo/data/studies/OSD-714>
+- Source: NASA Open Science Data Repository, OSD-714 (study title); Hayashi T et al. Commun Biol 2023, doi 10.1038/s42003-023-04769-3. <https://osdr.nasa.gov/bio/repo/data/studies/OSD-714>
 - Quote: "Lunar gravity prevents skeletal muscle atrophy but not myofiber type shift in mice"
 
 ### Radiation environment
@@ -88,7 +88,7 @@ another citation without opening the original; **fitted** means estimated from e
 - Quote: "The RAD surface radiation data show an average GCR dose equivalent rate of 0.67 millisieverts per day from August 2012 to June 2013 on the Martian surface"
 - Values: `doseEquivalentMSvPerDay` = 0.67
 
-**V16**. Mars surface, one MSL/RAD observation on sol 90: 8.60 uGy/h in silicon and 8.38 uGy/h in the tissue-equivalent detector.
+**V16**. Mars surface, the first of 45 MSL/RAD observations on sol 90: 8.60 uGy/h in detector B (silicon) and 8.38 uGy/h in detector E (tissue-equivalent plastic). The mean of detector B over that sol was 8.89 uGy/h. The detector descriptions were not checked against the instrument documentation.
 
 - Status: verified (dataset-record)
 - Source: NASA Planetary Data System, MSL-M-RAD-3-RDR-V1.0, sol 90 (2012-311), observation 00, fields DOSIMETRY_TOTAL_DOSE_B and _E. <https://pds-ppi.igpp.ucla.edu/data/MSL-M-RAD-3-RDR-V1.0/>
@@ -108,12 +108,12 @@ another citation without opening the original; **fitted** means estimated from e
 - Source: Wilson JW et al., NTRS 20040139603; ISS Radiation Shielding Model Development, NTRS 20040121166. <https://ntrs.nasa.gov/citations/20040139603>
 - Quote: "strategic placement of polyethylene augmentation (also TRL9) in crew quarters has helped in reducing exposures"
 
-**V22**. September 2017 solar particle event: GOES-15 >10 MeV proton flux peaked at 1071.8 pfu on 2017-09-11 01:00 UTC (5-minute data, not filtered on the quality flag).
+**V22**. September 2017 solar particle event: the east-facing GOES-15 >10 MeV proton channel peaked at 1071.8 pfu on 2017-09-11 01:00 UTC; the west-facing channel peaked at 1333.2 pfu at 11:40 UTC (5-minute data). Not used in the code.
 
 - Status: verified (dataset-record)
 - Source: NOAA NCEI, GOES-15 EPEAD corrected proton flux, 5-minute averages, September 2017. <https://www.ncei.noaa.gov/data/goes-space-environment-monitor/access/avg/2017/09/goes15/csv/g15_epead_cpflux_5m_20170901_20170930.csv>
 - Quote: none recorded
-- Values: `peakPfu` = 1071.8; `peakTime` = 2017-09-11T01:00Z
+- Values: `peakPfuEast` = 1071.8; `peakTimeEast` = 2017-09-11T01:00Z; `peakPfuWest` = 1333.2
 
 ### Mission facts
 
@@ -133,7 +133,7 @@ another citation without opening the original; **fitted** means estimated from e
 
 ### Electrical impedance myography (EIM)
 
-**V8**. Human disuse: after 10-59 days in a cast, 50 kHz EIM phase of the tibialis anterior was 6.64 deg versus 9.46 deg in the other leg (-28.4%), and returned to 9.37 deg after remobilisation (n = 10).
+**V8**. Human disuse: after 10-59 days in a cast, 50 kHz EIM phase of the tibialis anterior (shin) was 6.64 deg in the casted leg versus 9.46 deg in the other leg (28.4% lower), and rose to 9.37 deg after the cast came off (n = 10). A comparison between legs, not before and after.
 
 - Status: verified (full-text)
 - Source: Tarulli AW et al. Arch Phys Med Rehabil 2009;90:1806-1810. PMCID PMC2829834. <https://doi.org/10.1016/j.apmr.2009.04.007>
@@ -147,12 +147,12 @@ another citation without opening the original; **fitted** means estimated from e
 - Quote: "The principal EIM parameter, the spatially averaged phase theta(avg), shows a roughly quadratic reduction with increasing age, declining more steeply beyond 60 years."
 - Values: `n` = 100; `ageMin` = 18; `ageMax` = 90
 
-**V10**. Operator-applied 50 kHz EIM: test-retest ICC 0.938-0.971; variability 4.2% on average, 16.8% at most.
+**V10**. Operator-applied 50 kHz EIM in 30 people, measured on biceps, quadriceps and tibialis anterior and repeated within 250 days: test-retest ICC 0.938-0.971; variability 4.2% on average, 16.8% at most. Not measured on the calf, and not night to night.
 
 - Status: verified (abstract)
 - Source: Rutkove SB et al. Clin Neurophysiol 2006;117:1244-1248. PMID 16644269. <https://doi.org/10.1016/j.clinph.2005.12.029>
 - Quote: "Variability between measurements was on average 4.2% for all muscle combined, with an upper limit of 16.8%."
-- Values: `iccMin` = 0.938; `iccMax` = 0.971; `meanVariabilityPct` = 4.2; `maxVariabilityPct` = 16.8
+- Values: `n` = 30; `iccMin` = 0.938; `iccMax` = 0.971; `meanVariabilityPct` = 4.2; `maxVariabilityPct` = 16.8
 
 **V7**. Rats in a hindlimb-suspension analogue: EIM phase-slope fell from 14.60 to 11.03 to 10.13 deg/MHz at days 0, 7 and 14. The authors propose EIM as a biomarker under micro- and partial gravity.
 
@@ -168,7 +168,7 @@ another citation without opening the original; **fitted** means estimated from e
 - Quote: "The ECV and ICV data changed significantly during all three periods, that is, a steady state could not be reached within 30 minutes."
 - Values: `legEcvChangePct` = -10.96; `ecvTimeConstantMin` = 36.4; `noSteadyStateWithinMin` = 30
 
-**V30**. Textile electrodes strapped to the leg matched gel electrodes for multi-frequency bioimpedance. A capacitive bioimpedance mattress prototype exists but is motion-sensitive. No study of dry-electrode or bed-integrated EIM was found.
+**V30**. Textile electrodes strapped to the leg matched gel electrodes for multi-frequency bioimpedance. A capacitive bioimpedance mattress prototype exists but is motion-sensitive. We found no study of dry-electrode or bed-integrated EIM, and no human EIM data from space or bed rest.
 
 - Status: verified (abstract)
 - Source: Nichols CJ et al. IEEE Trans Biomed Eng 2023;70:2679 (PMID 37027282); Castro ID et al. IEEE EMBC 2019:5621 (PMID 31947128). <https://pubmed.ncbi.nlm.nih.gov/37027282/>
@@ -182,26 +182,32 @@ another citation without opening the original; **fitted** means estimated from e
 
 ### Sleep
 
-**V11**. ISS crew slept 6.09 h per night on average during missions; 12 of 16 used sleep-promoting drugs.
+**V11**. ISS crew slept 6.09 h per night on average during missions, measured by wrist actigraphy in 21 astronauts; 12 of 16 reported using sleep-promoting drugs.
 
 - Status: verified (abstract)
 - Source: Barger LK et al. Lancet Neurol 2014;13:904-912. PMID 25127232. <https://doi.org/10.1016/S1474-4422(14)70122-X>
 - Quote: "Crew members on ISS missions obtained significantly less sleep during spaceflight (6.09 h [0.67]) ... 12 (75%) of 16 ISS crew members reported using sleep-promoting drugs."
 - Values: `issSleepHours` = 6.09; `issSleepSd` = 0.67; `hypnoticUsers` = 12; `hypnoticOf` = 16
 
-**V18**. On the ISS the sleeping bag restrains the crew member to the crew-quarters wall, and NASA protects 8.5 hours for sleep each night.
+**V18**. Barger et al. report that NASA regulations mandate 8.5 hours of protected time for sleep each night, citing the ISS Generic Groundrules, Requirements and Constraints. The NASA rule document itself was not opened.
 
 - Status: verified (full-text)
-- Source: Barger LK et al. Lancet Neurol 2014 (full text, PMC4188436); NASA, Improvements to On-Orbit Sleeping Accommodations, NTRS 20190027189. <https://ntrs.nasa.gov/citations/20190027189>
+- Source: Barger LK et al. Lancet Neurol 2014;13:904-912, full text. PMCID PMC4188436. <https://pmc.ncbi.nlm.nih.gov/articles/PMC4188436/>
 - Quote: "sleep deficiency is pervasive among crewmembers despite NASA regulations that mandate 8.5 hours of protected time for sleep each night"
 - Values: `protectedSleepHours` = 8.5
 
-**V25**. Adults should sleep 7 or more hours per night.
+**V42**. On the ISS the sleeping bag restrains the crew member to the wall of the crew quarters, so the body does not rest on a surface.
+
+- Status: verified (official-document)
+- Source: NASA, Improvements to On-Orbit Sleeping Accommodations, NTRS 20190027189 (2019). <https://ntrs.nasa.gov/citations/20190027189>
+- Quote: "The sleeping bags provide a soft and warm environment and also serve to safely restrain the crew member to the wall of their CQ."
+
+**V25**. Adults aged 18 to 60 should sleep 7 or more hours per night.
 
 - Status: verified (consensus-statement)
 - Source: Watson NF et al. Sleep 2015;38:843-844 (AASM and Sleep Research Society consensus). PMCID PMC4434546. <https://pmc.ncbi.nlm.nih.gov/articles/PMC4434546/>
 - Quote: "Adults should sleep 7 or more hours per night on a regular basis to promote optimal health."
-- Values: `minSleepHours` = 7
+- Values: `minSleepHours` = 7; `ageMin` = 18; `ageMax` = 60
 
 ### Radar
 
@@ -212,12 +218,12 @@ another citation without opening the original; **fitted** means estimated from e
 - Quote: "In 37% of the included studies on the measurement of the respiratory rate and in 48% of those on the measurement of the heart rate, the maximum deviation was 5%. For a tolerated deviation of 10%, the corresponding percentages were 85% and 87%"
 - Values: `rrWithin5Pct` = 37; `hrWithin5Pct` = 48; `rrWithin10Pct` = 85; `hrWithin10Pct` = 87
 
-**V24**. A 60 GHz FMCW radar used during polysomnography (n = 44) agreed with the apnea-hypopnea index at ICC 0.776-0.929.
+**V24**. A 60 GHz FMCW radar used during polysomnography (n = 44) agreed with the apnea-hypopnea index at ICC 0.776-0.812 on its own, and 0.916-0.929 only when the sleep status came from polysomnography. The authors state that the radar alone cannot distinguish the sleep status.
 
 - Status: verified (full-text)
-- Source: Choi JW et al. Sensors 2022;22:7177. PMCID PMC9570824 (values taken from the full text by a research agent; no sentence copied). <https://pmc.ncbi.nlm.nih.gov/articles/PMC9570824/>
+- Source: Choi JW et al. Sensors 2022;22:7177. PMCID PMC9570824 (values checked in the full text twice; no sentence copied). <https://pmc.ncbi.nlm.nih.gov/articles/PMC9570824/>
 - Quote: none recorded
-- Values: `n` = 44; `iccMin` = 0.776; `iccMax` = 0.929
+- Values: `n` = 44; `iccRadarAloneMin` = 0.776; `iccRadarAloneMax` = 0.812; `iccWithPsgSleepMin` = 0.916; `iccWithPsgSleepMax` = 0.929
 
 **V27**. 60 GHz exposure: the ICNIRP 2020 general-public limit is 20 W/m2 local absorbed power density; penetration into skin is about 0.49 mm; a typical radar chip transmits at 12 dBm.
 
@@ -226,10 +232,10 @@ another citation without opening the original; **fitted** means estimated from e
 - Quote: "Local Sab is to be averaged over a square 4-cm2 surface area of the body."
 - Values: `limitWPerM2` = 20; `skinPenetrationMm` = 0.49; `txPowerDbm` = 12
 
-**V39**. Radar vital-sign monitoring has not been tested in space as far as we found. The closest work is a design study of UWB radar for the ISS crew quarters, validated by simulation and ground tests.
+**V39**. We found no test of radar vital-sign monitoring in space. The closest work is a design study of UWB radar for sensing breathing in the ISS crew quarters, validated by simulation and ground tests.
 
 - Status: verified (full-text)
-- Source: Baldi M et al. Sensors 2014. PMCID PMC4327036. <https://pmc.ncbi.nlm.nih.gov/articles/PMC4327036/>
+- Source: Baldi M et al. Sensors 2015;15(1):565-591. PMCID PMC4327036. <https://pmc.ncbi.nlm.nih.gov/articles/PMC4327036/>
 - Quote: "Both the EM and signal processing approaches have been validated through laboratory experiments in order to assess the reliability of the simulation tools"
 
 ### Cosmic-ray scattering image
@@ -244,7 +250,7 @@ another citation without opening the original; **fitted** means estimated from e
 **V32**. Highland formula for the RMS multiple-scattering angle: theta0 = (13.6 MeV / (beta c p)) z sqrt(x/X0) [1 + 0.038 ln(x z^2 / (X0 beta^2))], accurate to 11% or better.
 
 - Status: verified (reference-table)
-- Source: Particle Data Group, Passage of Particles Through Matter. <https://pdg.lbl.gov/2024/reviews/rpp2024-rev-passage-particles-matter.pdf>
+- Source: Particle Data Group, Passage of Particles Through Matter (the accuracy sentence is in the 2014 edition; the formula is unchanged in 2024). <https://pdg.lbl.gov/2014/reviews/rpp2014-rev-passage-particles-matter.pdf>
 - Quote: "is accurate to 11% or better for 10^-3 < x/X0 < 100"
 - Values: `constantMeV` = 13.6; `logCoefficient` = 0.038; `accuracyPct` = 11
 
@@ -296,7 +302,7 @@ another citation without opening the original; **fitted** means estimated from e
 
 | Name | Value | Unit | Status | Sources | Note |
 |---|---|---|---|---|---|
-| maxLossFraction | 0.38 | fraction of calf muscle volume | fitted | V4, V5 | Long-run loss at g = 0 without exercise (plateau -38%). Fitted with timeConstantDays 42 and exerciseEfficacy 0.72; the model then gives V4 control 60 d -28.9% (published -29%), V4 exercise 60 d -8.1% (published -8%), V5 ISS 180 d with exercise -10.5% (published -13 +/- 2%). V5 used a different, less effective exercise programme, so it is underestimated; matching all three exactly would need a plateau above 50%, so the smaller plateau was kept. The plateau is an extrapolation: there are no human data without countermeasures beyond a few months. |
+| maxLossFraction | 0.38 | fraction of calf muscle volume | fitted | V4, V5 | Long-run loss at g = 0 without exercise (plateau -38%). Fitted with timeConstantDays 42 and exerciseEfficacy 0.72; the model then gives V4 control 60 d -28.9% (published -29%), V4 exercise 60 d -8.1% (published -8%), V5 ISS 180 d with exercise -10.5% (published -13 +/- 2%). V5 used a different, less effective exercise programme, so it is underestimated; matching all three exactly would need a plateau above 50%, so the smaller plateau was kept. The plateau is an extrapolation: there are no human data without countermeasures beyond a few months. Two equivalences are assumed in the fit: 6-degree head-down bed rest (V4) is treated as g = 0, and the ISS crews (V5) as full exercise adherence. |
 | timeConstantDays | 42 | days | fitted | V4, V5 | Time constant of the approach to the loss target. Fitted together with maxLossFraction and exerciseEfficacy (see there). |
 | exerciseEfficacy | 0.72 | fraction of loss prevented at full adherence | fitted | V4, V5 | From the V4 ratio of exercise to control loss (8/29 = 0.28, so efficacy about 0.72). Applied to V5 as well, although that programme differed (see maxLossFraction). |
 | recoveryTimeConstantDays | 30 | days | assumption |  | Time constant of recovery toward baseline at g >= 1. No fitted source; chosen to be shorter than the loss time constant. |
