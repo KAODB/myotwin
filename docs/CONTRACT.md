@@ -180,7 +180,7 @@ On a grey card `extra` holds whatever is known and null for the rest.
 
 ### sim (`js/sim.js`)
 
-- `sim.SCENARIOS` : `{ S1, S2, S3, S4 }`, each `{ id, title, env, summary, baselineNights, phases, events }`, plus `rad` (which real dataset and window the radiation replays; absent for S4).
+- `sim.SCENARIOS` : `{ S1, S2, S3 }`, each `{ id, title, env, summary, baselineNights, phases, events, rad }`; `rad` names the real dataset and window the radiation replays.
 - `sim.generate(scenarioId, opts) -> { scenario, records, plan }`
   `opts = { seed = 1, exerciseAdherence?, gravityShape?, sleepOpportunityH?, shieldingFactor? }`.
   `shieldingFactor` scales `_truth.tracksPerCm2` only, never `rad.dose_uGy`.
@@ -190,7 +190,7 @@ On a grey card `extra` holds whatever is known and null for the rest.
   intended (planned exercise, no lapses, normal activity); it uses the same gravity shape as
   the records. Each scenario lists its `planPhases` next to its `phases`.
   Each scenario also has `person = { baselinePhaseDeg, hrBpm, rrBpm }` and its own default
-  `seed`, so the four scenarios do not show the same person. `opts.seed` overrides the default.
+  `seed`, so the three scenarios do not show the same person. `opts.seed` overrides the default.
   `opts.eimNoiseSdFraction` overrides the night-to-night EIM noise (a what-if for a noisier sensor).
   An unknown scenario id (including inherited names such as `__proto__`) throws a clear error.
 - `sim.NOISE` : declared night-to-night noise levels (assumptions).
@@ -213,16 +213,13 @@ On a grey card `extra` holds whatever is known and null for the rest.
   `{ risk, riskSourceIds, roadmapId, ratings: { moon, mars } (each { code, disposition, text }), scale, lastPublished,
   riskPageId, says, canBeDone, standard: [{ text, sourceIds }], gap: { id, text } }`. Ratings are the in-mission
   (operations) rating, except radiation, which shows the long-term health rating (its operations rating is 1x1).
-  `says` and `canBeDone` are verbatim sentences from the NASA risk page (V48 to V51). Shown in the space scenarios only.
-- `rules.DISCLAIMER` and `rules.DISCLAIMER_REPLAYED` : the line under "What it means"; the second is used for the
-  radiation check in the space scenarios, whose dose is replayed from measurements.
-- `rules.WORDING[mode]` : terms that differ between `'astronaut'` and `'eldercare'`
-  (for example who decides).
+  `says` and `canBeDone` are verbatim sentences from the NASA risk page (V48 to V51).
+- `rules.WORDING` : the crew terms filled into the card text (for example who decides).
 - `engine.baseline(records) -> { eim: { median, sd, n }, sleep: {...}, rr: {...}, hr: {...} }`
   Uses the nights with `missionDay < 0`.
 - `engine.assess(records, index, opts) -> Assessment`
   Assesses the night at `records[index]` using only `records[0..index]`.
-  `opts = { mode = 'astronaut', expectedChangePct? }`. `expectedChangePct` is the plan array
+  `opts = { expectedChangePct? }`. `expectedChangePct` is the plan array
   from `sim.generate` (aligned with `records`); when it is absent the plan is "no change".
 - `engine.project(records, index) -> { cardId: 'muscle', daysToRed, slopePctPerWeek } | null`
   Uses only complete weekly windows of mission nights; returns null when fewer than 3 such
@@ -251,10 +248,10 @@ Owned by the UI agent; internal structure is free. Requirements are in the
 agent brief. The page state lives in the URL hash so that any view can be
 shared and captured:
 
-`#s=S2&d=45&layer=density&view=raw&mode=astronaut&card=muscle`
+`#s=S2&d=45&layer=density&view=raw&card=muscle`
 
 - `s` scenario id, `d` mission day, `layer` image layer (`density|pressure|impedance`),
-  `view` (`raw|diff`), `mode` (`astronaut|eldercare`), `card` selected trend card (set by a card or by its hotspot on the body figure;
+  `view` (`raw|diff`), `card` selected trend card (set by a card or by its hotspot on the body figure;
   both give the same state and address).
 - What-if values in the address: `ex` 0 to 1 (step 0.05), `gs` 0.25 to 4 (step 0.25, default 1;
   older links with 1 to 4 in steps of 0.5 still load), `sh` 0.6 to 1 (step 0.1; the share of
@@ -264,11 +261,11 @@ shared and captured:
   A left-out night shows the body outline only, with a sentence saying why; the change view
   accumulates only the usable nights of its window and of the first week, and its label says
   how many nights were left out.
-- `mode` follows the scenario: `eldercare` exactly when `s=S4`, otherwise `astronaut`. It is
-  written to the address for readability; a valid `mode` in an older link is accepted and ignored,
-  without the notice (for example `#s=S4&d=34&mode=astronaut&card=muscle`).
-- In the home scenario (`s=S4`) the what-ifs `ex`, `gs` and `sh` do not apply: values in the address
-  are ignored, without the notice, and are not written back.
+- `mode` is no longer written. A `mode` of `astronaut` or `eldercare` in an older link is accepted
+  and ignored, without the notice (for example `#s=S3&d=20&mode=eldercare&card=radiation`); any
+  other `mode` value shows the notice.
+- An unknown scenario (for example `s=S4`, the removed home scenario) shows the notice and opens
+  the default view (`#s=S2&d=42&layer=density&view=raw&card=muscle`), ignoring the rest of the address.
 - Any value in the address that is unknown, repeated (for example `d=10&d=20`), rejected or changed
   to fit (for example a day outside the scenario) falls back as before and shows the notice "This
   link could not be opened; showing the default view." An unknown evidence id (`ev`) shows "That
@@ -290,9 +287,8 @@ shared and captured:
 
 Colour scheme (`css/style.css`, palette at the top; `test/palette.test.js` checks it):
 
-- Space (dark): Midnight Black `#02070A`, working colour Electric Blue `#0297DE`, accent Cantaloupe
-  Orange `#FC734D`. Home (`body.mode-eldercare`): White `#FCFFFF`, Sky Blue `#0593C6`, Hot Pink
-  `#D83995`, with darker `*-text` shades for small text so every pair meets WCAG AA.
+- Midnight Black `#02070A`, working colour Electric Blue `#0297DE`, accent Cantaloupe Orange
+  `#FC734D`; every colour pair meets WCAG AA.
 - The accent (`--attention`) is reserved for Watch and Report (marks, card bars, status words,
   chart points and threshold lines) and the headline when a shown check is on Watch or Report
   (`.headline-attn`). Report is solid with a heavy bar; Watch is an outlined triangle with a dashed
@@ -300,13 +296,12 @@ Colour scheme (`css/style.css`, palette at the top; `test/palette.test.js` check
 - Canvas scales come from `--map-heat` (black, working blue, white) and `--map-diverging` (blue,
   neutral, accent), read by `js/charts.js`; the density layer stays greyscale.
 
-Measured radiation data on the page (space scenarios only; none of it appears when `s=S4`):
+Measured radiation data on the page:
 
 - `index.html` loads `data/msl-rad.js`, `data/lro-crater.js`, `data/donki-sep-2017.js`,
   `data/omni-protons.js` and `data/osdr-pwb.js` before `js/sim.js`, and `data/osdr-pwb.js` before
   `js/model.js` (checked by `test/page.test.js`).
-- Card tags: the radiation card carries "Measured, replayed" (on nights with `rad`), the other
-  three cards "Simulated". Under the cards, `#rad-source` says where tonight's dose comes from,
+- Card tag: the radiation card carries "Measured by NASA" (on nights with `rad`). Under the cards, `#rad-source` says where tonight's dose comes from,
   built from `rad.measured` (V60 for Curiosity RAD, V61 for LRO CRaTER), and, on a night with
   `rad.events`, one DONKI record: the record named in the evidence table (V62) is preferred when
   it is among the night's records (linked to V62); otherwise the first record, shown by its id.
@@ -318,7 +313,7 @@ Measured radiation data on the page (space scenarios only; none of it appears wh
   scale (`logY`, decade ticks shared with `charts.logSeries`) with tick labels in the card's units
   (`charts.doseTick`: µGy below 1,000, mGy from 1,000 up); the note and the chart's accessible
   label say the scale is logarithmic. Narrower ranges keep the linear axis.
-- `#gcheck`, in "How it works" after the limits list (space scenarios only): the rat
+- `#gcheck`, in "How it works" after the limits list: the rat
   partial-weight-bearing check of the gravity term, drawn with `charts.dotScale` from
   `model.checkGravityTerm(data.osdrPwb, gs)` and worded by `model.describeGravityCheck`; caveats
   always visible; links V90 and V91. It follows the what-if shape `gs`. Each mark is centred on its

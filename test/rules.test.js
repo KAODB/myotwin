@@ -181,11 +181,9 @@ test('hazard facts: one NASA fact on each of the first four rows, numbers from e
   assert.deepStrictEqual(ids(all).filter((x) => !evidence.get(x)), []);
 });
 
-test('radiation wording: the solar particle event is on record, and its disclaimer names replayed measurements', () => {
+test('radiation wording: the solar particle event is on record', () => {
   assert.match(rules.TEXT.radiation.red.meaning, /a solar particle event is on record for the night/);
   assert.doesNotMatch(rules.TEXT.radiation.red.meaning, /detector flagged/);
-  assert.match(rules.DISCLAIMER_REPLAYED, /^Screening flag from replayed measurements\./);
-  assert.match(rules.DISCLAIMER, /^Screening flag from simulated data\./);
 });
 
 test('radiation wording names a replayed dose, and the direction map is not a shielding claim', () => {

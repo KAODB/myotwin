@@ -1,6 +1,6 @@
 /*
  * MyoTwin night-data simulator. Generates seeded, deterministic NightRecords
- * (see docs/CONTRACT.md) for four scenarios: 14 baseline nights on Earth, then
+ * (see docs/CONTRACT.md) for three scenarios: 14 baseline nights on Earth, then
  * surface nights. Muscle change comes from js/model.js. The nightly radiation
  * dose on Moon and Mars nights replays real measurements night by night (LRO
  * CRaTER, Curiosity RAD, with DONKI event records; see data/README.md). Every
@@ -42,11 +42,10 @@
     sleepEfficiency: a(0.88, '0..1', 'Mean sleep efficiency.'),
     rrBpm: a(14, 'breaths/min', 'Default mean night respiratory rate; each scenario person overrides it.'),
     hrBpm: a(54, 'beats/min', 'Default mean night heart rate; each scenario person overrides it.'),
-    personS1: a({ baselinePhaseDeg: 9.2, hrBpm: 52, rrBpm: 13.5 }, 'deg, beats/min, breaths/min', 'S1 crew member; values chosen so the four scenarios show different people.'),
-    personS2: a({ baselinePhaseDeg: 8.8, hrBpm: 56, rrBpm: 14.5 }, 'deg, beats/min, breaths/min', 'S2 crew member; values chosen so the four scenarios show different people.'),
-    personS3: a({ baselinePhaseDeg: 9.5, hrBpm: 50, rrBpm: 13 }, 'deg, beats/min, breaths/min', 'S3 crew member; values chosen so the four scenarios show different people.'),
-    personS4: a({ baselinePhaseDeg: 7.4, hrBpm: 64, rrBpm: 16 }, 'deg, beats/min, breaths/min', 'S4 older adult. EIM phase falls with age (V9), so the baseline phase is lower; the value itself is an assumption.', ['V9']),
-    scenarioSeeds: a({ S1: 11, S2: 23, S3: 37, S4: 41 }, 'seed', 'Default random seed per scenario so each scenario shows its own nights; opts.seed overrides.'),
+    personS1: a({ baselinePhaseDeg: 9.2, hrBpm: 52, rrBpm: 13.5 }, 'deg, beats/min, breaths/min', 'S1 crew member; values chosen so the three scenarios show different people.'),
+    personS2: a({ baselinePhaseDeg: 8.8, hrBpm: 56, rrBpm: 14.5 }, 'deg, beats/min, breaths/min', 'S2 crew member; values chosen so the three scenarios show different people.'),
+    personS3: a({ baselinePhaseDeg: 9.5, hrBpm: 50, rrBpm: 13 }, 'deg, beats/min, breaths/min', 'S3 crew member; values chosen so the three scenarios show different people.'),
+    scenarioSeeds: a({ S1: 11, S2: 23, S3: 37 }, 'seed', 'Default random seed per scenario so each scenario shows its own nights; opts.seed overrides.'),
     eimNoiseSdMax: a(0.2, 'fraction of value', 'Largest accepted what-if EIM noise (opts.eimNoiseSdFraction); other values are ignored.'),
     movement: a(0.2, '0..1', 'Mean movement index.'),
     sleepHoursPerNight: a(8, 'h', 'Hours of dose accumulation per sleep period. On Mars nights the replayed sol median dose rate is multiplied by it.'),
@@ -63,10 +62,7 @@
     verticalIntensity: a(0.2, 'per cm2 per s per sr', 'Vertical GCR intensity; inside the 0.12-0.40 range implied by V33 (1.5-5.0 per cm2 per s over 4 pi). The same value is used for the Moon and Mars; on Mars about 20 g/cm2 of air removes roughly a quarter of the usable tracks (our estimate), which this version does not apply.', ['V33']),
     coneHalfAngleDeg: a(20, 'deg', 'Half-angle of the accepted track cone.'),
     s2TransitDays: a(180, 'days', 'Earth-Mars transit at g = 0 before the first surface night.'),
-    s2TransitAdherence: a(0.9, 'fraction', 'Exercise adherence during the transit.'),
-    s4LowActivityG: a(0.6, 'g equivalent', 'Five weeks of low activity after hospital discharge represented as partial unloading at g = 0.6. Not a sourced equivalence.'),
-    s4LowActivityDays: a(35, 'days', 'Length of the low-activity period after discharge.'),
-    s4SleepMeanH: a(7.3, 'h', 'S4 mean sleep. The 7 h line (V79) is stated for an average adult and may not apply to an older adult, so a permanently amber sleep card would mislead.', ['V79'])
+    s2TransitAdherence: a(0.9, 'fraction', 'Exercise adherence during the transit.')
   };
 
   var NOISE = {
@@ -131,18 +127,6 @@
         { from: 14, to: 17, label: 'Measured: solar particle events of 4-7 Sep 2017 (LRO CRaTER)' },
         { from: 20, to: 24, label: 'Measured: solar particle event of 10 Sep 2017 and its tail (LRO CRaTER)' }
       ]
-    },
-    S4: {
-      id: 'S4', title: 'Earth, older adult after hospital discharge', env: 'earth', baselineNights: 14, transitDays: 0,
-      sleepMeanH: ASSUMPTIONS.s4SleepMeanH.value,
-      person: ASSUMPTIONS.personS4.value, seed: ASSUMPTIONS.scenarioSeeds.value.S4,
-      summary: 'Nine weeks at home after discharge: five weeks of low activity, modelled as partial unloading (g = 0.6, an assumption, not a sourced equivalence), then four weeks of normal activity. All data are simulated.',
-      phases: [
-        { days: ASSUMPTIONS.s4LowActivityDays.value, g: ASSUMPTIONS.s4LowActivityG.value, exerciseAdherence: 0 },
-        { days: 28, g: G.earth, exerciseAdherence: 0 }
-      ],
-      planPhases: [{ days: ASSUMPTIONS.s4LowActivityDays.value + 28, g: G.earth, exerciseAdherence: 0 }],
-      events: []
     }
   };
 
@@ -227,8 +211,8 @@
       for (var i = 0; i < p.days; i++) dayAdherence.push(p.exerciseAdherence);
     });
 
-    var measured = sc.rad ? replay(sc, dayAdherence.length) : null;
-    var usualDose = measured ? median(measured.map(function (n) { return n.dose; })) : null;
+    var measured = replay(sc, dayAdherence.length);
+    var usualDose = median(measured.map(function (n) { return n.dose; }));
     var cone = 2 * Math.PI * (1 - Math.cos(A.coneHalfAngleDeg.value * Math.PI / 180));
     var tracksBase = A.verticalIntensity.value * cone * A.sleepHoursPerNight.value * 3600 * shield;
     var sectorWeight = [];
@@ -275,7 +259,7 @@
         movement: round(clamp(A.movement.value + N.movementSd.value * u.mov, 'movement'), 3)
       };
 
-      var night = surf && measured ? measured[md] : null;
+      var night = surf ? measured[md] : null;
       var hasRad = !!night;
       // Solar-event and raised-dose nights keep the usual cosmic-ray tracks and are flagged unusable.
       var quiet = hasRad && !night.spe && night.dose <= A.trackQuietMaxRatio.value * usualDose;

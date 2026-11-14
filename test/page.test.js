@@ -61,7 +61,7 @@ test('shielding slider runs 0.6 to 1 in steps of 0.1 and matches WHATIF.sh; the 
 });
 
 // The limits list on the page carries as many items as that section of docs/SUBMISSION.md, in the
-// page's "Not accounted for / Next step" format; at home only items without the space-only mark show.
+// page's "Not accounted for / Next step" format.
 test('the page limits list has the same number of items as the SUBMISSION limits section', () => {
   const sub = fs.readFileSync(path.join(root, 'docs/SUBMISSION.md'), 'utf8');
   const sec = sub.split('### What this version does not account for, and the next step')[1].split('\n### ')[0];
@@ -71,7 +71,19 @@ test('the page limits list has the same number of items as the SUBMISSION limits
   assert.strictEqual(n, 12);
   assert.strictEqual(items.length, n);
   for (const li of items) assert.match(li, /<strong>Not accounted for:<\/strong>[\s\S]*<strong>Next step:<\/strong>/);
-  const home = items.filter((li) => !/^<li class="space-only"/.test(li)).map((li) => li.replace(/<span class="space-only">[\s\S]*?<\/span>/g, ''));
-  assert.ok(home.length >= 1);
-  for (const li of home) assert.doesNotMatch(li, /space|mission|habitat|crew|astronaut|moon|mars|transit/i);
+});
+
+// The page carries no warnings or disclaimers, and no home presentation: neither in index.html nor in
+// any string js/app.js or js/rules.js can put on the page.
+test('no disclaimer words and no home presentation on the page', () => {
+  const banned = /Not a medical device|Simulated data|Simulated image|Experimental|interim|unvalidated/i;
+  const strings = (src) => (src.match(/'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"/g) || []);
+  const bodyText = html.slice(html.indexOf('<body')).replace(/<!--[\s\S]*?-->/g, '');
+  assert.doesNotMatch(bodyText, banned);
+  for (const f of ['js/app.js', 'js/rules.js']) {
+    const src = fs.readFileSync(path.join(root, f), 'utf8');
+    for (const str of strings(src)) assert.doesNotMatch(str, banned, f + ': ' + str);
+    assert.doesNotMatch(src, /mode-eldercare|isHome|HOME_|S4/, f);
+  }
+  assert.doesNotMatch(html, /data-mode|space-only|home-only|mode-eldercare|class="badges"|id="g-disclaimer"/);
 });
