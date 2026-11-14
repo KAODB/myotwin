@@ -1,0 +1,213 @@
+# MyoTwin module contract
+
+This file is the shared interface for everyone (human or SI agent) working on
+the code. If you need to change anything here, stop and ask the orchestrator;
+do not change it on your own.
+
+## What the product is
+
+Crew sleep in a lunar or Mars surface habitat. A sensor panel in the sleep
+station measures them passively all night. MyoTwin is the software: every
+morning it turns the night's data into a brief (one whole-body image, four
+status cards, trends against the person's own baseline, and what to do next).
+The hardware is assumed, not built. All data in this repository are simulated
+and the UI must say so at all times.
+
+## Ground rules
+
+1. Static site. No build step, no backend, no network requests, no third-party
+   scripts, no CDN. It must work when `index.html` is opened from disk
+   (`file://`) and from GitHub Pages.
+2. Plain `<script>` tags, no ES modules (modules do not load from `file://`).
+   Modern JavaScript syntax is fine (const, let, arrow functions, classes).
+3. Every number used in logic or shown in the UI comes from `js/evidence.js`
+   (by id) or is declared as an assumption in the module that owns it, with a
+   `status` of `fitted` or `assumption` and a note. No magic numbers.
+4. English only, everywhere (code, comments, UI text, docs, commit messages).
+5. No personal data. No company names or product promotion.
+6. Never delete an existing file. If you think one should go, report it.
+7. Tests use the Node built-in runner only: `node --test "test/*.test.js"`. No packages.
+8. Each file starts with a short comment saying what it does and that it was
+   written with an SI tool (Claude) and reviewed by the team.
+
+## Module pattern
+
+Every file in `js/` uses this wrapper so it works in the browser and in Node:
+
+```js
+(function (root) {
+  'use strict';
+  var ns = (root.MyoTwin = root.MyoTwin || {});
+  var inNode = typeof module === 'object' && module.exports;
+  var evidence = inNode ? require('./evidence.js') : ns.evidence;
+  // ... other dependencies the same way ...
+
+  var api = { /* public functions */ };
+
+  ns.NAME = api;                       // NAME = model, sim, rules, engine, phantom, imaging, charts
+  if (inNode) module.exports = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+```
+
+Browser load order: `evidence, model, sim, rules, engine, phantom, imaging, charts, app`.
+
+## File ownership
+
+| File | Owner | Depends on |
+|---|---|---|
+| `js/evidence.js` | orchestrator | none |
+| `js/model.js`, `js/sim.js`, `test/model.test.js`, `test/sim.test.js` | model-sim agent | evidence |
+| `js/rules.js`, `js/engine.js`, `test/engine.test.js` | engine agent | evidence |
+| `js/phantom.js`, `js/imaging.js`, `test/imaging.test.js` | imaging agent | evidence |
+| `index.html`, `css/style.css`, `js/charts.js`, `js/app.js` | UI agent | all of the above |
+| `test/fixture.js`, `test/evidence.test.js`, `docs/CONTRACT.md` | orchestrator | evidence |
+
+Do not edit a file you do not own. If you need something from another module
+that this contract does not give you, report it instead of working around it.
+
+## Data contract
+
+### NightRecord
+
+One record per night. Pre-departure baseline nights have a negative `missionDay`.
+
+```js
+{
+  night: '2031-03-14',            // ISO date at the habitat
+  missionDay: 45,                 // surface day; baseline nights are -14 .. -1
+  env: 'moon' | 'mars' | 'earth',
+  eim: {                          // null when no usable scan that night
+    site: 'calf_L',
+    phase50_deg: 8.9,             // 50 kHz phase, median of that night's scans
+    contact: 0.82,                // contact quality 0..1
+    scans: 4                      // number of usable scans (usable = contact >= 0.6)
+  },
+  radar: {                        // null when the radar had no data
+    sleep_h: 6.4,                 // hours asleep
+    efficiency: 0.86,             // asleep / time in bed, 0..1
+    rr_bpm: 14.2,                 // respiratory rate, breaths per minute (night median)
+    hr_bpm: 54.0,                 // heart rate, beats per minute (night median)
+    movement: 0.21                // movement index 0..1
+  },
+  rad: {                          // null when no data
+    dose_uGy: 104.5,              // absorbed dose in silicon over the sleep period
+    dir: [n0, n1, ..., n7],       // particle counts in 8 azimuth sectors, sector 0 = toward the head
+    spe: false                    // solar particle event flag from the detector
+  },
+  log: { exercise_done: true, note: '' },   // countermeasure log for the day before
+  _truth: {                       // simulator only; the engine must never read this
+    muscleChangePct: -3.1,        // true calf muscle change vs baseline, percent (negative = loss)
+    tracksPerCm2: 2100            // usable cosmic-ray tracks that night for the density image
+  }
+}
+```
+
+### Assessment
+
+```js
+{
+  night: '2031-03-14',
+  missionDay: 45,
+  cards: [
+    {
+      id: 'muscle' | 'sleep' | 'cardio' | 'radiation',
+      status: 'green' | 'amber' | 'red' | 'grey',
+      value: 8.9,                 // headline number shown on the card (null when grey)
+      unit: 'deg',
+      deltaPct: -4.8,             // change versus the person's own baseline, percent (null if not applicable)
+      reason: 'short sentence',   // why this status, in plain words
+      meaning: 'short sentence',  // what it means
+      actions: ['...', '...'],    // what to do now
+      decides: 'flight surgeon',  // who decides
+      sourceIds: ['V10', 'V1']    // evidence ids behind the rule
+    }
+    // exactly four cards, always in the order muscle, sleep, cardio, radiation
+  ],
+  overall: 'green' | 'amber' | 'red' | 'grey',   // worst non-grey status; grey only if all four are grey
+  headline: 'one sentence for the top of the brief'
+}
+```
+
+## Function signatures
+
+### model (`js/model.js`)
+
+- `model.PARAMS` : object of named parameters, each `{ value, unit, status: 'fitted' | 'assumption', anchors: ['V4', ...], note }`.
+- `model.GRAVITY` : `{ microgravity: 0, moon, mars, earth: 1 }` taken from evidence V14.
+- `model.step(prevChangePct, { g, exerciseAdherence, gravityShape }) -> number`
+  One day of the first-order model. `prevChangePct` and the result are muscle
+  change in percent versus baseline (negative = loss).
+  Target = `-100 * maxLossFraction * unloading(g) * (1 - exerciseEfficacy * exerciseAdherence)`,
+  with `unloading(g) = (1 - g) ^ gravityShape` (default shape 1). At `g >= 1` the
+  value recovers toward 0 with the recovery time constant.
+- `model.simulate(phases, opts) -> number[]`
+  `phases = [{ days, g, exerciseAdherence }]`; returns one value per day,
+  starting with day 0 = 0.
+- `model.eimPhase(baselinePhaseDeg, muscleChangePct) -> number`
+  Maps muscle change to expected EIM phase with the declared assumption.
+
+### sim (`js/sim.js`)
+
+- `sim.SCENARIOS` : `{ S1, S2, S3, S4 }`, each `{ id, title, env, summary, baselineNights, phases, events }`.
+- `sim.generate(scenarioId, opts) -> { scenario, records }`
+  `opts = { seed = 1, exerciseAdherence?, gravityShape?, sleepOpportunityH?, shieldingFactor? }`.
+  Deterministic for a given seed. `records` is a `NightRecord[]` sorted by night.
+- `sim.NOISE` : declared night-to-night noise levels (assumptions).
+
+### rules (`js/rules.js`) and engine (`js/engine.js`)
+
+- `rules.THRESHOLDS` : thresholds as data, each with `sourceIds`.
+- `rules.TEXT[cardId][status]` : `{ meaning, actions: [...] }`.
+- `rules.WORDING[mode]` : terms that differ between `'astronaut'` and `'eldercare'`
+  (for example who decides).
+- `engine.baseline(records) -> { eim: { median, sd, n }, sleep: {...}, rr: {...}, hr: {...} }`
+  Uses the nights with `missionDay < 0`.
+- `engine.assess(records, index, opts) -> Assessment`
+  Assesses the night at `records[index]` using only `records[0..index]`.
+  `opts = { mode = 'astronaut' }`.
+- `engine.project(records, index) -> { cardId: 'muscle', daysToRed, slopePctPerWeek } | null`
+- `engine.series(records, key) -> [{ missionDay, value }]`
+  Convenience for charts. `key` is one of `eim`, `sleep`, `rr`, `hr`, `dose`.
+
+### phantom (`js/phantom.js`) and imaging (`js/imaging.js`)
+
+- `phantom.build({ calfMuscleChangePct = 0, thighMuscleChangePct = 0 }) ->
+  { w, h, cellCm: 2, soft: Float32Array, bone: Float32Array, region: Uint8Array, REGIONS }`
+  A simplified supine body on a 2 cm grid. `soft` and `bone` are path lengths in cm
+  through each cell; `region` holds an index into `REGIONS`
+  (`['none','head','torso','arm_L','arm_R','pelvis','thigh_L','thigh_R','calf_L','calf_R','foot_L','foot_R']`).
+- `imaging.tracksPerCm2({ verticalIntensity, coneHalfAngleDeg = 20, hours = 8, shieldingFactor = 1 }) -> number`
+- `imaging.render(layer, phantomNow, opts) -> { w, h, values: Float32Array, unit, min, max, label }`
+  `layer` is `'density' | 'pressure' | 'impedance'`.
+  `opts = { tracksPerCm2, seed, env, momentumSpreadFactor, eimPhaseDeg, baselinePhaseDeg }`.
+- `imaging.difference(imageNow, imageBaseline, phantomNow) -> { w, h, values, unit: '%', min, max, label }`
+  Percent change per cell, averaged within each body region to tame noise.
+- `imaging.regionStats(image, phantomNow) -> { regionName: { mean, n } }`
+
+### charts (`js/charts.js`) and app (`js/app.js`)
+
+Owned by the UI agent; internal structure is free. Requirements are in the
+agent brief. The page state lives in the URL hash so that any view can be
+shared and captured:
+
+`#s=S2&d=45&layer=density&view=raw&mode=astronaut&card=muscle`
+
+- `s` scenario id, `d` mission day, `layer` image layer (`density|pressure|impedance`),
+  `view` (`raw|diff`), `mode` (`astronaut|eldercare`), `card` selected trend card.
+
+## Status rules (interim, unvalidated; a flight surgeon decides)
+
+All comparisons are against the person's own baseline (the 14 pre-departure nights).
+
+| Card | Indicator | Amber | Red | Grey |
+|---|---|---|---|---|
+| muscle | 7-night median of `eim.phase50_deg` | below baseline by more than max(2 x noise7, 4.2%) | below by more than max(3 x noise7, 16.8%), or three weekly medians falling in a row with a total drop above 4.2% | fewer than 3 nights with a usable scan in the last 7 |
+| sleep | mean `radar.sleep_h` over the last 7 nights | 6 to under 7 h | under 6 h | fewer than 4 nights of data in the last 7 |
+| cardio | `radar.rr_bpm` and `radar.hr_bpm`, 3-night medians | one of them above baseline median + 2 SD | both above on each of the last 3 nights | fewer than 2 nights of data in the last 3 |
+| radiation | tonight's `rad.dose_uGy` versus the median of up to 30 earlier nights | above 2x | above 10x, or `rad.spe` is true | fewer than 7 earlier nights |
+
+`noise7` is the expected spread of a 7-night median, as a percentage of the
+baseline median: `1.2533 * sdNightly / sqrt(7) / median * 100`.
+4.2% and 16.8% are evidence V10; 7 h is V25; 6 h is the ISS average in V11 rounded down.
+
+Green is anything that is neither amber, red nor grey.

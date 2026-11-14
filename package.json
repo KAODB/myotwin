@@ -1,0 +1,10 @@
+{
+  "name": "myotwin",
+  "version": "0.1.0",
+  "description": "MyoTwin: a morning health brief built from passive sleep-station sensing on the Moon and Mars (concept software, simulated data). NASA Space Apps Challenge 2026.",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "test": "node --test \"test/*.test.js\""
+  }
+}
