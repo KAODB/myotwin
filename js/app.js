@@ -743,7 +743,7 @@
       // Solar-event scenario: why a night can be on Report below the line, and what Curiosity saw under Martian air (V92).
       if (data.gen.scenario.rad && data.gen.scenario.rad.checkSpe) {
         if (x.usualUGy != null) note += ' A night with a solar particle event on record is on Report even when its dose is below the line.';
-        noteMore = { text: 'Under 23 g/cm2 of Martian air, Curiosity\'s RAD saw the dose rate rise only two- to threefold in the same event.', ids: ['V92'] };
+        noteMore = { text: 'Under 23 g/cm² of Martian air, Curiosity\'s RAD saw the dose rate rise only two- to threefold in the same event.', ids: ['V92'] };
       }
     }
     if (o.axisBreak != null) legend.push(['break', 'Break: the transit is not monitored']);
