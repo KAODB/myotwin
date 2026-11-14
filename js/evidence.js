@@ -71,7 +71,7 @@
     {
       id: 'V48', topic: 'linked from the challenge resources', status: 'verified', level: 'agency-web-page',
       claim: "On the ISS, average losses of strength and aerobic fitness are 10-12% of pre-mission levels, and between 12% and 38% of crew members lose more than 20%. Crews exercise 1.5 hours a day; spacecraft bound for the Moon and Mars will likely have less room for exercise equipment.",
-      values: { avgLossPctLow: 10, avgLossPctHigh: 12, crewOver20PctLow: 12, crewOver20PctHigh: 38, lossLinePct: 20, exerciseHoursPerDay: 1.5 },
+      values: { avgLossPctLow: 10, avgLossPctHigh: 12, crewOver20PctLow: 12, crewOver20PctHigh: 38, lossLinePct: 20, exerciseHoursPerDay: 1.5, says: "Depending on how it’s measured, between 12-38% of space station crew members lose more than 20% of their pre-mission fitness.", canBeDone: "Six to seven days a week, astronauts on the International Space Station perform resistance training and aerobic exercises for 1.5 hours per day to maintain their fitness and protect against muscle and bone loss." },
       quote: "Six to seven days a week, astronauts on the International Space Station perform resistance training and aerobic exercises for 1.5 hours per day to maintain their fitness and protect against muscle and bone loss. ... Crew members also undergo periodic fitness self-evaluations to help researchers monitor their health and fitness and to optimize the astronauts’ training regimen. ... Spacecraft set to carry astronauts to the Moon and Mars, however, will likely have less space for exercise equipment. ... However, data from International Space Station missions indicates that average losses to strength and aerobic fitness are 10-12% of pre-mission levels. ... Depending on how it’s measured, between 12-38% of space station crew members lose more than 20% of their pre-mission fitness.",
       source: "NASA, Risk of Reduced Cardiorespiratory and Musculoskeletal Fitness (linked from Risks of Human Spaceflight)",
       url: 'https://www.nasa.gov/reference/risk-of-reduced-cardiorespiratory-and-musculoskeletal-fitness/'
@@ -79,7 +79,7 @@
     {
       id: 'V49', topic: 'linked from the challenge resources', status: 'verified', level: 'agency-web-page',
       claim: "NASA names work overload, irregular light-dark cycles and sleep-pattern disruptions as stressors of spaceflight. On the ISS, LED lighting simulates Earth's light-dark cycle, and crews are given designated time for relaxation and self-care.",
-      values: {},
+      values: { says: "Astronauts are exposed to numerous stressors during spaceflight, such as work overload, irregular light-dark cycles, and sleep-pattern disruptions.", canBeDone: "To help minimize some of the stresses of spaceflight on the International Space Station, light-emitting diodes, or LEDs, simulate Earth’s light-dark cycle to help astronauts sleep better." },
       quote: "Astronauts are exposed to numerous stressors during spaceflight, such as work overload, irregular light-dark cycles, and sleep-pattern disruptions. ... To help minimize some of the stresses of spaceflight on the International Space Station, light-emitting diodes, or LEDs, simulate Earth’s light-dark cycle to help astronauts sleep better. ... Astronauts are also given designated times for relaxation and self-care as part of their routine to help prevent burnout.",
       source: "NASA, Risk from Inadequate Sleep and Irregular Schedules (linked from Risks of Human Spaceflight)",
       url: 'https://www.nasa.gov/reference/risk-from-inadequate-sleep-and-irregular-schedules/'
@@ -87,24 +87,24 @@
     {
       id: 'V50', topic: 'linked from the challenge resources', status: 'verified', level: 'agency-web-page',
       claim: "NASA lists blood clots, heart arrhythmias, cardiovascular disease, and low blood pressure with fainting at landing as possible results of low gravity. Regular exercise and a healthy diet help crews maintain cardiovascular fitness.",
-      values: {},
-      quote: "potentially leading to blood clots, heart arrythmias, cardiovascular disease, and low blood pressure which elevates the chances of fainting at landing. ... Regular exercise and healthy diets help crews maintain cardiovascular fitness. ... For future Mars missions, astronauts will also receive enhanced training to respond to cardiovascular emergencies.",
+      values: { says: "Low-gravity conditions and other spaceflight stressors can alter the heart and blood vessels, potentially leading to blood clots, heart arrythmias, cardiovascular disease, and low blood pressure which elevates the chances of fainting at landing.", canBeDone: "Regular exercise and healthy diets help crews maintain cardiovascular fitness." },
+      quote: "Low-gravity conditions and other spaceflight stressors can alter the heart and blood vessels, potentially leading to blood clots, heart arrythmias, cardiovascular disease, and low blood pressure which elevates the chances of fainting at landing. ... Regular exercise and healthy diets help crews maintain cardiovascular fitness. ... For future Mars missions, astronauts will also receive enhanced training to respond to cardiovascular emergencies.",
       source: "NASA, Risk of Cardiovascular Adaptations (linked from Risks of Human Spaceflight)",
       url: 'https://www.nasa.gov/reference/risk-of-cardiovascular-adaptations/'
     },
     {
       id: 'V51', topic: 'linked from the challenge resources', status: 'verified', level: 'agency-web-page',
       claim: "Instruments that measure radiation exposure are in place on the ISS, and NASA is working toward a personal cancer risk assessment for each astronaut based on radiation dose and genetic factors. Missions to the Moon and Mars leave the protection of Earth's magnetosphere.",
-      values: {},
-      quote: "In addition, various instruments that measure radiation exposure are in place aboard the International Space Station. ... Scientists are also conducting tissue research on Earth aimed at developing personalized cancer risk assessments for each astronaut, based on radiation dose and genetic factors. ... While missions to the space station are entirely within the magnetosphere, missions to the Moon and Mars will extend beyond this protective bubble.",
+      values: { says: "While missions to the space station are entirely within the magnetosphere, missions to the Moon and Mars will extend beyond this protective bubble.", canBeDone: "NASA scientists are working to develop strategies to identify and prevent health complications from space radiation exposure, including best practices for health surveillance as well as medicines to counter the effects of radiation exposures during spaceflight." },
+      quote: "NASA scientists are working to develop strategies to identify and prevent health complications from space radiation exposure, including best practices for health surveillance as well as medicines to counter the effects of radiation exposures during spaceflight. In addition, various instruments that measure radiation exposure are in place aboard the International Space Station. Scientists are also conducting tissue research on Earth aimed at developing personalized cancer risk assessments for each astronaut, based on radiation dose and genetic factors. ... While missions to the space station are entirely within the magnetosphere, missions to the Moon and Mars will extend beyond this protective bubble.",
       source: "NASA, Risk of Radiation-Induced Cancers (linked from Risks of Human Spaceflight)",
       url: 'https://www.nasa.gov/reference/risk-of-radiation-induced-cancers/'
     },
     {
       id: 'V52', topic: 'linked from the challenge resources', status: 'verified', level: 'agency-web-page',
       claim: "Isolation and confinement can affect a crew member's sleep, morale and decision making. NASA encourages self-care, including keeping a regular journal.",
-      values: {},
-      quote: "These factors may impact a crew member’s sleep, morale, and decision making ... To improve mental health, NASA encourages astronauts to explore self-care options including keeping a regular journal.",
+      values: { says: "The prolonged isolation and confinement that astronauts face in space can increase risks of behavioral issues and psychiatric disorders, such as anxiety and depression.", canBeDone: "To improve mental health, NASA encourages astronauts to explore self-care options including keeping a regular journal." },
+      quote: "The prolonged isolation and confinement that astronauts face in space can increase risks of behavioral issues and psychiatric disorders, such as anxiety and depression. These factors may impact a crew member’s sleep, morale, and decision making ... To improve mental health, NASA encourages astronauts to explore self-care options including keeping a regular journal.",
       source: "NASA, Risk of Behavioral Conditions and Psychiatric Disorders (linked from Risks of Human Spaceflight)",
       url: 'https://www.nasa.gov/reference/risk-of-behavioral-conditions-and-psychiatric-disorders/'
     },

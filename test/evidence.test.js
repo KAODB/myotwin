@@ -59,4 +59,10 @@ test('the twelve NASA pages linked from the challenge resources are present, ver
   assert.equal(evidence.value('V48', 'avgLossPctLow'), 10);
   assert.equal(evidence.value('V53', 'boneLossPctPerMonthHigh'), 1.5);
   assert.equal(evidence.value('V54', 'commDelayMinutesOneWay'), 20);
+  // The sentences shown to the user as "what NASA says" must be inside the checked quote.
+  for (const id of ['V48', 'V49', 'V50', 'V51', 'V52']) {
+    const it = evidence.get(id);
+    assert.ok(it.quote.includes(it.values.says), id + ' says');
+    assert.ok(it.quote.includes(it.values.canBeDone), id + ' canBeDone');
+  }
 });
