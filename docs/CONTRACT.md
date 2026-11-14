@@ -170,8 +170,10 @@ On a grey card `extra` holds whatever is known and null for the rest.
   `measures`: six `{ measure, sex, day: 28, pct1g, pct04g, pct0g, share, unstable }` (grip,
   plantarflexion torque, calf girth; F and M); `model = gravityTerm(partialG, shape)`.
   `unstable` uses the declared `model.GRAVITY_CHECK.unstablePoints`. `model.js` also loads the data
-  (Node: require; browser: `MyoTwin.data.osdrPwb` if `data/osdr-pwb.js` is loaded before it) to
+  (Node: require; browser: `MyoTwin.data.osdrPwb`, so `index.html` loads `data/osdr-pwb.js` before it) to
   write the result into the `gravityShape` note.
+- `model.describeGravityCheck(check) -> { marks, sentences: [3], caveats, closing }`
+  The page text for that check, composed only from a `checkGravityTerm` result.
 
 ### sim (`js/sim.js`)
 
@@ -248,6 +250,8 @@ shared and captured:
 - `s` scenario id, `d` mission day, `layer` image layer (`density|pressure|impedance`),
   `view` (`raw|diff`), `mode` (`astronaut|eldercare`), `card` selected trend card (set by a card or by its hotspot on the body figure;
   both give the same state and address).
+- What-if values in the address: `ex` 0 to 1 (step 0.05), `gs` 0.25 to 4 (step 0.25, default 1;
+  older links with 1 to 4 in steps of 0.5 still load), `sh` 0.1 to 1 (step 0.1), `nz` 0.01 to 0.08.
 - `mode` follows the scenario: `eldercare` exactly when `s=S4`, otherwise `astronaut`. It is
   written to the address for readability; a valid `mode` in an older link is accepted and ignored.
 - Any value in the address that is unknown, rejected or changed to fit (for example a day outside
@@ -256,8 +260,9 @@ shared and captured:
 
 Measured radiation data on the page (space scenarios only; none of it appears when `s=S4`):
 
-- `index.html` loads `data/msl-rad.js`, `data/lro-crater.js`, `data/donki-sep-2017.js` and
-  `data/omni-protons.js` before `js/sim.js` (checked by `test/page.test.js`).
+- `index.html` loads `data/msl-rad.js`, `data/lro-crater.js`, `data/donki-sep-2017.js`,
+  `data/omni-protons.js` and `data/osdr-pwb.js` before `js/sim.js`, and `data/osdr-pwb.js` before
+  `js/model.js` (checked by `test/page.test.js`).
 - Card tags: the radiation card carries "Measured, replayed" (on nights with `rad`), the other
   three cards "Simulated". Under the cards, `#rad-source` says where tonight's dose comes from,
   built from `rad.measured` (V60 for Curiosity RAD, V61 for LRO CRaTER), and, on a night with
@@ -265,6 +270,10 @@ Measured radiation data on the page (space scenarios only; none of it appears wh
 - Trend panel, radiation card, solar-event scenario (S3): `#flux-fig` draws the OMNI2 hourly
   proton flux above 10 MeV, 4 to 16 September 2017, on a log10 axis (`charts.logSeries`), with the
   selected night's 22:00 to 06:00 UTC window shaded; caption links V63.
+- `#gcheck`, in "How it works" after the limits list (space scenarios only): the rat
+  partial-weight-bearing check of the gravity term, drawn with `charts.dotScale` from
+  `model.checkGravityTerm(data.osdrPwb, gs)` and worded by `model.describeGravityCheck`; caveats
+  always visible; links V90 and V91. It follows the what-if shape `gs`.
 - `#measured`, just above the evidence drawer: one row per data module (`name`, what it drives,
   `source`, link to `url`, `retrieved`, `terms`) and the line "Everything else on this page is simulated."
 

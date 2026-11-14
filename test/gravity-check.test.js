@@ -153,3 +153,39 @@ test('V90 (OSD-652 grip) and V91 (OSD-616 torque and girth) match data/osdr-pwb.
     assert.deepStrictEqual(it.values, want, id);
   }
 });
+
+// ---- step 2: the page text and the widened what-if range -------------------------------------
+test('describeGravityCheck builds the panel text from checkGravityTerm output only', () => {
+  for (const shape of [0.25, 0.5, 1, 2, 4]) {
+    const c = model.checkGravityTerm(pwb, shape);
+    const t = model.describeGravityCheck(c);
+    assert.equal(t.sentences.length, 3);
+    for (const v of [c.min, c.median, c.max]) assert.ok(t.sentences[0].includes(v.toFixed(2)), shape + ': ' + t.sentences[0]);
+    assert.ok(t.sentences[1].includes(c.model.toFixed(2)) && t.sentences[1].includes('shape at ' + shape), t.sentences[1]);
+    assert.deepStrictEqual(t.marks.map((m) => m.share), c.measures.map((m) => m.share));
+    assert.equal(t.closing, 'A plausibility check of one assumption, not a fit.');
+  }
+  const one = model.describeGravityCheck(model.checkGravityTerm(pwb, 1));
+  assert.equal(one.sentences[2], 'The linear assumption sits near the middle of a wide spread.');
+  assert.match(model.describeGravityCheck(model.checkGravityTerm(pwb, 4)).sentences[2], /below all 6 shares/);
+  assert.match(model.describeGravityCheck(model.checkGravityTerm(pwb, 0.5)).sentences[2], /^This shape sits in the upper part/);
+  // The caveats stay, with their numbers taken from the check.
+  const mg = model.checkGravityTerm(pwb, 1).measures.find((m) => m.measure === 'grip' && m.sex === 'M');
+  assert.match(one.caveats[0], /harness for 28 days.*analog of partial gravity.*not human data/);
+  assert.match(one.caveats[1], /not muscle volume/);
+  assert.ok(one.caveats[2].includes('gained ' + Math.round(mg.pct1g) + '% grip') && one.caveats[2].includes(mg.share.toFixed(2)));
+  assert.match(one.caveats[3], /^One share is above 1 \(calf girth, females, 1\.05\)/);
+  assert.equal(one.caveats.length, 4);   // no share is flagged unstable
+});
+
+test('the muscle model behaves at shape 0.25 in the Moon and Mars scenarios', () => {
+  const sim = require('../js/sim.js');
+  for (const id of ['S1', 'S2', 'S3']) {
+    const lo = sim.generate(id, { gravityShape: 0.25 }), mid = sim.generate(id, { gravityShape: 1 });
+    const tl = lo.records.map((r) => r._truth.muscleChangePct), tm = mid.records.map((r) => r._truth.muscleChangePct);
+    assert.ok(tl.every((v) => Number.isFinite(v) && v <= 0 && v > -100 * model.PARAMS.maxLossFraction.value), id);
+    assert.ok(lo.plan.expectedChangePct.every(Number.isFinite), id + ' plan');
+    // shape below 1 means less protection, so at least as much loss by the last night
+    assert.ok(tl[tl.length - 1] <= tm[tm.length - 1], id + ' ' + tl[tl.length - 1] + ' vs ' + tm[tm.length - 1]);
+  }
+});

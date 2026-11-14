@@ -496,7 +496,57 @@
     return { x: X, y: Y };
   }
 
+  // ---- labelled dot scale ------------------------------------------------------
+  /**
+   * One row per mark on a shared horizontal scale from 0 to `max`, the label above each
+   * row (so it fits at 320 px), and one dashed vertical reference line with its label.
+   * opts: { rows: [{ value, label, shape: 'circle' | 'square' | 'triangle' }],
+   *   max, ticks: number[], ref: { value, label }, title, label }
+   * The <svg> height attribute is set here from the number of rows (give it no CSS height).
+   */
+  function dotScale(svg, opts) {
+    var ROW = 36, m = { l: 12, r: 18, t: 30, b: 60 };
+    var H = m.t + opts.rows.length * ROW + m.b;
+    svg.setAttribute('height', H);
+    var W = sizeOf(svg, 640, H).w;
+    clear(svg);
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    svg.setAttribute('aria-label', opts.label || 'Chart');
+    el('title', null, svg).textContent = opts.label || 'Chart';
+    var pw = W - m.l - m.r;
+    function X(v) { return m.l + Math.max(0, Math.min(opts.max, v)) / opts.max * pw; }
+    var y1 = m.t + opts.rows.length * ROW;
+    (opts.ticks || []).forEach(function (v) {
+      el('line', { x1: X(v), x2: X(v), y1: m.t, y2: y1, 'class': 'grid' }, svg);
+      text(svg, X(v), y1 + 16, fmt(v), 'ax-label');
+    });
+    el('line', { x1: m.l, x2: W - m.r, y1: y1, y2: y1, 'class': 'axis' }, svg);
+    // The axis title goes on two lines when it is wider than the plot (narrow screens).
+    var tt = text(svg, m.l + pw / 2, y1 + 36, opts.title || '', 'ax-title');
+    if (widthOf(tt) > pw) {
+      var words = tt.textContent.split(' '), half = Math.ceil(words.length / 2);
+      tt.textContent = words.slice(0, half).join(' ');
+      text(svg, m.l + pw / 2, y1 + 51, words.slice(half).join(' '), 'ax-title');
+    }
+    // Reference line under the rows so it never hides a label; its own label above the plot.
+    if (opts.ref) {
+      var xr = X(opts.ref.value);
+      el('line', { x1: xr, x2: xr, y1: m.t - 8, y2: y1, 'class': 'dot-ref' }, svg);
+      text(svg, xr, m.t - 14, opts.ref.label, 'dot-ref-label', xr > m.l + pw * 0.75 ? 'end' : xr < m.l + pw * 0.25 ? 'start' : 'middle');
+    }
+    opts.rows.forEach(function (r, i) {
+      var y = m.t + i * ROW + 26, x = X(r.value), s = 5.5;
+      el('line', { x1: m.l, x2: W - m.r, y1: y, y2: y, 'class': 'dot-track' }, svg);
+      text(svg, m.l, y - 12, r.label + ': ' + r.value.toFixed(2), 'ax-label dot-label', 'start');
+      if (r.shape === 'square') el('rect', { x: x - s, y: y - s, width: 2 * s, height: 2 * s, 'class': 'dot dot-square' }, svg);
+      else if (r.shape === 'triangle') el('path', { d: 'M' + x + ',' + (y - s * 1.3) + 'L' + (x + s * 1.2) + ',' + (y + s) + 'L' + (x - s * 1.2) + ',' + (y + s) + 'Z', 'class': 'dot dot-triangle' }, svg);
+      else el('circle', { cx: x, cy: y, r: s, 'class': 'dot dot-circle' }, svg);
+    });
+    return { x: X };
+  }
+
   var api = {
+    dotScale: dotScale,
     STATUS: STATUS,
     ROSE_DIRECTIONS: ROSE_DIRECTIONS,
     statusIcon: statusIcon,

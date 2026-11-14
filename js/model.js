@@ -112,6 +112,54 @@
     };
   }
 
+  // Plain-language text for the page, composed only from a checkGravityTerm result `c`:
+  // { marks: [{ measure, sex, label, share }], sentences: [3], caveats: [...], closing }.
+  var CHECK_NAMES = { grip: 'Grip', plantarflexionTorque: 'Plantarflexion torque', calfGirth: 'Calf girth' };
+  var CHECK_SEX = { F: 'females', M: 'males' };
+  function describeGravityCheck(c) {
+    function f2(v) { return v.toFixed(2); }
+    function name(m) { return CHECK_NAMES[m.measure] + ', ' + CHECK_SEX[m.sex]; }
+    var day = c.measures[0].day, wb = Math.round(c.partialG * 100) + '%';
+    var shares = c.measures.filter(function (m) { return m.share != null; });
+    var n = shares.length, below = shares.filter(function (m) { return m.share < c.model; }).length;
+    var where = below === 0 ? 'sits below all ' + n + ' shares: it assumes partial gravity protects muscle more than any measure showed' :
+      below === n ? 'sits above all ' + n + ' shares: it assumes partial gravity protects muscle less than any measure showed' :
+      below === Math.floor(n / 2) || below === Math.ceil(n / 2) ? 'sits near the middle of a wide spread' :
+      below < n / 2 ? 'sits in the lower part of a wide spread, below its median: it assumes more protection than most measures showed' :
+      'sits in the upper part of a wide spread, above its median: it assumes less protection than most measures showed';
+    var caveats = [
+      'Rats in a harness for ' + day + ' days: ' + wb + ' weight bearing is an analog of partial gravity, not reduced gravity, and these are not human data.',
+      'Grip, plantarflexion torque and calf girth measure strength and girth, not muscle volume, which is what the model tracks.'
+    ];
+    var mg = c.measures.filter(function (m) { return m.measure === 'grip' && m.sex === 'M'; })[0];
+    if (mg && mg.share != null) {
+      caveats.push('The male rats at full weight bearing ' + (mg.pct1g >= 0 ? 'gained ' : 'lost ') + Math.abs(Math.round(mg.pct1g)) +
+        '% grip over the ' + day + ' days; subtracting that change moves the male grip share to ' + f2(mg.share) + '.');
+    }
+    var over = shares.filter(function (m) { return m.share > 1; });
+    if (over.length) {
+      caveats.push((over.length === 1 ? 'One share is' : over.length + ' shares are') + ' above 1 (' +
+        over.map(function (m) { return name(m).toLowerCase() + ', ' + f2(m.share); }).join('; ') +
+        '): there the rats at ' + wb + ' weight bearing lost more than the fully unloaded rats.');
+    }
+    var shaky = c.measures.filter(function (m) { return m.unstable; });
+    if (shaky.length) {
+      caveats.push('Unstable (the 0 g and 1 g changes differ by less than ' + GRAVITY_CHECK.unstablePoints.value + ' points): ' +
+        shaky.map(function (m) { return name(m).toLowerCase(); }).join('; ') + '.');
+    }
+    return {
+      marks: c.measures.map(function (m) { return { measure: m.measure, sex: m.sex, label: name(m), share: m.share }; }),
+      sentences: [
+        'Rats kept at ' + wb + ' weight bearing for ' + day + ' days lost between ' + f2(c.min) + ' and ' + f2(c.max) +
+          ' (median ' + f2(c.median) + ') of what fully unloaded rats lost, across ' + n + ' measures, after subtracting the change in rats at full weight bearing.',
+        'With the partial-gravity shape at ' + c.shape + ', the model\'s share at ' + c.partialG + ' g is ' + f2(c.model) + '.',
+        (c.shape === 1 ? 'The linear assumption ' : 'This shape ') + where + '.'
+      ],
+      caveats: caveats,
+      closing: 'A plausibility check of one assumption, not a fit.'
+    };
+  }
+
   if (pwb) {
     var chk = checkGravityTerm(pwb, PARAMS.gravityShape.value);
     PARAMS.gravityShape.note += ' In rats after 28 days at ' + chk.partialG + ' g weight bearing (V90, V91; six measures, 1 g change subtracted), ' +
@@ -146,7 +194,8 @@
 
   var api = {
     PARAMS: PARAMS, GRAVITY: GRAVITY, step: step, simulate: simulate, eimPhase: eimPhase,
-    GRAVITY_CHECK: GRAVITY_CHECK, gravityTerm: gravityTerm, shareOfUnloadedLoss: shareOfUnloadedLoss, checkGravityTerm: checkGravityTerm
+    GRAVITY_CHECK: GRAVITY_CHECK, gravityTerm: gravityTerm, shareOfUnloadedLoss: shareOfUnloadedLoss, checkGravityTerm: checkGravityTerm,
+    describeGravityCheck: describeGravityCheck
   };
 
   ns.model = api;
