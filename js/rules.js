@@ -74,9 +74,9 @@
       grey: { meaning: 'Not enough radar data.', actions: ['Check the radar unit.'] }
     },
     radiation: {
-      green: { meaning: "Last night's dose in the sleep station was in the usual range.", actions: ['No change needed.'] },
+      green: { meaning: "Last night's replayed dose was in the usual range.", actions: ['No change needed.'] },
       amber: { meaning: "Last night's dose was more than twice the usual level.", actions: ['Check the space weather bulletin.', 'Mention it at the next contact with the {clinician}.'] },
-      red: { meaning: "Last night's dose in the sleep station was more than ten times the usual level, or a solar particle event is on record for the night. This is a record of what happened overnight: real-time warnings come from space-weather alerts and the flight rules.", actions: ['Report the logged dose to the {clinician}.', 'Use the direction map to review which side of the sleep station is less shielded.'] },
+      red: { meaning: "Last night's replayed dose was more than ten times the usual level, or a solar particle event is on record for the night. This is a record of what happened overnight: real-time warnings come from space-weather alerts and the flight rules.", actions: ['Report the logged dose to the {clinician}.', 'Use the direction map to see which side more particles came from.'] },
       grey: { meaning: 'Not enough dose history to judge, or no particle detector at this bed.', actions: ['No action.'] }
     }
   };
@@ -141,10 +141,10 @@
   var NASA = {
     muscle: nasa('muscle', 'V70', 'V48', [
       { text: 'NASA-STD-3001 requires countermeasures to keep in-mission muscle strength at or above ' + Math.round(evidence.value('V81', 'minStrengthFraction') * 100) + '% of baseline.', sourceIds: ['V81'] },
-      { text: 'NASA’s evidence report says “Currently, no standard in-flight measurement of strength exists.” The requirement is tested about ' + evidence.value('V85', 'testDaysAfterLandingAbout') + ' days after landing.', sourceIds: ['V85'] }
+      { text: 'NASA’s 2023 evidence report says “Currently, no standard in-flight measurement of strength exists.” The requirement is tested about ' + evidence.value('V85', 'testDaysAfterLandingAbout') + ' days after landing.', sourceIds: ['V85'] }
     ]),
     sleep: nasa('sleep', 'V71', 'V49', [
-      { text: 'The rationale of a NASA-STD-3001 requirement recommends an ' + evidence.value('V78', 'recommendedSleepPeriodHours') + '-hour sleep period.', sourceIds: ['V78'] },
+      { text: 'The rationale of a NASA-STD-3001 requirement recommends an ' + evidence.value('V78', 'recommendedSleepPeriodHours') + '-hour sleep period, which is the time set aside for sleep each day, not the hours spent asleep.', sourceIds: ['V78'] },
       { text: 'A NASA brief says an average adult needs ' + evidence.value('V79', 'adultSleepHoursLow') + ' to ' + evidence.value('V79', 'adultSleepHoursHigh') + ' hours of sleep, and that astronauts sleep about ' + evidence.value('V79', 'inSpaceSleepHoursAbout') + ' hours on average in space.', sourceIds: ['V79'] }
     ]),
     cardio: nasa('cardio', 'V72', 'V50', [
@@ -152,7 +152,7 @@
     ]),
     radiation: nasa('radiation', 'V73', 'V51', [
       { text: 'For habitats on planetary surfaces, NASA-STD-3001 limits the effective dose from galactic cosmic rays to less than ' + evidence.value('V83', 'surfaceLimitMSvPerDay') + ' mSv per day. This card shows absorbed dose, not effective dose, so it cannot be compared with that limit without a conversion this version does not do.', sourceIds: ['V83'] },
-      { text: 'NASA-STD-3001 requires the radiation monitoring system to alert the crew when exposure rates exceed predefined thresholds, even if ground communication is disrupted.', sourceIds: ['V84'] }
+      { text: 'NASA-STD-3001 requires the radiation monitoring system to alert the crew and operations teams when exposure rates exceed predefined thresholds; the rationale adds that the crew must be alerted even if ground communication is disrupted.', sourceIds: ['V84'] }
     ])
   };
 
@@ -163,7 +163,7 @@
     var out = {};
     Object.keys(MISSIONS).forEach(function (w) {
       var p = MISSIONS[w].prefix;
-      out[w] = { text: 'NASA rates Earth-independent operations ' + evidence.value('V75', p + 'Ops') + ' and medical conditions in mission ' +
+      out[w] = { text: 'NASA rates the risk of operating with little real-time help from Earth ' + evidence.value('V75', p + 'Ops') + ' and medical conditions in mission ' +
         evidence.value('V74', p + 'Ops') + ' for ' + MISSIONS[w].label + ' (likelihood x consequence, each from 1 to 5).', sourceIds: ['V75', 'V74'] };
     });
     return out;

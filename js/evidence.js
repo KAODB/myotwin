@@ -282,15 +282,15 @@
     },
     {
       id: 'V84', topic: 'nasa ratings and requirements', status: 'verified', level: 'official-document',
-      claim: "NASA-STD-3001 requires radiation monitoring in habitable volumes that reports dose, intensity and angles of incidence, and an alert to the crew when exposure rates exceed thresholds, even without ground communication.",
+      claim: "NASA-STD-3001 requires the program to monitor the radiation exposure from galactic cosmic rays, solar energetic particles, trapped radiation and neutrons in habitable volumes, and requires the monitoring system to alert the crew and operations teams when exposure rates exceed predefined thresholds. The rationale, not the requirement text, adds that monitoring gives the radiation type, LET, intensity and angles of incidence, and that the crew must be alerted even if ground communication is disrupted.",
       values: {},
-      quote: "Appropriate dose monitoring provides data on the radiation type, linear energy transfer (LET), intensity, and angles of incidence. ... Timepix-based instruments have been used by past programs to characterize the ionizing radiation inside crewed vehicles and to measure the dose and dose rates. ... The radiation monitoring system shall alert the crew and operations teams when radiation exposure rates exceed predefined thresholds. ... The crew must be alerted even if ground communication is disrupted or is unviable.",
+      quote: "The program shall monitor the radiation exposure produced by galactic cosmic rays, solar energetic particles, trapped radiation, and neutrons in habitable volumes ... Appropriate dose monitoring provides data on the radiation type, linear energy transfer (LET), intensity, and angles of incidence. ... Timepix-based instruments have been used by past programs to characterize the ionizing radiation inside crewed vehicles and to measure the dose and dose rates. ... The radiation monitoring system shall alert the crew and operations teams when radiation exposure rates exceed predefined thresholds. ... The crew must be alerted even if ground communication is disrupted or is unviable.",
       source: "NASA-STD-3001 Volume 2, Revision F, requirements [V2 6161] Intravehicular Area Monitoring and [V2 6164] Alerting",
       url: 'https://www.nasa.gov/wp-content/uploads/2025/05/nasa-std-3001-vol-2.pdf'
     },
     {
       id: 'V85', topic: 'muscle', status: 'verified', level: 'official-document',
-      claim: "NASA's evidence report on muscle and aerobic capacity states that no standard in-flight measurement of strength exists and that the strength requirement is tested about a week after landing. With ISS countermeasures, knee strength falls about 15% on average and about 31% of crew lose more than 20%.",
+      claim: "NASA's evidence report on muscle and aerobic capacity states that no standard in-flight measurement of strength exists and that the strength requirement is tested about a week after landing. With ISS countermeasures, knee strength falls about 15% on average. About 31% of ISS crew come back with knee strength more than 20% below preflight.",
       values: { avgKneeStrengthLossPct: 15, crewLosingOver20Pct: 31, testDaysAfterLandingAbout: 7 },
       quote: "It is also important to keep in mind that the medical requirements testing is conducted approximately 1 week after landing ... Isokinetic knee strength is reduced on average about 15% from pre to postflight with ISS countermeasures provided to crew ... About 31% of crew lose greater than 20% knee muscle strength ... Currently, no standard in-flight measurement of strength exists.",
       source: "NASA Human Research Program Evidence Report, Risk of Impaired Performance due to Reduced Muscle Mass, Strength and Endurance and Risk of Reduced Physical Performance Capabilities due to Reduced Aerobic Capacity (approved for public release 22 January 2023)",
@@ -306,7 +306,7 @@
     },
     {
       id: 'V87', topic: 'eim', status: 'verified', level: 'official-database',
-      claim: "A NASA-funded study of astronauts (2019 to 2034) performs non-invasive electrical impedance myography before and after flight.",
+      claim: "A NASA-funded study adds impedance myography before and after flight in astronauts (2019 to 2034), alongside the standard muscle measures.",
       values: {},
       quote: "In addition, we will perform in vivo, non-invasive electrical impedance myography pre- and post-flight to supplement function assessments of muscle being conducted as part of the standard measures in the integrated One-Year Mission Project.",
       source: "NASA Task Book, Time Course of Spaceflight-Induced Adaptations in Bone Morphology, Bone Strength and Muscle Quality (principal investigator M. Bouxsein)",
@@ -625,6 +625,22 @@
       quote: null,
       source: 'NASA GSFC SPDF OMNI2 hourly data, omni2_2017.dat, word 46; data/omni-protons.js',
       url: 'https://spdf.gsfc.nasa.gov/pub/data/omni/low_res_omni/omni2_2017.dat'
+    },
+    {
+      id: 'V92', topic: 'radiation', status: 'verified', level: 'abstract',
+      claim: 'On the surface of Mars, under about 23 g/cm2 of CO2 atmosphere, Curiosity RAD saw dose rates rise above the galactic-cosmic-ray background by factors of 2 to 3 during the solar particle event of 10-12 September 2017.',
+      values: { atmosphereGPerCm2: 23, doseRateRiseFactorLow: 2, doseRateRiseFactorHigh: 3 },
+      quote: 'Despite 23 g/cm2 of CO2 shielding provided by the atmosphere above RAD, dose rates rose above background galactic cosmic ray levels by factors of 2 to 3 over the course of several hours and leveled off at sustained peak rates for about 12 hr before declining over the following 36 hr.',
+      source: 'Zeitlin C et al. Analysis of the Radiation Hazard Observed by RAD on the Surface of Mars During the September 2017 Solar Particle Event. Geophys Res Lett 2018;45:5845-5851. Abstract read in the Crossref record',
+      url: 'https://doi.org/10.1029/2018GL077760'
+    },
+    {
+      id: 'V93', topic: 'radiation', status: 'verified', level: 'full-text',
+      claim: 'LRO CRaTER: two pieces of tissue-equivalent plastic, about 54 mm and 27 mm long, sit between its three detector pairs, and aluminium end caps about 0.81 mm thick close both ends. D1&2 sits behind the zenith cap, facing deep space; D5&6 sits behind the nadir cap, facing the Moon.',
+      values: { tepZenithMm: 53.992, tepNadirMm: 26.972, endCapZenithUm: 812.8, endCapNadirUm: 810.3 },
+      quote: 'TEP on-axis linear dimensions: 53.992 mm (zenith section) and 26.972 (nadir section) ... Aluminum end cap thickness: 812.8 µm (zenith cap) and 810.3 µm (nadir cap)',
+      source: 'Spence HE et al. CRaTER: The Cosmic Ray Telescope for the Effects of Radiation Experiment on the Lunar Reconnaissance Orbiter Mission. Space Sci Rev 2010;150:243-284, Tables 2 to 4. Read in the open copy at the MDSOAR repository (hdl.handle.net/11603/43632)',
+      url: 'https://doi.org/10.1007/s11214-009-9584-8'
     },
     {
       id: 'V17', topic: 'radiation', status: 'verified', level: 'full-text',

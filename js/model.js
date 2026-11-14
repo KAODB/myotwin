@@ -116,11 +116,14 @@
   // { marks: [{ measure, sex, label, share }], sentences: [3], caveats: [...], closing }.
   var CHECK_NAMES = { grip: 'Grip', plantarflexionTorque: 'Plantarflexion torque', calfGirth: 'Calf girth' };
   var CHECK_SEX = { F: 'females', M: 'males' };
+  var COUNT_WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
+  function countWord(k) { return COUNT_WORDS[k] || String(k); }
   function describeGravityCheck(c) {
     function f2(v) { return v.toFixed(2); }
     function name(m) { return CHECK_NAMES[m.measure] + ', ' + CHECK_SEX[m.sex]; }
     var day = c.measures[0].day, wb = Math.round(c.partialG * 100) + '%';
     var shares = c.measures.filter(function (m) { return m.share != null; });
+    var nMeasures = shares.map(function (m) { return m.measure; }).filter(function (x, i, a) { return a.indexOf(x) === i; }).length;
     var n = shares.length, below = shares.filter(function (m) { return m.share < c.model; }).length;
     var where = below === 0 ? 'sits below all ' + n + ' shares: it assumes partial gravity protects muscle more than any measure showed' :
       below === n ? 'sits above all ' + n + ' shares: it assumes partial gravity protects muscle less than any measure showed' :
@@ -151,7 +154,7 @@
       marks: c.measures.map(function (m) { return { measure: m.measure, sex: m.sex, label: name(m), share: m.share }; }),
       sentences: [
         'Rats kept at ' + wb + ' weight bearing for ' + day + ' days lost between ' + f2(c.min) + ' and ' + f2(c.max) +
-          ' (median ' + f2(c.median) + ') of what fully unloaded rats lost, across ' + n + ' measures, after subtracting the change in rats at full weight bearing.',
+          ' (median ' + f2(c.median) + ') of what fully unloaded rats lost, across ' + countWord(nMeasures) + ' measures in each sex (' + countWord(n) + ' results), after subtracting the change in rats at full weight bearing.',
         'With the partial-gravity shape at ' + c.shape + ', the model\'s share at ' + c.partialG + ' g is ' + f2(c.model) + '.',
         (c.shape === 1 ? 'The linear assumption ' : 'This shape ') + where + '.'
       ],
@@ -162,7 +165,7 @@
 
   if (pwb) {
     var chk = checkGravityTerm(pwb, PARAMS.gravityShape.value);
-    PARAMS.gravityShape.note += ' In rats after 28 days at ' + chk.partialG + ' g weight bearing (V90, V91; six measures, 1 g change subtracted), ' +
+    PARAMS.gravityShape.note += ' In rats after 28 days at ' + chk.partialG + ' g weight bearing (V90, V91; three measures in each sex, six results, 1 g change subtracted), ' +
       'the loss was ' + chk.min.toFixed(2) + ' to ' + chk.max.toFixed(2) + ' (median ' + chk.median.toFixed(2) + ') of the fully unloaded loss; ' +
       'the model uses ' + chk.model.toFixed(2) + ' at ' + chk.partialG + ' g.';
   }

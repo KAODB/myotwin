@@ -186,3 +186,12 @@ test('radiation wording: the solar particle event is on record, and its disclaim
   assert.match(rules.DISCLAIMER_REPLAYED, /^Screening flag from replayed measurements\./);
   assert.match(rules.DISCLAIMER, /^Screening flag from simulated data\./);
 });
+
+test('radiation wording names a replayed dose, and the direction map is not a shielding claim', () => {
+  assert.match(rules.TEXT.radiation.green.meaning, /^Last night's replayed dose /);
+  assert.match(rules.TEXT.radiation.red.meaning, /^Last night's replayed dose /);
+  assert.doesNotMatch(JSON.stringify(rules.TEXT.radiation), /sleep station/);
+  assert.ok(rules.TEXT.radiation.red.actions.includes('Use the direction map to see which side more particles came from.'));
+  // The alert requirement and its rationale are told apart.
+  assert.match(rules.NASA.radiation.standard[1].text, /the rationale adds that the crew must be alerted even if ground communication is disrupted/);
+});
