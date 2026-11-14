@@ -51,8 +51,10 @@
   var state = {};
   var data = { key: null, gen: null, dayIndex: {}, base: null, ref: {}, assessKey: null, assessments: [] };
   var playTimer = null;
+  var lastSpace = 'S2';                            // the Astronaut button returns to this scenario
 
   function defaultDay(s) { return s === 'S2' ? 42 : null; }          // null = last night
+  // The Eldercare presentation is shown exactly when the Earth scenario is selected.
   function defaultMode(s) { return s === 'S4' ? 'eldercare' : 'astronaut'; }
 
   function snap(v, o) {
@@ -62,23 +64,36 @@
   }
   function pick(v, list, def) { return list.indexOf(v) >= 0 ? v : def; }
 
+  // Parse a view from the address. Any value that is rejected or changed sets `rejected`,
+  // so the page can say that the link could not be opened as written.
+  var HASH_KEYS = ['s', 'd', 'layer', 'view', 'mode', 'card', 'ex', 'gs', 'sh', 'nz', 'ev'];
   function parseHash(hash) {
-    var q = {};
+    var q = Object.create(null), bad = false;
     hash.replace(/^#/, '').split('&').forEach(function (kv) {
-      var i = kv.indexOf('=');
-      if (i > 0) { try { q[kv.slice(0, i)] = decodeURIComponent(kv.slice(i + 1)); } catch (e) { /* ignore bad escapes */ } }
+      if (!kv) return;
+      var i = kv.indexOf('='), k = kv.slice(0, i);
+      if (i <= 0 || HASH_KEYS.indexOf(k) < 0) { bad = true; return; }
+      try { q[k] = decodeURIComponent(kv.slice(i + 1)); } catch (e) { bad = true; }
     });
-    var s = typeof q.s === 'string' && has(sim.SCENARIOS, q.s) ? q.s : 'S2';
+    function check(k, v) { if (k in q && v !== q[k]) bad = true; return v; }
+    function checkNum(k, v) { if (k in q && !(v != null && Math.abs(v - parseFloat(q[k])) < 1e-6)) bad = true; return v; }
+    var s = check('s', has(sim.SCENARIOS, q.s) ? q.s : 'S2');
     var d = /^-?\d+$/.test(q.d || '') ? parseInt(q.d, 10) : defaultDay(s);
-    return {
+    if ('d' in q && String(d) !== q.d) bad = true;
+    // The presentation follows the scenario; a valid mode from an older link is accepted and ignored.
+    if ('mode' in q && MODES.indexOf(q.mode) < 0) bad = true;
+    var st = {
       s: s, d: d,
-      layer: pick(q.layer, LAYERS, 'density'),
-      view: pick(q.view, VIEWS, 'raw'),
-      mode: pick(q.mode, MODES, defaultMode(s)),
-      card: pick(q.card, CARD_IDS, 'muscle'),
-      ex: snap(q.ex, WHATIF.ex), gs: snap(q.gs, WHATIF.gs), sh: snap(q.sh, WHATIF.sh), nz: snap(q.nz, WHATIF.nz),
-      ev: /^V\d+$/.test(q.ev || '') ? q.ev : null
+      layer: check('layer', pick(q.layer, LAYERS, s === 'S4' ? 'pressure' : 'density')),
+      view: check('view', pick(q.view, VIEWS, 'raw')),
+      mode: defaultMode(s),
+      card: check('card', pick(q.card, CARD_IDS, 'muscle')),
+      ex: checkNum('ex', snap(q.ex, WHATIF.ex)), gs: checkNum('gs', snap(q.gs, WHATIF.gs)),
+      sh: checkNum('sh', snap(q.sh, WHATIF.sh)), nz: checkNum('nz', snap(q.nz, WHATIF.nz)),
+      ev: check('ev', /^V\d+$/.test(q.ev || '') ? q.ev : null)
     };
+    st.rejected = bad;
+    return st;
   }
 
   function hashFor(st) {
@@ -95,7 +110,11 @@
   }
 
   // ---- data ------------------------------------------------------------------------
+  // Returns true when a value in the state had to be changed to fit the scenario.
   function ensureData() {
+    var changed = false;
+    state.mode = defaultMode(state.s);           // the presentation follows the scenario
+    if (state.s !== 'S4') lastSpace = state.s;
     var key = [state.s, state.ex, state.gs, state.sh, state.nz].join('|');
     if (data.key !== key) {
       // Each scenario has its own default seed (sim.SCENARIOS[s].seed), so no seed is passed.
@@ -119,13 +138,15 @@
     }
     var recs2 = data.gen.records;
     if (state.d == null || data.dayIndex[state.d] === undefined) {
+      if (state.d != null) changed = true;
       var def = defaultDay(state.s);
       state.d = def != null && data.dayIndex[def] !== undefined ? def : recs2[recs2.length - 1].missionDay;
     }
     if (isHome()) {
-      if (state.card === 'radiation') state.card = 'muscle';
-      if (state.layer === 'density') state.layer = 'pressure';
+      if (state.card === 'radiation') { state.card = 'muscle'; changed = true; }
+      if (state.layer === 'density') { state.layer = 'pressure'; changed = true; }
     }
+    return changed;
   }
 
   function idx() { return data.dayIndex[state.d]; }
@@ -133,8 +154,8 @@
   function assessment() { return data.assessments[idx()]; }
   function card(id) { return assessment().cards[CARD_IDS.indexOf(id)]; }
   function hasTrackers() { return data.gen.records.some(function (r) { return r._truth.tracksPerCm2 != null; }); }
-  // Eldercare at home: no space words, no radiation, no particle trackers.
-  function isHome() { return state.mode === 'eldercare' && data.gen && data.gen.scenario.env === 'earth'; }
+  // Eldercare at home (scenario S4): no space words, no radiation, no particle trackers.
+  function isHome() { return state.mode === 'eldercare'; }
   function visibleCards() { return isHome() ? CARD_IDS.slice(0, 3) : CARD_IDS; }
 
   function words() {
@@ -155,7 +176,9 @@
 
   // Engine and rules text is written for the mission; at home the same facts read in care words.
   function scrub(s) {
-    s = String(s).replace(/\buGy\b/g, 'µGy').replace(/expects a drop of about -?0\.0% at this point/g, 'expects no change at this point');
+    s = String(s).replace(/(\d+(?:\.\d+)?) (?:uGy|µGy)/g, function (_, n) { return fmtDose(parseFloat(n)); })
+      .replace(/(\d+(?:\.\d+)?)x the usual/g, function (_, n) { return fmtRatio(parseFloat(n)) + ' the usual'; })
+      .replace(/expects a drop of about -?0\.0% at this point/g, 'expects no change at this point');
     if (!isHome()) return s;
     return s.replace(/\bmission plan\b/gi, 'care plan').replace(/\bsince arrival\b/gi, 'since the start')
       .replace(/\bmission\b/gi, 'period');
@@ -174,8 +197,10 @@
     var sign = r > 0 ? '+' : r < 0 ? '−' : '';
     return sign + Math.abs(r).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
   }
-  function fmtRatio(x) { return (x >= 10 ? Math.round(x) : Math.round(x * 10) / 10) + 'x'; }
-  function fmtDose(uGy) { return uGy >= 1000 ? (uGy / 1000).toFixed(1) + ' mGy' : Math.round(uGy) + ' µGy'; }
+  // One unit and one rounding per number, in the cards and in the engine's reason text alike.
+  function fmtRatio(x) { return (x >= 100 ? Math.round(x) : x.toFixed(1)) + 'x'; }
+  function doseParts(uGy) { return uGy >= 1000 ? [(uGy / 1000).toFixed(1), 'mGy'] : [String(Math.round(uGy)), 'µGy']; }
+  function fmtDose(uGy) { return doseParts(uGy).join(' '); }
   function median(xs) {
     var s = xs.slice().sort(function (a, b) { return a - b; }), m = s.length >> 1;
     return s.length ? (s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2) : null;
@@ -219,8 +244,8 @@
     var env = data.gen.scenario.env;
     $('env-label').textContent = isHome() ? 'Setting' : 'Habitat';
     $('env-name').textContent = isHome() ? 'Home' : ENV_NAMES[env] + (rec().missionDay < 0 ? ' · baseline on Earth' : '');
-    document.body.classList.toggle('mode-eldercare', state.mode === 'eldercare');
-    document.body.classList.toggle('mode-astronaut', state.mode !== 'eldercare');
+    document.body.classList.toggle('mode-eldercare', isHome());
+    document.body.classList.toggle('mode-astronaut', !isHome());
     pressed('[data-mode]', 'mode', state.mode);
     // Static words that change at home.
     var w = words();
@@ -232,8 +257,10 @@
     $('sensor-trackers').hidden = isHome();
     $('hrp-line').hidden = isHome();
     $('hrp-link').href = evidenceHref('V44');
+    $('knob-adherence').hidden = isHome();     // exercise is not part of the home scenario
     $('knob-shape').hidden = isHome();
     $('knob-shield').hidden = isHome();
+    $('g-cm-title').textContent = isHome() ? 'Exercise and nutrition, and their evidence' : 'Countermeasures and their evidence';
   }
 
   function pressed(selector, attr, value) {
@@ -256,12 +283,18 @@
     return 'All three checks are in your normal range.';
   }
 
+  // The S4 summary in js/sim.js speaks of partial unloading (g); at home the same assumption in care words.
+  function homeSummary() {
+    return 'Nine weeks at home after discharge: five weeks of low activity, modelled as the legs carrying ' +
+      Math.round(sim.ASSUMPTIONS.s4LowActivityG.value * 100) + '% of their usual load (an assumption, not a sourced equivalence), then four weeks of normal activity. All data are simulated.';
+  }
+
   function renderBrief() {
     var a = assessment(), r = rec();
     $('brief-date').textContent = 'Night of ' + r.night + ' · ' + dayLabel(r);
     var shown = a.cards.filter(function (c) { return visibleCards().indexOf(c.id) >= 0; });
     $('headline').textContent = scrub(isHome() ? homeHeadline(shown) : a.headline);
-    $('scenario-summary').textContent = data.gen.scenario.summary;
+    $('scenario-summary').textContent = isHome() ? homeSummary() : data.gen.scenario.summary;
     $('cards').classList.toggle('cards-3', isHome());
     a.cards.forEach(renderCard);
   }
@@ -275,15 +308,16 @@
   function cardLines(c) {
     var grey = c.status === 'grey', x = c.extra || {};
     if (c.id === 'muscle') {
-      var med = grey ? '—' : fmtValue(c.value, 'deg') + ' deg';
+      // The 7-night median itself is in the reason line; this line says what "deg" is.
       var exp = c.expectedDeltaPct;
       var plan = exp != null ? ' · ' + (isHome() ? 'care plan' : 'plan') + ' expects ' + (Math.round(exp * 10) === 0 ? 'no change' : fmtPct(exp)) : '';
-      return { num: grey ? '—' : fmtPct(c.deltaPct), unit: 'vs your own baseline', delta: WINDOW + '-night median ' + med + plan, extra: '' };
+      return { num: grey ? '—' : fmtPct(c.deltaPct), unit: 'vs your own baseline', delta: 'Reading: calf impedance phase angle, in degrees (deg)' + plan, extra: '' };
     }
     if (c.id === 'radiation') {
+      var dose = c.value != null && isFinite(c.value) ? doseParts(c.value) : ['—', 'µGy'];
       return {
-        num: fmtValue(c.value, c.unit), unit: unitLabel(c.unit),
-        delta: x.ratio != null && !grey ? fmtRatio(x.ratio) + ' the usual level' : 'Usual level: not enough nights yet',
+        num: dose[0], unit: dose[1],
+        delta: x.ratio != null && !grey ? fmtRatio(Math.round(x.ratio * 10) / 10) + ' the usual level' : 'Usual level: not enough nights yet',
         extra: x.cumulativeUGy ? 'Sleep-period dose so far this mission: ' + fmtDose(x.cumulativeUGy) + ' (in silicon)' : ''
       };
     }
@@ -515,7 +549,7 @@
       o.expected = !ok ? null : recs.map(function (r, i) {
         return { missionDay: r.missionDay, low: med * (1 + (plan[i] - me.amberLimitPct) / 100), high: med * (1 + plan[i] / 100) };
       }).filter(function (p) { return p.missionDay >= 0; });
-      o.thresholds = !ok ? [] : [{ value: med * (1 - me.redLimitPct / 100), label: 'Report line: ' + me.redLimitPct.toFixed(1) + '% below baseline', status: 'red' }];
+      o.thresholds = !ok ? [] : [{ value: med * (1 - me.redLimitPct / 100), label: 'Report line: ' + me.redLimitPct.toFixed(1) + '% below baseline', shortLabel: 'Report: −' + me.redLimitPct.toFixed(1) + '%', status: 'red' }];
       o.exercise = recs.filter(function (r) { return r.missionDay >= 0; }).map(function (r) { return { missionDay: r.missionDay, done: !!r.log.exercise_done }; });
       o.unit = 'deg'; o.yLabel = 'Calf phase';
       legend.push(['line', WINDOW + '-night median'], ['band', 'Own baseline range'], ['plan', w.plan + ' (amber below this band)'],
@@ -536,7 +570,7 @@
       o.raw = engine.series(recs, 'hr');
       o.baseline = band(b.hr);
       var hrLim = x.hrLimit != null ? x.hrLimit : (b.hr.median != null ? b.hr.median + T.cardioSdMultiple.value * b.hr.sd : null);
-      if (hrLim != null) o.thresholds = [{ value: hrLim, label: 'Watch line: baseline + ' + T.cardioSdMultiple.value + ' SD', status: 'amber' }];
+      if (hrLim != null) o.thresholds = [{ value: hrLim, label: 'Watch line: baseline + ' + T.cardioSdMultiple.value + ' SD', shortLabel: 'Watch: +' + T.cardioSdMultiple.value + ' SD', status: 'amber' }];
       o.unit = 'bpm'; o.yLabel = 'Night heart rate';
       legend.push(['line', T.cardioNights.value + '-night median'], ['band', 'Own baseline range'], ['watch', 'Watch line'], ['event', 'Event'], ['selected', 'Selected night']);
       note = 'Dots are the nightly heart rates; the line is the ' + T.cardioNights.value + '-night median the card uses. Breathing rate is judged the same way' +
@@ -554,8 +588,8 @@
       legend.push(['line', 'Dose the card judges']);
       if (x.usualUGy != null) legend.push(['watch', 'Watch line'], ['report', 'Report line']);
       legend.push(['event', 'Event'], ['selected', 'Selected night']);
-      note = x.usualUGy != null ? 'Absorbed dose in silicon over each sleep period. Usual level before tonight: ' + Math.round(x.usualUGy) +
-        ' µGy (median of up to ' + T.radiationHistoryNights.value + ' earlier nights). The brief is read the morning after: real-time warnings come from space-weather alerts and the flight rules.' :
+      note = x.usualUGy != null ? 'Absorbed dose in silicon over each sleep period. Usual level before tonight: ' + fmtDose(x.usualUGy) +
+        ' (median of up to ' + T.radiationHistoryNights.value + ' earlier nights). The brief is read the morning after: real-time warnings come from space-weather alerts and the flight rules.' :
         'Not enough earlier nights to set a usual level, so no lines are drawn.';
     }
     if (o.axisBreak != null) legend.push(['break', 'Break: the transit is not monitored']);
@@ -601,8 +635,8 @@
         x.rad.dir.forEach(function (n, j) { sum[j] += n; });
       });
       var k = charts.rose($('rose'), sum, { highlightMax: true });
-      $('rose-reading').textContent = 'Most particles arrive from sector ' + k + '.';
-      $('rose-span').textContent = ' (' + nights + (nights === 1 ? ' night' : ' nights') + ' with tracker data up to tonight)';
+      $('rose-reading').textContent = 'Most particles arrive from the ' + charts.ROSE_DIRECTIONS[k] + ' side.';
+      $('rose-span').textContent = '(' + nights + (nights === 1 ? ' night' : ' nights') + ' with tracker data up to tonight).';
     }
   }
 
@@ -614,7 +648,7 @@
   }
 
   function sourceLink(id) {
-    var a = el('a', null, id);
+    var a = el('a', 'ev-link', id);
     a.href = evidenceHref(id);
     return a;
   }
@@ -758,6 +792,7 @@
         if (it.quote) body.appendChild(el('q', 'ev-quote', it.quote));
         var a = el('a', 'ev-source', it.source);
         a.href = it.url;
+        a.target = '_blank';                       // a source opens in a new tab; the page stays
         a.rel = 'noopener noreferrer';
         body.appendChild(a);
         li.appendChild(body);
@@ -799,7 +834,12 @@
   function openEvidence(id) {
     Array.prototype.forEach.call(document.querySelectorAll('.ev-target'), function (n) { n.classList.remove('ev-target'); });
     var target = $('ev-' + id);
-    if (!target) return;
+    if (!target) {
+      showNotice('That source is not in the evidence list.');
+      state.ev = null;
+      writeHash();
+      return;
+    }
     target.closest('details').open = true;
     target.classList.add('ev-target');
     target.scrollIntoView({ block: 'center', behavior: reducedMotion ? 'auto' : 'smooth' });
@@ -808,7 +848,7 @@
 
   // ---- update cycle ----------------------------------------------------------------
   function render() {
-    ensureData();
+    var changed = ensureData();
     renderTopbar();
     renderBrief();
     renderImage();
@@ -817,21 +857,39 @@
     renderGuidance();
     renderHazards();
     renderWhatIf();
+    return changed;
   }
 
   // Render a state from a link; on any error fall back to the default view with a notice.
+  // The notice also shows when a value in the address was rejected or changed to fit.
   function renderFromLink(hash) {
     state = parseHash(hash);
+    var rejected = state.rejected;
+    delete state.rejected;
     try {
-      render();
-      $('notice').hidden = true;
+      if (render()) rejected = true;
     } catch (e) {
       state = parseHash('');
+      delete state.rejected;
       data.key = null;
       render();
-      $('notice').hidden = false;
+      rejected = true;
     }
+    if (rejected) showNotice(); else $('notice').hidden = true;
     writeHash();
+  }
+
+  var NOTICE_TEXT = $('notice').textContent;
+  function showNotice(text) {
+    $('notice').textContent = text || NOTICE_TEXT;
+    $('notice').hidden = false;
+  }
+  // An address without "=" is an in-page anchor; one that names no element on the page is a broken link.
+  function isBrokenAnchor(hash) {
+    var id = hash.replace(/^#/, '');
+    if (!id) return false;
+    try { id = decodeURIComponent(id); } catch (e) { return true; }
+    return !document.getElementById(id);
   }
 
   function update(changes) {
@@ -864,17 +922,28 @@
   function wire() {
     $('scenario').addEventListener('change', function (e) {
       setPlaying(false);
-      update({ s: e.target.value, d: defaultDay(e.target.value), mode: defaultMode(e.target.value) });
+      update({ s: e.target.value, d: defaultDay(e.target.value) });
     });
     document.addEventListener('click', function (e) {
       var b = e.target.closest('button');
       if (!b || b.disabled) return;
-      if (b.dataset.mode) update({ mode: b.dataset.mode });
+      if (b.dataset.mode) {
+        // Eldercare is the home scenario (S4); Astronaut returns to the last space scenario.
+        var s = b.dataset.mode === 'eldercare' ? 'S4' : lastSpace;
+        if (s !== state.s) { setPlaying(false); update({ s: s, d: defaultDay(s) }); }
+      }
       else if (b.dataset.layer) update({ layer: b.dataset.layer });
       else if (b.dataset.view) update({ view: b.dataset.view });
       else if (b.dataset.card) update({ card: b.dataset.card });
       else if (b.id === 'play') setPlaying(!playTimer);
       else if (b.id === 'whatif-reset') update({ ex: WHATIF.ex.def, gs: WHATIF.gs.def, sh: WHATIF.sh.def, nz: WHATIF.nz.def });
+    });
+    // The skip link moves focus without replacing the view in the address.
+    document.querySelector('.skip').addEventListener('click', function (e) {
+      e.preventDefault();
+      var t = $('brief-title');
+      t.scrollIntoView({ block: 'start', behavior: reducedMotion ? 'auto' : 'smooth' });
+      t.focus({ preventScroll: true });
     });
     $('cap-exp').addEventListener('click', function (e) {
       e.preventDefault();
@@ -905,7 +974,10 @@
       root.requestAnimationFrame(function () { pending = false; renderTrend(); });
     });
     root.addEventListener('hashchange', function () {
-      if (location.hash.indexOf('=') < 0) return;      // a plain in-page anchor, not a view
+      if (location.hash.indexOf('=') < 0) {             // a plain in-page anchor, not a view
+        if (isBrokenAnchor(location.hash)) showNotice();
+        return;
+      }
       if (location.hash === hashFor(state)) return;
       setPlaying(false);
       renderFromLink(location.hash);
@@ -916,6 +988,8 @@
   // ---- start -----------------------------------------------------------------------
   buildEvidence();
   wire();
-  renderFromLink(location.hash.indexOf('=') >= 0 ? location.hash : '');
+  var initialHash = location.hash;
+  renderFromLink(initialHash.indexOf('=') >= 0 ? initialHash : '');
+  if (initialHash.indexOf('=') < 0 && isBrokenAnchor(initialHash)) showNotice();
   if (state.ev) openEvidence(state.ev);
 })(typeof globalThis !== 'undefined' ? globalThis : this);

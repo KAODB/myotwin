@@ -67,7 +67,7 @@ test('muscle: with a plan expecting 5%, a 5% drop is green', () => {
 test('muscle: with a plan expecting 5%, a 10% drop is amber', () => {
   const c = muscleWith(8.1, planOf(() => -5));
   assert.equal(c.status, 'amber');
-  assert.match(c.reason, /5\.0% worse than the plan\.$/);
+  assert.match(c.reason, /5\.0 percentage points worse than the plan\.$/);
 });
 test('muscle: an 18% drop is red with or without a plan', () => {
   assert.equal(muscleWith(7.38).status, 'red');
