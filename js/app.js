@@ -953,6 +953,7 @@
     var meaning = scrub(c.meaning);
     if (state.card === 'sleep') meaning += ' ' + sleepLineNote();
     $('g-meaning').textContent = meaning;
+    $('g-meaning').classList.toggle('statement-long', meaning.length > 150);   // a long meaning is set smaller
     var ul = $('g-actions');
     clear(ul);
     c.actions.forEach(function (x) { ul.appendChild(el('li', null, scrub(x))); });
