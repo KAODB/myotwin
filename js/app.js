@@ -318,7 +318,7 @@
       return {
         num: dose[0], unit: dose[1],
         delta: x.ratio != null && !grey ? fmtRatio(Math.round(x.ratio * 10) / 10) + ' the usual level' : 'Usual level: not enough nights yet',
-        extra: x.cumulativeUGy ? 'Sleep-period dose so far this mission: ' + fmtDose(x.cumulativeUGy) + ' (in silicon)' : ''
+        extra: x.cumulativeUGy ? 'Sleep-period dose so far this mission: ' + fmtDose(x.cumulativeUGy) + ' (' + doseMedium() + ')' : ''
       };
     }
     return { num: fmtValue(c.value, c.unit), unit: unitLabel(c.unit), delta: 'Change vs baseline: ' + (grey ? '—' : fmtPct(changeVsBaseline(c))), extra: '' };
@@ -340,6 +340,58 @@
     ex.textContent = L.extra;
     ex.hidden = !L.extra;
     btn.querySelector('.card-reason').textContent = scrub(c.reason);
+    if (c.id === 'radiation') renderRadSource();
+  }
+
+  // ---- radiation card: where tonight's number comes from (data/*.js, replayed) --------
+  var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  // Shielding in front of each LRO CRaTER detector pair, from the instrument paper (see data/README.md).
+  var CRATER_SHIELD = { 'D5&6': 'behind about 8 cm of plastic' };
+  function longDate(iso) {
+    var p = iso.split('-');
+    return Number(p[2]) + ' ' + MONTHS[Number(p[1]) - 1] + ' ' + p[0];
+  }
+  function measuredDataset() { return data.gen.scenario.rad ? data.gen.scenario.rad.dataset : null; }
+  function doseMedium() { return measuredDataset() === 'msl-rad' ? 'in silicon' : 'water-corrected'; }
+  function shieldNote() { return state.sh !== WHATIF.sh.def ? ' Tonight\'s number is multiplied by the what-if shielding factor ' + state.sh + '.' : ''; }
+
+  function renderRadSource() {
+    var r = rec(), m = r.rad && r.rad.measured, box = $('rad-source');
+    var show = !!m && !isHome();
+    box.hidden = !show;
+    $('rad-tag').hidden = !show;
+    if (!show) return;
+    var p = $('rad-measured');
+    clear(p);
+    p.appendChild(el('strong', null, 'Radiation tonight: '));
+    var txt, ev;
+    if (m.dataset === 'msl-rad') {
+      txt = 'Measured by Curiosity\'s RAD on sol ' + m.sol + ' (' + longDate(m.date) + ') and replayed for this night. ' +
+        'It is dose in silicon on the open surface of Mars, not inside a habitat; using a 2012 sol for this night is an assumption.';
+      ev = 'V60';
+    } else {
+      if (!has(CRATER_SHIELD, m.pair)) throw new Error('No shielding description for CRaTER pair ' + m.pair);
+      txt = 'Measured in lunar orbit by LRO CRaTER on the night of ' + longDate(m.date) + ', ' + CRATER_SHIELD[m.pair] +
+        ' (detector pair ' + m.pair + '), scaled to the surface by the instrument team, and replayed for this night. ' +
+        'It is not a habitat measurement; using a 2017 night for this night is an assumption.';
+      ev = 'V61';
+    }
+    p.appendChild(document.createTextNode(txt + shieldNote() + ' '));
+    p.appendChild(sourceLink(ev));
+
+    var d = $('rad-donki'), first = r.rad.events && r.rad.events[0];
+    d.hidden = !first;
+    clear(d);
+    if (!first) return;
+    var t = first.start.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})Z$/);
+    d.appendChild(document.createTextNode('NASA\'s DONKI space-weather database lists a solar energetic particle event starting ' +
+      longDate(t[1]) + ', ' + t[2] + ' UTC'));
+    if (first.id === evidence.value('V62', 'id')) {
+      d.appendChild(document.createTextNode('. '));
+      d.appendChild(sourceLink('V62'));
+    } else {
+      d.appendChild(document.createTextNode(' (record ' + first.id + ').'));
+    }
   }
 
   // ---- render: whole-body image ----------------------------------------------------
@@ -588,7 +640,7 @@
       legend.push(['line', 'Dose the card judges']);
       if (x.usualUGy != null) legend.push(['watch', 'Watch line'], ['report', 'Report line']);
       legend.push(['event', 'Event'], ['selected', 'Selected night']);
-      note = x.usualUGy != null ? 'Absorbed dose in silicon over each sleep period. Usual level before tonight: ' + fmtDose(x.usualUGy) +
+      note = x.usualUGy != null ? 'Measured dose over each sleep period (' + doseMedium() + '), replayed night by night. Usual level before tonight: ' + fmtDose(x.usualUGy) +
         ' (median of up to ' + T.radiationHistoryNights.value + ' earlier nights). The brief is read the morning after: real-time warnings come from space-weather alerts and the flight rules.' :
         'Not enough earlier nights to set a usual level, so no lines are drawn.';
     }
@@ -623,6 +675,8 @@
     proj.textContent = p ? 'Weekly trend: ' + fmtPct(p.slopePctPerWeek) + ' per week. At this rate the weekly median reaches the Report line ' +
       (p.daysToRed <= 7 ? 'within about a week' : 'in about ' + p.daysToRed + ' days') + '; the nightly check can change sooner.' : '';
 
+    renderFlux(cardId);
+
     var r = rec(), roseFig = $('rose-fig');
     var showRose = cardId === 'radiation' && r.rad && r.rad.dir;
     roseFig.hidden = !showRose;
@@ -638,6 +692,24 @@
       $('rose-reading').textContent = 'Most particles arrive from the ' + charts.ROSE_DIRECTIONS[k] + ' side.';
       $('rose-span').textContent = '(' + nights + (nights === 1 ? ' night' : ' nights') + ' with tracker data up to tonight).';
     }
+  }
+
+  // Solar-event scenario only: OMNI2 proton flux near Earth, with the selected night's sleep window shaded.
+  function renderFlux(cardId) {
+    var fig = $('flux-fig'), sc = data.gen.scenario, omni = M.data && M.data.omniProtons;
+    var show = cardId === 'radiation' && !isHome() && !!(sc.rad && sc.rad.checkSpe) && !!omni;
+    fig.hidden = !show;
+    if (!show) return;
+    var pts = omni.rows.map(function (x) { return { t: Date.parse(x[0]), value: x[1] }; });
+    var from = pts[0].t, to = pts[pts.length - 1].t + 3600000;
+    var m = rec().rad && rec().rad.measured, shade = null;
+    if (m) { var open = Date.parse(m.date + 'T22:00:00Z'); shade = { from: open, to: open + 8 * 3600000 }; }
+    charts.logSeries($('flux-chart'), {
+      points: pts, from: from, to: to, shade: shade, yMin: 0.1, yMax: 10000, yLabel: 'Protons >10 MeV (pfu)',
+      label: 'Hourly proton flux above 10 MeV near Earth, 4 to 16 September 2017, logarithmic scale' +
+        (shade && shade.to > from && shade.from < to ? '; the sleep window of the night of ' + longDate(m.date) + ' is shaded' : '')
+    });
+    $('flux-ev').href = evidenceHref('V63');
   }
 
   // ---- render: guidance ------------------------------------------------------------
@@ -985,8 +1057,32 @@
     });
   }
 
+  // Measured data used on this page, from the metadata each data module exports.
+  function buildMeasured() {
+    var ul = $('measured-list'), D = M.data || {};
+    clear(ul);
+    [['mslRad', 'nightly dose on Mars'], ['lroCrater', 'nightly dose on the Moon'],
+      ['donkiSep2017', 'solar-particle-event records'], ['omniProtons', 'proton flux chart']].forEach(function (x) {
+      var d = D[x[0]];
+      if (!d) return;
+      var li = el('li');
+      li.appendChild(el('strong', null, d.name));
+      li.appendChild(document.createTextNode(': ' + x[1] + '. '));
+      li.appendChild(el('span', null, d.source + ' '));
+      var a = el('a', null, 'Source: ' + new URL(d.url).hostname);
+      a.href = d.url;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      li.appendChild(a);
+      li.appendChild(document.createTextNode('. Retrieved ' + d.retrieved + '. '));
+      li.appendChild(el('span', 'muted', d.terms));
+      ul.appendChild(li);
+    });
+  }
+
   // ---- start -----------------------------------------------------------------------
   buildEvidence();
+  buildMeasured();
   wire();
   var initialHash = location.hash;
   renderFromLink(initialHash.indexOf('=') >= 0 ? initialHash : '');

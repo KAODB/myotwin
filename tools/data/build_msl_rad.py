@@ -46,6 +46,7 @@ for sol in sorted(by):
     rows.append([sol, good[0].isoformat(), round(med, 3), len(rs)])
 
 data = {
+    "name": "Curiosity RAD dose rate, Mars surface (MSL-M-RAD-3-RDR-V1.0)",
     "source": "NASA Planetary Data System, PPI node: MSL-M-RAD-3-RDR-V1.0 (Curiosity Radiation Assessment Detector, reduced data records), Gale crater surface.",
     "url": "https://pds-ppi.igpp.ucla.edu/data/MSL-M-RAD-3-RDR-V1.0/",
     "retrieved": "2026-11-14",

@@ -19,7 +19,7 @@ const daysApart = (a, b) => (Date.parse(b + 'T00:00:00Z') - Date.parse(a + 'T00:
 
 test('every data module carries provenance', () => {
   for (const d of [msl, crater, donki, omni]) {
-    for (const k of ['source', 'url', 'retrieved', 'units', 'processing', 'terms']) assert.ok(typeof d[k] === 'string' && d[k].length > 5, k);
+    for (const k of ['name', 'source', 'url', 'retrieved', 'units', 'processing', 'terms']) assert.ok(typeof d[k] === 'string' && d[k].length > 5, k);
     assert.equal(d.retrieved, '2026-11-14');
     assert.match(d.url, /^https:\/\//);
   }

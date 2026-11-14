@@ -61,6 +61,7 @@ for name, (d0, d1) in WINDOWS.items():
     data_windows[name] = rows
 
 data = {
+    "name": "LRO CRaTER dose rate, Moon",
     "source": "LRO CRaTER (Cosmic Ray Telescope for the Effects of Radiation) dose-rate products, instrument team, University of New Hampshire, NASA Lunar Reconnaissance Orbiter mission.",
     "url": "https://crater-web.sr.unh.edu/data/craterProducts/doserates/doserates_nospe.txt",
     "urlEventFile": "https://crater-web.sr.unh.edu/data/craterProducts/doserates/data/2017262/doserates_standard_2017262_31days_allevents.txt",

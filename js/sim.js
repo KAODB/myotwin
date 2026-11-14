@@ -55,7 +55,7 @@
     craterPair: a('D5&6', 'detector pair', 'LRO CRaTER pair behind both tissue-equivalent plastic blocks (about 81 mm, from the instrument paper), used as the stand-in for someone inside a habitat. It is not a habitat measurement; D1&2, behind the thinnest shielding, is kept in the data file for comparison.', ['V61']),
     moonNightMapping: a({ S1: '2017-04-21', S3: '2017-08-21' }, 'first replayed night (UTC date)', 'Mission night k replays the CRaTER night starting k days after this date: S1 the quiet window 2017-04-21 to 2017-06-19, S3 the window that contains the September 2017 events, so that mission night 20 is the night starting 2017-09-10. The choice of windows is ours.', ['V61']),
     marsNightMapping: a('sols 13-108', 'Curiosity RAD sols', 'Mars night k replays the k-th of the 94 sols with data between sol 13 and sol 112 (sols 29-33 and 64 have no file and are skipped, not filled), using the median of detector B over that sol (dose in silicon). Sol length (24 h 40 min) is ignored.', ['V60']),
-    speRule: a(16, 'h before the sleep window opens', 'A night is flagged as a solar particle event when a DONKI SEP record starts between 16 h before the sleep window opens and the moment it closes (start inclusive, end exclusive). Only S3 is checked; DONKI records were retrieved for September 2017 only, so nights whose look-up span leaves that month carry events = null (not checked), and S1 and S2 nights are never flagged.', ['V62']),
+    speRule: a(16, 'h before the sleep window opens', 'A night is flagged as a solar particle event when a DONKI SEP record from a GOES instrument (near Earth, in geostationary orbit) starts between 16 h before the sleep window opens and the moment it closes (start inclusive, end exclusive). Records from STEREO A (far from the Earth-Moon system), from SOHO (at the Sun-Earth L1 point) and from a model are left out. Only S3 is checked; DONKI records were retrieved for September 2017 only, so nights whose look-up span leaves that month carry events = null (not checked), and S1 and S2 nights are never flagged.', ['V62']),
     hotSectorIndex: a(2, 'sector', 'Azimuth sector facing a thinner-shielded side.'),
     hotSectorExcess: a(0.3, 'fraction', 'Extra particle count in the hot sector versus the other sectors.'),
     dirCountsPerNight: a(100, 'counts', 'Total counts in the 8-sector direction histogram (a fixed sample, not scaled with dose).'),
@@ -184,7 +184,10 @@
       if (sc.rad.checkSpe) {
         var open = Date.parse(c[0] + 'T22:00:00Z');
         var lo = open - ASSUMPTIONS.speRule.value * H, hi = open + 8 * H;
-        var ev = DONKI.rows.filter(function (e) { var t = Date.parse(e[1]); return t >= lo && t < hi; })
+        var ev = DONKI.rows.filter(function (e) {
+          var t = Date.parse(e[1]);
+          return t >= lo && t < hi && e[2].some(function (i) { return /^GOES/.test(i); });
+        })
           .map(function (e) { return { id: e[0], start: e[1] }; });
         n.spe = ev.length > 0;
         n.events = lo >= Date.parse(DONKI.coverage[0]) && hi <= Date.parse(DONKI.coverage[1]) ? ev : null;

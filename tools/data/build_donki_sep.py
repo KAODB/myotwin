@@ -21,6 +21,7 @@ rows = [[e["sepID"], e["eventTime"], [i["displayName"] for i in e.get("instrumen
          [l["activityID"] for l in e.get("linkedEvents") or []]] for e in sep]
 rows.sort(key=lambda r: r[1])
 data = {
+    "name": "DONKI solar energetic particle records, September 2017",
     "source": "NASA Community Coordinated Modeling Center (CCMC), DONKI (Space Weather Database Of Notifications, Knowledge, Information), SEP records, via the NASA Open APIs gateway.",
     "url": "https://api.nasa.gov/DONKI/SEP?startDate=2017-09-01&endDate=2017-09-30",
     "retrieved": "2026-11-14",

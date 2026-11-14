@@ -8,7 +8,7 @@
 (function (root) {
   'use strict';
   var ns = (root.MyoTwin = root.MyoTwin || {});
-  var data = {"source":"NASA Goddard Space Flight Center, Space Physics Data Facility (SPDF), OMNI2 hourly dataset (proton flux from GOES).","url":"https://spdf.gsfc.nasa.gov/pub/data/omni/low_res_omni/omni2_2017.dat","retrieved":"2026-11-14","units":"gt10MeV_pfu: integral proton flux above 10 MeV, protons per (cm2 s sr) (pfu); hour: UTC start of the hour.","processing":"Word 46 of omni2_2017.dat for each hour from 2017-09-04T00Z to 2017-09-16T23Z, copied as given; fill values (>= 99999) become null. Rebuild: python3 -I tools/data/build_omni_protons.py omni2_2017.dat data/omni-protons.js","terms":"NASA SPDF data are public; acknowledge \"OMNI data from GSFC/SPDF OMNIWeb\".","columns":["hour","gt10MeV_pfu"],"rows":[["2017-09-04T00:00Z",0.22],
+  var data = {"name":"OMNI2 hourly proton flux above 10 MeV","source":"NASA Goddard Space Flight Center, Space Physics Data Facility (SPDF), OMNI2 hourly dataset (proton flux from GOES).","url":"https://spdf.gsfc.nasa.gov/pub/data/omni/low_res_omni/omni2_2017.dat","retrieved":"2026-11-14","units":"gt10MeV_pfu: integral proton flux above 10 MeV, protons per (cm2 s sr) (pfu); hour: UTC start of the hour.","processing":"Word 46 of omni2_2017.dat for each hour from 2017-09-04T00Z to 2017-09-16T23Z, copied as given; fill values (>= 99999) become null. Rebuild: python3 -I tools/data/build_omni_protons.py omni2_2017.dat data/omni-protons.js","terms":"NASA SPDF data are public; acknowledge \"OMNI data from GSFC/SPDF OMNIWeb\".","columns":["hour","gt10MeV_pfu"],"rows":[["2017-09-04T00:00Z",0.22],
 ["2017-09-04T01:00Z",0.2],
 ["2017-09-04T02:00Z",0.17],
 ["2017-09-04T03:00Z",0.19],

@@ -94,21 +94,22 @@ test('S3 replays the September 2017 CRaTER window; night 20 is 2017-09-10 and ca
   assert.ok(n20.rad.dose_uGy / quiet > 400, String(n20.rad.dose_uGy / quiet));
 });
 
-test('S3 spe flags fall exactly where a DONKI record starts 16 h before to the end of the sleep window', () => {
+test('S3 spe flags fall exactly where a GOES DONKI record starts 16 h before to the end of the sleep window', () => {
   const surf = surface(sim.generate('S3').records);
   const H = 3600000;
   const expected = surf.map((r) => {
     const open = Date.parse(r.rad.measured.date + 'T22:00:00Z');
     const lo = open - 16 * H, hi = open + 8 * H;
     const covered = lo >= Date.parse(donki.coverage[0]) && hi <= Date.parse(donki.coverage[1]);
-    const ids = donki.rows.filter((e) => Date.parse(e[1]) >= lo && Date.parse(e[1]) < hi).map((e) => e[0]);
+    const goes = donki.rows.filter((e) => e[2].some((i) => i.startsWith('GOES')));
+    const ids = goes.filter((e) => Date.parse(e[1]) >= lo && Date.parse(e[1]) < hi).map((e) => e[0]);
     return { spe: ids.length > 0, ids: covered ? ids : null };
   });
   surf.forEach((r, k) => {
     assert.equal(r.rad.spe, expected[k].spe, 'night ' + k);
     assert.deepStrictEqual(r.rad.events && r.rad.events.map((e) => e.id), expected[k].ids, 'night ' + k);
   });
-  assert.deepStrictEqual(surf.filter((r) => r.rad.spe).map((r) => r.missionDay), [14, 16, 20, 22, 27]);
+  assert.deepStrictEqual(surf.filter((r) => r.rad.spe).map((r) => r.missionDay), [14, 16, 20]);
 });
 
 test('S3 event labels cover exactly the nights above 2x the scenario median dose', () => {

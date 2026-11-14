@@ -446,6 +446,56 @@
     return imax;
   }
 
+  // ---- hourly series on a logarithmic axis ----------------------------------------
+  /**
+   * Hourly values on a log10 vertical axis with decade ticks, and an optional shaded span.
+   * opts: { points: [{t: ms, value}], from: ms, to: ms, shade: {from: ms, to: ms}|null,
+   *   yMin, yMax (positive, decades; the caller makes them cover every value), yLabel, label (accessible name) }
+   * Non-positive or null values are gaps. Day ticks at 00:00 UTC, every second day.
+   */
+  function logSeries(svg, opts) {
+    var size = sizeOf(svg, 640, 200), W = size.w, H = size.h;
+    var m = { l: 62, r: 16, t: 10, b: 34 };
+    clear(svg);
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    svg.setAttribute('aria-label', opts.label || 'Chart');
+    el('title', null, svg).textContent = opts.label || 'Chart';
+    var pw = W - m.l - m.r, ph = H - m.t - m.b;
+    var l0 = Math.log10(opts.yMin), l1 = Math.log10(opts.yMax);
+    function X(t) { return m.l + (t - opts.from) / (opts.to - opts.from) * pw; }
+    function Y(v) { return m.t + (1 - (Math.log10(v) - l0) / (l1 - l0)) * ph; }
+    if (opts.shade) {
+      var s0 = Math.max(opts.from, opts.shade.from), s1 = Math.min(opts.to, opts.shade.to);
+      if (s1 > s0) el('rect', { x: X(s0), y: m.t, width: X(s1) - X(s0), height: ph, 'class': 'flux-shade' }, svg);
+    }
+    for (var k = Math.ceil(l0); k <= l1; k++) {
+      var v = Math.pow(10, k);
+      el('line', { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), 'class': 'grid' }, svg);
+      text(svg, m.l - 8, Y(v) + 4, String(v), 'ax-label', 'end');
+    }
+    if (opts.yLabel) {
+      var yl = text(svg, 0, 0, opts.yLabel, 'ax-title');
+      yl.setAttribute('transform', 'translate(13,' + (m.t + ph / 2) + ') rotate(-90)');
+    }
+    el('line', { x1: m.l, x2: W - m.r, y1: m.t + ph, y2: m.t + ph, 'class': 'axis' }, svg);
+    var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var step = pw < 360 ? 4 : 2;
+    for (var t = opts.from, i = 0; t <= opts.to; t += 86400000, i++) {
+      if (i % step) continue;
+      var d = new Date(t);
+      el('line', { x1: X(t), x2: X(t), y1: m.t + ph, y2: m.t + ph + 4, 'class': 'axis' }, svg);
+      text(svg, X(t), m.t + ph + 18, d.getUTCDate() + ' ' + MON[d.getUTCMonth()], 'ax-label');
+    }
+    var path = '', pen = false;
+    (opts.points || []).forEach(function (p) {
+      if (p.value == null || !(p.value > 0)) { pen = false; return; }
+      path += (pen ? 'L' : 'M') + X(p.t).toFixed(1) + ',' + Y(p.value).toFixed(1);
+      pen = true;
+    });
+    if (path) el('path', { d: path, 'class': 'series' }, svg);
+    return { x: X, y: Y };
+  }
+
   var api = {
     STATUS: STATUS,
     ROSE_DIRECTIONS: ROSE_DIRECTIONS,
@@ -456,6 +506,7 @@
     colormap: colormap,
     normalise: normalise,
     line: line,
+    logSeries: logSeries,
     image: image,
     colorbar: colorbar,
     rose: rose

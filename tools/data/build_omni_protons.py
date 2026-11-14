@@ -25,6 +25,7 @@ for line in open(sys.argv[1]):
         x = float(p[45])
         rows.append([t.strftime("%Y-%m-%dT%H:00Z"), None if x >= 99999.0 else x])
 data = {
+    "name": "OMNI2 hourly proton flux above 10 MeV",
     "source": "NASA Goddard Space Flight Center, Space Physics Data Facility (SPDF), OMNI2 hourly dataset (proton flux from GOES).",
     "url": "https://spdf.gsfc.nasa.gov/pub/data/omni/low_res_omni/omni2_2017.dat",
     "retrieved": "2026-11-14",
