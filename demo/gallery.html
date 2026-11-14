@@ -8,7 +8,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src data:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src data:; base-uri 'none'; form-action 'none'; require-trusted-types-for 'script'">
 <link rel="icon" href="data:,">
 <title>MyoTwin chart gallery</title>
 <link rel="stylesheet" href="../css/style.css">
@@ -33,7 +33,7 @@
   </section>
 
   <section class="panel">
-    <h2 class="section-title">line: baseline band, expected band, thresholds, markers, exercise ticks, gaps, selected day</h2>
+    <h2 class="section-title">line: nightly dots, judged line, baseline band, plan band, report line, markers, axis break, exercise ticks, gaps, selected day</h2>
     <svg id="line-full" class="chart"></svg>
   </section>
 

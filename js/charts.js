@@ -18,7 +18,7 @@
   var STATUS = {
     green: { word: 'In range', shape: 'circle', icon: '#st-green' },
     amber: { word: 'Watch', shape: 'triangle', icon: '#st-amber' },
-    red: { word: 'Act now', shape: 'octagon', icon: '#st-red' },
+    red: { word: 'Report', shape: 'octagon', icon: '#st-red' },
     grey: { word: 'No data', shape: 'dash', icon: '#st-grey' }
   };
   function statusKey(s) { return STATUS[s] ? s : 'grey'; }
@@ -129,10 +129,14 @@
   // ---- line chart --------------------------------------------------------------
   /**
    * Draw a time series into an <svg>.
-   * opts: { series: [{missionDay, value|null}], baseline: {median, low, high}|null,
-   *   expected: [{missionDay, low, high}]|null, thresholds: [{value, label, status}],
-   *   markers: [{missionDay, label}], exercise: [{missionDay, done}]|null,
-   *   statusAt: (missionDay) => status, selectedDay, unit, yLabel }
+   * opts: { series: [{missionDay, value|null}], raw: [{missionDay, value|null}]|null,
+   *   baseline: {median, low, high}|null, expected: [{missionDay, low, high}]|null,
+   *   thresholds: [{value, label, status}], markers: [{missionDay, label}],
+   *   exercise: [{missionDay, done}]|null, statusAt: (missionDay) => status,
+   *   selectedDay, unit, yLabel, xTitle = 'Mission day', axisBreak: missionDay|null }
+   * `series` is the line the status is judged on (status-shaped markers); `raw` are the
+   * nightly readings drawn as small neutral dots. `axisBreak` draws a break in the x axis
+   * just before that day and never joins the line across it.
    */
   function line(svg, opts) {
     opts = opts || {};
@@ -144,19 +148,23 @@
     clear(svg);
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
     svg.setAttribute('role', 'img');
+    var xTitle = opts.xTitle || 'Mission day';
+    var raw = opts.raw || [];
     var label = (opts.yLabel || 'Value') + (opts.unit ? ' (' + opts.unit + ')' : '') +
-      ' by mission day, ' + series.filter(function (p) { return p.value != null; }).length + ' nights with data';
+      ' by ' + xTitle.toLowerCase() + ', ' + series.filter(function (p) { return p.value != null; }).length + ' nights with data';
     svg.setAttribute('aria-label', label);
     el('title', null, svg).textContent = label;
 
     // Domains
     var days = series.map(function (p) { return p.missionDay; });
+    raw.forEach(function (p) { days.push(p.missionDay); });
     (opts.expected || []).forEach(function (p) { days.push(p.missionDay); });
     var x0 = Math.min.apply(null, days.length ? days : [0]);
     var x1 = Math.max.apply(null, days.length ? days : [1]);
     if (x1 === x0) x1 = x0 + 1;
     var ys = [];
     series.forEach(function (p) { if (p.value != null) ys.push(p.value); });
+    raw.forEach(function (p) { if (p.value != null) ys.push(p.value); });
     if (opts.baseline) ys.push(opts.baseline.low, opts.baseline.high, opts.baseline.median);
     (opts.expected || []).forEach(function (p) { ys.push(p.low, p.high); });
     (opts.thresholds || []).forEach(function (t) { ys.push(t.value); });
@@ -197,7 +205,16 @@
       el('line', { x1: X(d), x2: X(d), y1: m.t + ph, y2: m.t + ph + 4, 'class': 'axis' }, svg);
       text(svg, X(d), m.t + ph + 18, String(d), 'ax-label');
     });
-    text(svg, m.l + pw, H - 4, 'Mission day', 'ax-title', 'end');
+    text(svg, m.l + pw, H - 4, xTitle, 'ax-title', 'end');
+
+    // Axis break: the days on either side are not adjacent (for example a long transit).
+    var brk = opts.axisBreak;
+    if (brk != null && brk > x0 && brk <= x1) {
+      var bx = X(brk - 0.5), by = m.t + ph;
+      el('rect', { x: bx - 4, y: by - 6, width: 8, height: 12, 'class': 'axis-break-gap' }, svg);
+      el('path', { d: 'M' + (bx - 6) + ',' + (by + 5) + 'l5,-10M' + (bx + 1) + ',' + (by + 5) + 'l5,-10', 'class': 'axis-break' }, svg);
+      el('line', { x1: bx, x2: bx, y1: m.t, y2: by, 'class': 'axis-break-line' }, svg);
+    }
 
     // Baseline band and median
     if (opts.baseline && opts.baseline.low != null && opts.baseline.high != null) {
@@ -228,9 +245,11 @@
       var mx = X(mk.missionDay);
       el('line', { x1: mx, x2: mx, y1: m.t, y2: m.t + ph, 'class': 'event' }, svg);
       if (mk.label) {
-        var anchor = mx > m.l + pw * 0.75 ? 'end' : 'start';
-        var rows = pw < 420 ? 3 : 2;
-        text(svg, mx + (anchor === 'end' ? -4 : 4), m.t + 12 + (k % rows) * 14, mk.label, 'event-label', anchor);
+        // Keep the label inside the plot: estimated width about 6 px per character.
+        var est = mk.label.length * 6, rows = pw < 420 ? 3 : 2;
+        var lx = mx > m.l + pw * 0.75 ? mx - 4 - est : mx + 4;
+        lx = Math.max(m.l + 2, Math.min(lx, W - m.r - est));
+        text(svg, lx, m.t + 12 + (k % rows) * 14, mk.label, 'event-label', 'start');
       }
     });
 
@@ -239,9 +258,17 @@
       el('line', { x1: X(opts.selectedDay), x2: X(opts.selectedDay), y1: m.t, y2: m.t + ph, 'class': 'selected-day' }, svg);
     }
 
-    // Series line with gaps, then status-shaped points
-    var path = '', pen = false;
+    // Nightly readings: small neutral dots
+    raw.forEach(function (p) {
+      if (p.value == null || !isFinite(p.value)) return;
+      el('circle', { cx: X(p.missionDay).toFixed(1), cy: Y(p.value).toFixed(1), r: 1.8, 'class': 'raw-dot' }, svg);
+    });
+
+    // Judged line with gaps (and never across the axis break), then status-shaped points
+    var path = '', pen = false, prev = null;
     series.forEach(function (p) {
+      if (brk != null && prev != null && prev < brk && p.missionDay >= brk) pen = false;
+      prev = p.missionDay;
       if (p.value == null || !isFinite(p.value)) { pen = false; return; }
       path += (pen ? 'L' : 'M') + X(p.missionDay).toFixed(1) + ',' + Y(p.value).toFixed(1);
       pen = true;
@@ -272,8 +299,10 @@
   // ---- image -------------------------------------------------------------------
   /**
    * Draw a row-major Float32Array image (values[y * w + x]) onto a canvas with
-   * nearest-neighbour scaling. NaN cells get nanColor.
-   * image: { w, h, values, min, max }; opts: { colormap, nanColor: [r,g,b,a], scale }
+   * nearest-neighbour scaling. NaN cells get nanColor. Cells where opts.overlay (a
+   * Uint8Array of codes) is non-zero get opts.overlayColors[code] instead.
+   * image: { w, h, values, min, max };
+   * opts: { colormap, nanColor: [r,g,b,a], scale, overlay, overlayColors: { code: [r,g,b,a] } }
    */
   function image(canvas, img, opts) {
     opts = opts || {};
@@ -287,8 +316,15 @@
     src.width = w; src.height = h;
     var sctx = src.getContext('2d');
     var data = sctx.createImageData(w, h);
+    var ov = opts.overlay, ovc = opts.overlayColors || {};
     for (var i = 0; i < w * h; i++) {
       var val = v[i], o = i * 4;
+      if (ov && ov[i] && ovc[ov[i]]) {
+        var oc = ovc[ov[i]];
+        data.data[o] = oc[0]; data.data[o + 1] = oc[1]; data.data[o + 2] = oc[2];
+        data.data[o + 3] = oc.length > 3 ? oc[3] : 255;
+        continue;
+      }
       if (val == null || !isFinite(val)) {
         data.data[o] = nan[0]; data.data[o + 1] = nan[1]; data.data[o + 2] = nan[2];
         data.data[o + 3] = nan.length > 3 ? nan[3] : 255;
@@ -332,12 +368,18 @@
     var span = Math.abs(max - min) || Math.abs(max) || 1;
     var dec = Math.max(0, Math.min(4, 2 - Math.floor(Math.log10(span))));
     var f = function (v) { var s = (Math.abs(v) < Math.pow(10, -dec) / 2 ? 0 : v).toFixed(dec); return s; };
-    [f(min) + unit, name === 'diverging' ? '0' : f((min + max) / 2), f(max) + unit].forEach(function (s) {
+    [f(min), name === 'diverging' ? '0' : f((min + max) / 2), f(max)].forEach(function (s) {
       var sp = doc.createElement('span');
       sp.textContent = s;
       labels.appendChild(sp);
     });
     container.appendChild(labels);
+    if (scale.unit) {
+      var u = doc.createElement('div');
+      u.className = 'colorbar-unit';
+      u.textContent = scale.unit;
+      container.appendChild(u);
+    }
     container.setAttribute('aria-label', 'Colour scale from ' + f(min) + ' to ' + f(max) + unit);
   }
 
