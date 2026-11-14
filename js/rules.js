@@ -20,7 +20,7 @@
 
   var THRESHOLDS = {
     // Windows and statistics
-    windowNights: assumption(7, 'nights', 'Length of the rolling window for muscle and sleep, and of one "week" in the trend rule.'),
+    windowNights: assumption(7, 'nights', 'Length of the rolling window for muscle and sleep, and of one "week" in the projection.'),
     baselineMinNights: assumption(3, 'nights', 'Fewest baseline values needed to compute a median and SD.'),
     medianSeFactor: assumption(1.2533, 'ratio', 'sqrt(pi/2): standard error of a median relative to a mean for normally distributed nights.'),
     // Muscle
@@ -28,7 +28,6 @@
     muscleRedDropPct: fromEvidence('V10', 'maxVariabilityPct', '%', 'EIM test-retest variability, upper limit.'),
     muscleAmberNoiseMultiple: assumption(2, 'x noise7', 'Amber needs a drop beyond 2 times the expected spread of a 7-night median.'),
     muscleRedNoiseMultiple: assumption(3, 'x noise7', 'Red needs a drop beyond 3 times the expected spread of a 7-night median.'),
-    muscleTrendWeeks: assumption(3, 'weeks', 'Three weekly medians falling in a row (four windows compared).'),
     muscleMinUsableNights: assumption(3, 'nights', 'Fewest nights with a usable scan in the last 7 before the card is judged.'),
     // Sleep
     sleepAmberHours: fromEvidence('V25', 'minSleepHours', 'h', 'Adult recommendation of 7 h or more.'),
@@ -56,9 +55,9 @@
 
   var TEXT = {
     muscle: {
-      green: { meaning: 'Calf muscle signal is within your own normal range.', actions: ['Keep the current exercise plan.'] },
-      amber: { meaning: 'The calf muscle signal has fallen below your own normal range. This is a screening flag, not a strength measurement.', actions: ['Review the last two weeks of the {exerciseLog}.', 'Schedule an active strength check.', 'Tell the {clinician} at the next contact.'] },
-      red: { meaning: 'The calf muscle signal has fallen well below your own normal range, or has dropped three weeks in a row.', actions: ['Notify the {clinician}.', 'Confirm with {strengthCheck}.', 'Do not increase training loads on your own until this is confirmed.'] },
+      green: { meaning: 'Calf muscle signal is in line with your baseline and the mission plan.', actions: ['Keep the current exercise plan.'] },
+      amber: { meaning: 'The calf muscle signal is lower than the mission plan expects. This is a screening flag, not a strength measurement.', actions: ['Review the last two weeks of the {exerciseLog}.', 'Schedule an active strength check.', 'Tell the {clinician} at the next contact.'] },
+      red: { meaning: 'The calf muscle signal has fallen well below your own baseline.', actions: ['Notify the {clinician}.', 'Confirm with {strengthCheck}.', 'Do not increase training loads on your own until this is confirmed.'] },
       grey: { meaning: 'Not enough usable scans this week.', actions: ['Check that bare calves rest on the electrode strip.', 'Check the position of the sleep liner.'] }
     },
     sleep: {
