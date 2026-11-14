@@ -10,6 +10,9 @@
   var ns = (root.MyoTwin = root.MyoTwin || {});
   var inNode = typeof module === 'object' && module.exports;
   var evidence = inNode ? require('./evidence.js') : ns.evidence;
+  // Rat partial-weight-bearing data (NASA OSDR), read only to add the result of checkGravityTerm
+  // to the gravityShape note below. In the browser it is there only if data/osdr-pwb.js loads first.
+  var pwb = inNode ? require('../data/osdr-pwb.js') : (ns.data && ns.data.osdrPwb);
 
   var PARAMS = {
     maxLossFraction: {
@@ -35,7 +38,7 @@
       note: 'Time constant of recovery toward baseline at g >= 1. No fitted source; chosen to be shorter than the loss time constant.'
     },
     gravityShape: {
-      value: 1, unit: 'exponent', status: 'assumption', anchors: ['V6'],
+      value: 1, unit: 'exponent', status: 'assumption', anchors: ['V6', 'V90', 'V91'],
       note: 'Unloading = (1 - g) ^ gravityShape; 1 means loss scales linearly with missing gravity. ' +
         'Mouse data in V6 (0.33 g preserved soleus size, 0.67 g needed for function) suggest the relation may not be linear.'
     },
@@ -53,12 +56,75 @@
     earth: 1
   };
 
+  // Declared threshold for checkGravityTerm (not a model parameter, so not in PARAMS).
+  var GRAVITY_CHECK = {
+    unstablePoints: {
+      value: 5, unit: 'percentage points', status: 'assumption',
+      note: 'A share is flagged unstable when the 0 g change minus the 1 g change is smaller than this ' +
+        '(a small denominator makes the share swing). Chosen by judgement, not fitted.'
+    }
+  };
+
+  // Fraction of the full-unloading loss that the model keeps at gravity g (1 at g = 0, 0 at g = 1).
+  function gravityTerm(g, shape) {
+    return Math.pow(1 - g, shape);
+  }
+
+  // Share of the fully unloaded loss that remained at partial loading:
+  // (changePartial - changeControl) / (changeUnloaded - changeControl), all percent changes over
+  // the same period. Subtracting the 1 g control change removes growth, ageing or practice effects
+  // seen without unloading. 0 = no loss beyond the controls, 1 = the same loss as full unloading,
+  // above 1 = more loss than full unloading. The model's counterpart is gravityTerm(g, shape).
+  // When the control change equals the unloaded change the share is undefined: returns null.
+  function shareOfUnloadedLoss(changePartial, changeUnloaded, changeControl) {
+    var d = changeUnloaded - changeControl;
+    return d === 0 ? null : (changePartial - changeControl) / d;
+  }
+
+  // Applies shareOfUnloadedLoss to data shaped like data/osdr-pwb.js (passed in, not read here):
+  // for each measure and sex, the percent change of the group mean from day 0 to day 28 at each
+  // loading, the share at the partial loading, and the model's gravityTerm there for `shape`.
+  function checkGravityTerm(data, shape) {
+    var L = data.loadings;                       // [1, partial, 0]
+    var day = Math.max.apply(null, data.rows.map(function (x) { return x[3]; }));   // last day (28)
+    function mean(sex, g, m, d) {
+      var r = data.rows.filter(function (x) { return x[0] === sex && x[1] === g && x[2] === m && x[3] === d; })[0];
+      return r ? r[5] : null;
+    }
+    function change(sex, g, m) { return 100 * (mean(sex, g, m, day) / mean(sex, g, m, 0) - 1); }
+    var measures = [];
+    ['grip', 'plantarflexionTorque', 'calfGirth'].forEach(function (m) {
+      ['F', 'M'].forEach(function (sex) {
+        var c1 = change(sex, L[0], m), cp = change(sex, L[1], m), c0 = change(sex, L[2], m);
+        measures.push({
+          measure: m, sex: sex, day: day, pct1g: c1, pct04g: cp, pct0g: c0,
+          share: shareOfUnloadedLoss(cp, c0, c1),
+          unstable: Math.abs(c0 - c1) < GRAVITY_CHECK.unstablePoints.value
+        });
+      });
+    });
+    var s = measures.map(function (x) { return x.share; }).filter(function (v) { return v != null; })
+      .sort(function (a, b) { return a - b; });
+    var h = s.length >> 1;
+    return {
+      partialG: L[1], shape: shape, model: gravityTerm(L[1], shape), measures: measures,
+      min: s[0], median: s.length % 2 ? s[h] : (s[h - 1] + s[h]) / 2, max: s[s.length - 1]
+    };
+  }
+
+  if (pwb) {
+    var chk = checkGravityTerm(pwb, PARAMS.gravityShape.value);
+    PARAMS.gravityShape.note += ' In rats after 28 days at ' + chk.partialG + ' g weight bearing (V90, V91; six measures, 1 g change subtracted), ' +
+      'the loss was ' + chk.min.toFixed(2) + ' to ' + chk.max.toFixed(2) + ' (median ' + chk.median.toFixed(2) + ') of the fully unloaded loss; ' +
+      'the model uses ' + chk.model.toFixed(2) + ' at ' + chk.partialG + ' g.';
+  }
+
   function step(prevChangePct, o) {
     var shape = o.gravityShape == null ? PARAMS.gravityShape.value : o.gravityShape;
     if (o.g >= 1) {
       return prevChangePct * Math.exp(-1 / PARAMS.recoveryTimeConstantDays.value);
     }
-    var target = -100 * PARAMS.maxLossFraction.value * Math.pow(1 - o.g, shape) *
+    var target = -100 * PARAMS.maxLossFraction.value * gravityTerm(o.g, shape) *
       (1 - PARAMS.exerciseEfficacy.value * o.exerciseAdherence);
     return prevChangePct + (target - prevChangePct) * (1 - Math.exp(-1 / PARAMS.timeConstantDays.value));
   }
@@ -78,7 +144,10 @@
     return Math.max(0, baselinePhaseDeg * (1 + PARAMS.eimPhasePctPerMusclePct.value * muscleChangePct / 100));
   }
 
-  var api = { PARAMS: PARAMS, GRAVITY: GRAVITY, step: step, simulate: simulate, eimPhase: eimPhase };
+  var api = {
+    PARAMS: PARAMS, GRAVITY: GRAVITY, step: step, simulate: simulate, eimPhase: eimPhase,
+    GRAVITY_CHECK: GRAVITY_CHECK, gravityTerm: gravityTerm, shareOfUnloadedLoss: shareOfUnloadedLoss, checkGravityTerm: checkGravityTerm
+  };
 
   ns.model = api;
   if (inNode) module.exports = api;

@@ -162,6 +162,16 @@ On a grey card `extra` holds whatever is known and null for the rest.
   starting with day 0 = 0.
 - `model.eimPhase(baselinePhaseDeg, muscleChangePct) -> number`
   Maps muscle change to expected EIM phase with the declared assumption.
+- `model.gravityTerm(g, shape) -> number` : `(1 - g) ^ shape`, the unloading factor `step` uses.
+- `model.shareOfUnloadedLoss(changePartial, changeUnloaded, changeControl) -> number | null`
+  `(changePartial - changeControl) / (changeUnloaded - changeControl)`; null when the denominator is 0.
+- `model.checkGravityTerm(data, shape) -> { partialG, shape, model, measures, min, median, max }`
+  `data` = `data/osdr-pwb.js` (rat partial weight bearing, NASA OSDR OSD-652 and OSD-616, evidence V90-V91).
+  `measures`: six `{ measure, sex, day: 28, pct1g, pct04g, pct0g, share, unstable }` (grip,
+  plantarflexion torque, calf girth; F and M); `model = gravityTerm(partialG, shape)`.
+  `unstable` uses the declared `model.GRAVITY_CHECK.unstablePoints`. `model.js` also loads the data
+  (Node: require; browser: `MyoTwin.data.osdrPwb` if `data/osdr-pwb.js` is loaded before it) to
+  write the result into the `gravityShape` note.
 
 ### sim (`js/sim.js`)
 

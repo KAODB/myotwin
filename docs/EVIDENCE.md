@@ -244,6 +244,20 @@ another citation without opening the original; **fitted** means estimated from e
 - Quote: "The machine is too complex for everyday exercise ... Mass: 200 kg"
 - Values: `massKg` = 200
 
+**V90**. Rats (Fischer 344, intact), 28 days of partial weight bearing in a harness, an analog of partial gravity, not human data: maximum rear-paw grip force changed from day 0 to day 28 by +0.1% at full weight bearing (1 g), -34.3% at 40% weight bearing (0.4 g, Mars analog) and -52.0% with the hindlimbs unloaded (0 g) in females, and by +34.0%, -50.2% and -56.5% in males (group means, 10 rats per group). After subtracting the 1 g change, the 0.4 g groups lost 0.66 (females) and 0.93 (males) of the 0 g loss.
+
+- Status: verified (dataset-record)
+- Source: NASA Open Science Data Repository, OSD-652 (LSDS-76), file LSDS-76_Force Transducer_Grip_Strength_Transformed.csv, column max_grip_Newtons (the second of two with that name); dataset DOI 10.26030/z92y-7b97; paper Rosa-Caldwell ME et al., J Appl Physiol 2023, doi:10.1152/japplphysiol.00023.2023; group means in data/osdr-pwb.js. <https://doi.org/10.26030/z92y-7b97>
+- Quote: none recorded
+- Values: `gripF1gPct` = 0.1; `gripF04gPct` = -34.3; `gripF0gPct` = -52; `gripFShare` = 0.66; `gripM1gPct` = 34; `gripM04gPct` = -50.2; `gripM0gPct` = -56.5; `gripMShare` = 0.93; `nMin` = 10; `nMax` = 10
+
+**V91**. Same rats (intact), 28 days of partial weight bearing in a harness, an analog of partial gravity, not human data: maximum nerve-stimulated plantarflexion torque changed from day 0 to day 28 by -1.8% at 1 g, -9.5% at 0.4 g and -18.7% at 0 g in females, and by +13.0%, +8.8% and -4.2% in males; calf girth changed by +2.1%, -5.6% and -5.2% in females and by +1.9%, -2.5% and -7.9% in males (group means, 10 rats per group). After subtracting the 1 g change, the 0.4 g groups lost 0.46 (females) and 0.25 (males) of the 0 g torque loss and 1.05 (females) and 0.44 (males) of the 0 g girth loss.
+
+- Status: verified (dataset-record)
+- Source: NASA Open Science Data Repository, OSD-616 (LSDS-61), file LSDS-61_Force Plate_Force_Plate_Transformed_Reusable_Files.csv, columns Girth_FootPlate_Data_Max_Plantar_flexion_Newtons_times_millimeters and Girth_FootPlate_Data_Girth; dataset DOI 10.26030/e0yx-ta10; paper Rosa-Caldwell ME et al., J Appl Physiol 2023, doi:10.1152/japplphysiol.00023.2023; group means in data/osdr-pwb.js. <https://doi.org/10.26030/e0yx-ta10>
+- Quote: none recorded
+- Values: `plantarflexionTorqueF1gPct` = -1.8; `plantarflexionTorqueF04gPct` = -9.5; `plantarflexionTorqueF0gPct` = -18.7; `plantarflexionTorqueFShare` = 0.46; `plantarflexionTorqueM1gPct` = 13; `plantarflexionTorqueM04gPct` = 8.8; `plantarflexionTorqueM0gPct` = -4.2; `plantarflexionTorqueMShare` = 0.25; `calfGirthF1gPct` = 2.1; `calfGirthF04gPct` = -5.6; `calfGirthF0gPct` = -5.2; `calfGirthFShare` = 1.05; `calfGirthM1gPct` = 1.9; `calfGirthM04gPct` = -2.5; `calfGirthM0gPct` = -7.9; `calfGirthMShare` = 0.44; `nMin` = 10; `nMax` = 10
+
 **V1**. NASA requires in-mission skeletal muscle strength to stay at or above 80% of baseline.
 
 - Status: verified (official-document)
@@ -579,7 +593,7 @@ another citation without opening the original; **fitted** means estimated from e
 | timeConstantDays | 42 | days | fitted | V4, V5 | Time constant of the approach to the loss target. Fitted together with maxLossFraction and exerciseEfficacy (see there). |
 | exerciseEfficacy | 0.72 | fraction of loss prevented at full adherence | fitted | V4, V5 | From the V4 ratio of exercise to control loss (8/29 = 0.28, so efficacy about 0.72). Applied to V5 as well, although that programme differed (see maxLossFraction). |
 | recoveryTimeConstantDays | 30 | days | assumption |  | Time constant of recovery toward baseline at g >= 1. No fitted source; chosen to be shorter than the loss time constant. |
-| gravityShape | 1 | exponent | assumption | V6 | Unloading = (1 - g) ^ gravityShape; 1 means loss scales linearly with missing gravity. Mouse data in V6 (0.33 g preserved soleus size, 0.67 g needed for function) suggest the relation may not be linear. |
+| gravityShape | 1 | exponent | assumption | V6, V90, V91 | Unloading = (1 - g) ^ gravityShape; 1 means loss scales linearly with missing gravity. Mouse data in V6 (0.33 g preserved soleus size, 0.67 g needed for function) suggest the relation may not be linear. In rats after 28 days at 0.4 g weight bearing (V90, V91; six measures, 1 g change subtracted), the loss was 0.25 to 1.05 (median 0.56) of the fully unloaded loss; the model uses 0.60 at 0.4 g. |
 | eimPhasePctPerMusclePct | 1 | % phase change per % muscle change | assumption | V8 | Assumed one-to-one. V8 reports a 28.4% lower 50 kHz phase in the tibialis anterior after 10-59 days in a cast, but with no paired muscle-size measurement, so the slope is not fitted. |
 
 ### Simulator assumptions (`sim.ASSUMPTIONS`)

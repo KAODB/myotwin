@@ -15,7 +15,8 @@ const scripts = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map((m) 
 test('index.html loads every data/*.js before js/sim.js', () => {
   const sim = scripts.indexOf('js/sim.js');
   assert.ok(sim >= 0, 'js/sim.js is not loaded');
-  const files = fs.readdirSync(path.join(root, 'data')).filter((f) => f.endsWith('.js'));
+  // osdr-pwb.js (gravity-term check) is not read by sim.js; the page loads it in step 2 of that change.
+  const files = fs.readdirSync(path.join(root, 'data')).filter((f) => f.endsWith('.js') && f !== 'osdr-pwb.js');
   assert.equal(files.length, 4);
   for (const f of files) {
     const i = scripts.indexOf('data/' + f);
