@@ -445,3 +445,19 @@ body.mode-eldercare .mk { stroke: #fff; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
+
+/* ---- measured radiation data (data/*.js): source line, tags, flux chart, data panel ---- */
+.card-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.brief { grid-template-areas: "head head" "image cards" "image radsrc"; }
+.rad-source { grid-area: radsrc; font-size: 0.9em; display: grid; gap: 4px; }
+.rad-source p { margin: 0; }
+.rad-source[hidden] { display: none; }
+.flux-fig { margin: 16px 0 0; }
+.chart-flux { height: 200px; }
+.flux-shade { fill: var(--accent); opacity: 0.3; }
+.measured-list { padding-left: 1.2em; display: grid; gap: 10px; }
+.measured-list a { overflow-wrap: anywhere; }
+.measured > p { margin-top: 12px; }
+@media (max-width: 760px) {
+  .brief { grid-template-areas: "head" "cards" "radsrc" "image"; }
+}

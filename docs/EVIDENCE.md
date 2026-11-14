@@ -404,13 +404,6 @@ another citation without opening the original; **fitted** means estimated from e
 - Quote: "Habitat designers should strive to surround astronauts with 20 g/cm2 of hydrogen rich shielding for GCR protection ... Adding more than 20 g/cm2 is not helpful, unless you are adding meters of material."
 - Values: `shieldingGPerCm2` = 20
 
-**V12**. Lunar surface (Chang'E-4 LND): absorbed dose rate 13.2 +/- 1 uGy/h in silicon; dose equivalent 1369 uSv/day.
-
-- Status: verified (full-text)
-- Source: Zhang S et al. Sci Adv 2020;6:eaaz1334. PMCID PMC7518862. <https://doi.org/10.1126/sciadv.aaz1334>
-- Quote: "We measured an average total absorbed dose rate in silicon of 13.2 +/- 1 uGy/hour and a neutral particle dose rate of 3.1 +/- 0.5 uGy/hour. ... LND measured an average dose equivalent of 1369 uSv/day on the surface of the Moon."
-- Values: `doseRateUGyPerH` = 13.2; `doseRateSd` = 1; `neutralUGyPerH` = 3.1; `doseEquivalentUSvPerDay` = 1369; `chargedDoseEquivalentUSvPerH` = 57.1
-
 **V15**. Mars surface (MSL/RAD): average GCR dose equivalent rate 0.67 mSv/day, August 2012 to June 2013.
 
 - Status: verified (press-release)
@@ -424,6 +417,34 @@ another citation without opening the original; **fitted** means estimated from e
 - Source: NASA Planetary Data System, MSL-M-RAD-3-RDR-V1.0, sol 90 (2012-311), observation 00, fields DOSIMETRY_TOTAL_DOSE_B and _E. <https://pds-ppi.igpp.ucla.edu/data/MSL-M-RAD-3-RDR-V1.0/>
 - Quote: none recorded
 - Values: `doseRateSiUGyPerH` = 8.6; `doseRateTissueUGyPerH` = 8.38; `sol` = 90
+
+**V60**. Mars surface (Curiosity RAD, detector B, dose in silicon), sols 13-112 (2012-08-18 to 2012-11-28), 94 sols with data: the per-sol median dose rate ranges from 8.623 to 9.313 uGy/h, mean 8.97 uGy/h. Sols 29-33 and 64 have no file.
+
+- Status: verified (dataset-record)
+- Source: NASA Planetary Data System, MSL-M-RAD-3-RDR-V1.0, field DOSIMETRY_TOTAL_DOSE_B, all observations of sols 13-112; per-sol medians in data/msl-rad.js. <https://pds-ppi.igpp.ucla.edu/data/MSL-M-RAD-3-RDR-V1.0/>
+- Quote: none recorded
+- Values: `sols` = 94; `firstSol` = 13; `lastSol` = 112; `firstDate` = 2012-08-18; `lastDate` = 2012-11-28; `meanOfSolMediansUGyPerH` = 8.97; `minSolMedianUGyPerH` = 8.623; `maxSolMedianUGyPerH` = 9.313; `missingSols` = [29,30,31,32,33,64]
+
+**V61**. Moon (LRO CRaTER, scaled by the instrument team from lunar orbit to the lunar surface, water-corrected): over the sleep window 22:00-06:00 UTC, the quiet median of 60 nights (21 Apr to 19 Jun 2017) is 89.6 uGy behind detector pair D5&6 and 91.3 uGy behind D1&2. The night starting 10 Sep 2017 gave 43538.8 uGy behind D5&6 (486 times quiet) and 166218.8 uGy behind D1&2 (1821 times).
+
+- Status: verified (dataset-record)
+- Source: LRO CRaTER instrument team (University of New Hampshire, NASA LRO mission), doserates_nospe.txt and doserates_standard_2017262_31days_allevents.txt, columns D1&2 and D5&6; nightly sums in data/lro-crater.js. <https://crater-web.sr.unh.edu/data/craterProducts/doserates/doserates_nospe.txt>
+- Quote: "All dose rate units: cGy / day. All dose rates have a silicon to water correction applied and are altitude corrected to the lunar surface."
+- Values: `quietNights` = 60; `quietMedianD56UGyPerNight` = 89.6; `quietMedianD12UGyPerNight` = 91.3; `sep10D56UGyPerNight` = 43538.8; `sep10D12UGyPerNight` = 166218.8; `sep10MultipleD56` = 486; `sep10MultipleD12` = 1821
+
+**V62**. NASA CCMC DONKI records solar energetic particle event 2017-09-10T16:45:00-SEP-001 (GOES13 above 10 MeV), starting 2017-09-10 16:45 UTC, linked to flare 2017-09-10T15:35:00-FLR-001 and coronal mass ejection 2017-09-10T16:09:00-CME-001.
+
+- Status: verified (dataset-record)
+- Source: NASA CCMC DONKI, SEP records for September 2017 via api.nasa.gov; data/donki-sep-2017.js. <https://api.nasa.gov/DONKI/SEP?startDate=2017-09-01&endDate=2017-09-30>
+- Quote: none recorded
+- Values: `id` = 2017-09-10T16:45:00-SEP-001; `start` = 2017-09-10T16:45Z; `instruments` = ["GOES13: SEM/EPS >10 MeV"]; `flareId` = 2017-09-10T15:35:00-FLR-001; `cmeId` = 2017-09-10T16:09:00-CME-001
+
+**V63**. OMNI2 hourly integral proton flux above 10 MeV (from GOES) peaked at 1208.39 protons per cm2 s sr in the hour starting 2017-09-11 11:00 UTC (4-16 Sep 2017).
+
+- Status: verified (dataset-record)
+- Source: NASA GSFC SPDF OMNI2 hourly data, omni2_2017.dat, word 46; data/omni-protons.js. <https://spdf.gsfc.nasa.gov/pub/data/omni/low_res_omni/omni2_2017.dat>
+- Quote: none recorded
+- Values: `peakGt10MeVPfu` = 1208.39; `peakHour` = 2017-09-11T11:00Z
 
 **V17**. Timepix-based Radiation Environment Monitors have flown on the ISS since 16 October 2012; the direction of each particle track can be reconstructed. The Timepix-based HERA flew on Artemis I.
 
@@ -583,8 +604,13 @@ another citation without opening the original; **fitted** means estimated from e
 | scenarioSeeds | {"S1":11,"S2":23,"S3":37,"S4":41} | seed | assumption |  | Default random seed per scenario so each scenario shows its own nights; opts.seed overrides. |
 | eimNoiseSdMax | 0.2 | fraction of value | assumption |  | Largest accepted what-if EIM noise (opts.eimNoiseSdFraction); other values are ignored. |
 | movement | 0.2 | 0..1 | assumption |  | Mean movement index. |
-| sleepHoursPerNight | 8 | h | assumption |  | Hours of dose accumulation per sleep period. |
-| shieldingFactor | 1 | fraction | assumption |  | Default multiplier on dose and tracks for habitat shielding at the sleep station (1 = as measured by the surface instrument). |
+| sleepHoursPerNight | 8 | h | assumption |  | Hours of dose accumulation per sleep period. On Mars nights the replayed sol median dose rate is multiplied by it. |
+| shieldingFactor | 1 | fraction | assumption |  | Default multiplier on dose and tracks for habitat shielding at the sleep station (1 = as measured by the instrument). |
+| sleepWindowUtc | 22:00-06:00 | UTC | assumption | V61 | Fixed sleep window used to sum the hourly LRO CRaTER dose rates of a Moon night (eight hourly values; nights with fewer are dropped, none were in the two windows used). A real crew schedule would differ. |
+| craterPair | D5&6 | detector pair | assumption | V61 | LRO CRaTER pair behind both tissue-equivalent plastic blocks (about 81 mm, from the instrument paper), used as the stand-in for someone inside a habitat. It is not a habitat measurement; D1&2, behind the thinnest shielding, is kept in the data file for comparison. |
+| moonNightMapping | {"S1":"2017-04-21","S3":"2017-08-21"} | first replayed night (UTC date) | assumption | V61 | Mission night k replays the CRaTER night starting k days after this date: S1 the quiet window 2017-04-21 to 2017-06-19, S3 the window that contains the September 2017 events, so that mission night 20 is the night starting 2017-09-10. The choice of windows is ours. |
+| marsNightMapping | sols 13-108 | Curiosity RAD sols | assumption | V60 | Mars night k replays the k-th of the 94 sols with data between sol 13 and sol 112 (sols 29-33 and 64 have no file and are skipped, not filled), using the median of detector B over that sol (dose in silicon). Sol length (24 h 40 min) is ignored. |
+| speRule | 16 | h before the sleep window opens | assumption | V62 | A night is flagged as a solar particle event when a DONKI SEP record from a GOES instrument (near Earth, in geostationary orbit) starts between 16 h before the sleep window opens and the moment it closes (start inclusive, end exclusive). Records from STEREO A (far from the Earth-Moon system), from SOHO (at the Sun-Earth L1 point) and from a model are left out. Only S3 is checked; DONKI records were retrieved for September 2017 only, so nights whose look-up span leaves that month carry events = null (not checked), and S1 and S2 nights are never flagged. |
 | hotSectorIndex | 2 | sector | assumption |  | Azimuth sector facing a thinner-shielded side. |
 | hotSectorExcess | 0.3 | fraction | assumption |  | Extra particle count in the hot sector versus the other sectors. |
 | dirCountsPerNight | 100 | counts | assumption |  | Total counts in the 8-sector direction histogram (a fixed sample, not scaled with dose). |
@@ -606,7 +632,6 @@ another citation without opening the original; **fitted** means estimated from e
 | rrSd | 0.5 | breaths/min | assumption |  | Night-to-night SD of the respiratory-rate median. |
 | hrSd | 2 | beats/min | assumption |  | Night-to-night SD of the heart-rate median. |
 | movementSd | 0.05 | 0..1 | assumption |  | Night-to-night SD of the movement index. |
-| doseSdFraction | 0.05 | fraction of value | assumption |  | Night-to-night SD of the nightly dose. |
 | dirCounts | Poisson | counts | assumption |  | Sector counts with Poisson counting noise (normal approximation). |
 | clamps | {"sleep_h":[2,11],"efficiency":[0.5,0.99],"rr_bpm":[8,30],"hr_bpm":[35,130],"movement":[0,1]} | per field | assumption |  | Radar values are clamped to these plausible ranges. |
 

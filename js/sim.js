@@ -1,9 +1,11 @@
 /*
  * MyoTwin night-data simulator. Generates seeded, deterministic NightRecords
  * (see docs/CONTRACT.md) for four scenarios: 14 baseline nights on Earth, then
- * surface nights. Muscle change comes from js/model.js; every other level is
- * either an evidence value (by id) or a declared assumption in ASSUMPTIONS or
- * NOISE below. All output is simulated data.
+ * surface nights. Muscle change comes from js/model.js. The nightly radiation
+ * dose on Moon and Mars nights replays real measurements night by night (LRO
+ * CRaTER, Curiosity RAD, with DONKI event records; see data/README.md). Every
+ * other level is either an evidence value (by id) or a declared assumption in
+ * ASSUMPTIONS or NOISE below, and is simulated.
  *
  * Written with an SI tool (Claude) and reviewed by the team.
  */
@@ -11,8 +13,18 @@
   'use strict';
   var ns = (root.MyoTwin = root.MyoTwin || {});
   var inNode = typeof module === 'object' && module.exports;
-  var evidence = inNode ? require('./evidence.js') : ns.evidence;
   var model = inNode ? require('./model.js') : ns.model;
+
+  // Real-data modules (data/*.js). In the browser they must be loaded by script tags before this file.
+  function need(name, file) {
+    var d;
+    try { d = inNode ? require('../data/' + file) : (ns.data || {})[name]; } catch (err) { d = null; }
+    if (!d || !d.columns) throw new Error('MyoTwin sim: real-data module data/' + file + ' is missing; load it before js/sim.js.');
+    return d;
+  }
+  var MSL = need('mslRad', 'msl-rad.js');
+  var CRATER = need('lroCrater', 'lro-crater.js');
+  var DONKI = need('donkiSep2017', 'donki-sep-2017.js');
 
   function a(value, unit, note, sourceIds) {
     return { value: value, unit: unit, status: 'assumption', note: note, sourceIds: sourceIds || [] };
@@ -37,8 +49,13 @@
     scenarioSeeds: a({ S1: 11, S2: 23, S3: 37, S4: 41 }, 'seed', 'Default random seed per scenario so each scenario shows its own nights; opts.seed overrides.'),
     eimNoiseSdMax: a(0.2, 'fraction of value', 'Largest accepted what-if EIM noise (opts.eimNoiseSdFraction); other values are ignored.'),
     movement: a(0.2, '0..1', 'Mean movement index.'),
-    sleepHoursPerNight: a(8, 'h', 'Hours of dose accumulation per sleep period.'),
-    shieldingFactor: a(1, 'fraction', 'Default multiplier on dose and tracks for habitat shielding at the sleep station (1 = as measured by the surface instrument).'),
+    sleepHoursPerNight: a(8, 'h', 'Hours of dose accumulation per sleep period. On Mars nights the replayed sol median dose rate is multiplied by it.'),
+    shieldingFactor: a(1, 'fraction', 'Default multiplier on dose and tracks for habitat shielding at the sleep station (1 = as measured by the instrument).'),
+    sleepWindowUtc: a('22:00-06:00', 'UTC', 'Fixed sleep window used to sum the hourly LRO CRaTER dose rates of a Moon night (eight hourly values; nights with fewer are dropped, none were in the two windows used). A real crew schedule would differ.', ['V61']),
+    craterPair: a('D5&6', 'detector pair', 'LRO CRaTER pair behind both tissue-equivalent plastic blocks (about 81 mm, from the instrument paper), used as the stand-in for someone inside a habitat. It is not a habitat measurement; D1&2, behind the thinnest shielding, is kept in the data file for comparison.', ['V61']),
+    moonNightMapping: a({ S1: '2017-04-21', S3: '2017-08-21' }, 'first replayed night (UTC date)', 'Mission night k replays the CRaTER night starting k days after this date: S1 the quiet window 2017-04-21 to 2017-06-19, S3 the window that contains the September 2017 events, so that mission night 20 is the night starting 2017-09-10. The choice of windows is ours.', ['V61']),
+    marsNightMapping: a('sols 13-108', 'Curiosity RAD sols', 'Mars night k replays the k-th of the 94 sols with data between sol 13 and sol 112 (sols 29-33 and 64 have no file and are skipped, not filled), using the median of detector B over that sol (dose in silicon). Sol length (24 h 40 min) is ignored.', ['V60']),
+    speRule: a(16, 'h before the sleep window opens', 'A night is flagged as a solar particle event when a DONKI SEP record from a GOES instrument (near Earth, in geostationary orbit) starts between 16 h before the sleep window opens and the moment it closes (start inclusive, end exclusive). Records from STEREO A (far from the Earth-Moon system), from SOHO (at the Sun-Earth L1 point) and from a model are left out. Only S3 is checked; DONKI records were retrieved for September 2017 only, so nights whose look-up span leaves that month carry events = null (not checked), and S1 and S2 nights are never flagged.', ['V62']),
     hotSectorIndex: a(2, 'sector', 'Azimuth sector facing a thinner-shielded side.'),
     hotSectorExcess: a(0.3, 'fraction', 'Extra particle count in the hot sector versus the other sectors.'),
     dirCountsPerNight: a(100, 'counts', 'Total counts in the 8-sector direction histogram (a fixed sample, not scaled with dose).'),
@@ -58,7 +75,6 @@
     rrSd: { value: 0.5, unit: 'breaths/min', status: 'assumption', note: 'Night-to-night SD of the respiratory-rate median.' },
     hrSd: { value: 2, unit: 'beats/min', status: 'assumption', note: 'Night-to-night SD of the heart-rate median.' },
     movementSd: { value: 0.05, unit: '0..1', status: 'assumption', note: 'Night-to-night SD of the movement index.' },
-    doseSdFraction: { value: 0.05, unit: 'fraction of value', status: 'assumption', note: 'Night-to-night SD of the nightly dose.' },
     dirCounts: { value: 'Poisson', unit: 'counts', status: 'assumption', note: 'Sector counts with Poisson counting noise (normal approximation).' }
   };
 
@@ -74,7 +90,8 @@
     S1: {
       id: 'S1', title: 'Moon base, 60 nights', env: 'moon', baselineNights: 14, transitDays: 0, sleepMeanH: 7.5,
       person: ASSUMPTIONS.personS1.value, seed: ASSUMPTIONS.scenarioSeeds.value.S1,
-      summary: 'Sixty nights at a lunar base with full exercise; a week of poor sleep and a misplaced EIM liner. All data are simulated.',
+      summary: 'Sixty nights at a lunar base with full exercise; a week of poor sleep and a misplaced EIM liner. Radiation replays LRO CRaTER, 21 Apr to 19 Jun 2017; the rest is simulated.',
+      rad: { dataset: 'lro-crater', window: 'quiet' },
       phases: [{ days: 60, g: G.moon, exerciseAdherence: 1 }],
       planPhases: [{ days: 60, g: G.moon, exerciseAdherence: 1 }],
       events: [
@@ -85,7 +102,8 @@
     S2: {
       id: 'S2', title: 'Mars surface, first 90 nights', env: 'mars', baselineNights: 14, transitDays: ASSUMPTIONS.s2TransitDays.value, sleepMeanH: 7.4,
       person: ASSUMPTIONS.personS2.value, seed: ASSUMPTIONS.scenarioSeeds.value.S2,
-      summary: 'The first 90 nights on Mars after a 180-day transit, with a three-week exercise lapse and a short illness. All data are simulated.',
+      summary: 'The first 90 nights on Mars after a 180-day transit, with a three-week exercise lapse and a short illness. Radiation replays Curiosity RAD sols 13-108 (2012); the rest is simulated.',
+      rad: { dataset: 'msl-rad' },
       phases: [
         { days: ASSUMPTIONS.s2TransitDays.value, g: G.microgravity, exerciseAdherence: ASSUMPTIONS.s2TransitAdherence.value, transit: true },
         { days: 22, g: G.mars, exerciseAdherence: 1 },
@@ -104,12 +122,13 @@
     S3: {
       id: 'S3', title: 'Moon base, solar particle event', env: 'moon', baselineNights: 14, transitDays: 0, sleepMeanH: 7.5,
       person: ASSUMPTIONS.personS3.value, seed: ASSUMPTIONS.scenarioSeeds.value.S3,
-      summary: 'Forty-five nights at a lunar base with a solar particle event on night 20; the scenario places thinner shielding on one side. All data are simulated.',
+      summary: 'Forty-five nights at a lunar base. Radiation replays LRO CRaTER, 21 Aug to 4 Oct 2017, with the solar particle events of September; night 20 is 10 Sep. The rest is simulated.',
+      rad: { dataset: 'lro-crater', window: 'event', checkSpe: true },
       phases: [{ days: 45, g: G.moon, exerciseAdherence: 1 }],
       planPhases: [{ days: 45, g: G.moon, exerciseAdherence: 1 }],
       events: [
-        { from: 20, to: 20, label: 'Solar particle event', doseFactor: 40, spe: true },
-        { from: 21, to: 21, label: 'Event tail', doseFactor: 4 }
+        { from: 14, to: 17, label: 'Measured: solar particle events of 4-7 Sep 2017 (LRO CRaTER)' },
+        { from: 20, to: 24, label: 'Measured: solar particle event of 10 Sep 2017 and its tail (LRO CRaTER)' }
       ]
     },
     S4: {
@@ -144,6 +163,40 @@
     return d.toISOString().slice(0, 10);
   }
 
+  function median(xs) {
+    var s = xs.slice().sort(function (x, y) { return x - y; }), m = s.length >> 1;
+    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+  }
+
+  // Measured, unshielded sleep-period dose and provenance for each surface night of a scenario.
+  function replay(sc, nights) {
+    var H = 3600000, out = [];
+    for (var k = 0; k < nights; k++) {
+      if (sc.rad.dataset === 'msl-rad') {
+        var m = MSL.rows[k];
+        if (!m) throw new Error('MyoTwin sim: no Curiosity RAD sol for night ' + k);
+        out.push({ dose: m[2] * ASSUMPTIONS.sleepHoursPerNight.value, measured: { dataset: 'msl-rad', sol: m[0], date: m[1] } });
+        continue;
+      }
+      var c = CRATER[sc.rad.window][k];
+      if (!c) throw new Error('MyoTwin sim: no LRO CRaTER night for night ' + k);
+      var n = { dose: c[1], measured: { dataset: 'lro-crater', date: c[0], pair: 'D5&6' } };
+      if (sc.rad.checkSpe) {
+        var open = Date.parse(c[0] + 'T22:00:00Z');
+        var lo = open - ASSUMPTIONS.speRule.value * H, hi = open + 8 * H;
+        var ev = DONKI.rows.filter(function (e) {
+          var t = Date.parse(e[1]);
+          return t >= lo && t < hi && e[2].some(function (i) { return /^GOES/.test(i); });
+        })
+          .map(function (e) { return { id: e[0], start: e[1] }; });
+        n.spe = ev.length > 0;
+        n.events = lo >= Date.parse(DONKI.coverage[0]) && hi <= Date.parse(DONKI.coverage[1]) ? ev : null;
+      }
+      out.push(n);
+    }
+    return out;
+  }
+
   function generate(scenarioId, opts) {
     opts = opts || {};
     if (!Object.prototype.hasOwnProperty.call(SCENARIOS, scenarioId)) throw new Error('Unknown scenario: ' + scenarioId);
@@ -173,8 +226,8 @@
       for (var i = 0; i < p.days; i++) dayAdherence.push(p.exerciseAdherence);
     });
 
-    var doseRate = sc.env === 'moon' ? evidence.value('V12', 'doseRateUGyPerH') :
-      sc.env === 'mars' ? evidence.value('V16', 'doseRateSiUGyPerH') : null;
+    var measured = sc.rad ? replay(sc, dayAdherence.length) : null;
+    var usualDose = measured ? median(measured.map(function (n) { return n.dose; })) : null;
     var cone = 2 * Math.PI * (1 - Math.cos(A.coneHalfAngleDeg.value * Math.PI / 180));
     var tracksBase = A.verticalIntensity.value * cone * A.sleepHoursPerNight.value * 3600 * shield;
     var sectorWeight = [];
@@ -199,7 +252,8 @@
       var u = {
         phase: normal(), contact: rand(), scans: rand(),
         sleep: normal(), eff: normal(), rr: normal(), hr: normal(), mov: normal(),
-        dose: normal(), dir: sectorWeight.map(normal), exercise: rand()
+        dose: normal(), // no longer used (the dose is measured); still drawn so the other streams stay as before
+        dir: sectorWeight.map(normal), exercise: rand()
       };
 
       var phase = model.eimPhase(sc.person.baselinePhaseDeg, change) *
@@ -220,16 +274,19 @@
         movement: round(clamp(A.movement.value + N.movementSd.value * u.mov, 'movement'), 3)
       };
 
-      var factor = ev.doseFactor || 1;
-      var hasRad = surf && doseRate !== null;
+      var night = surf && measured ? measured[md] : null;
+      var hasRad = !!night;
+      var factor = hasRad ? night.dose / usualDose : 1;
       var rad = hasRad ? {
-        dose_uGy: round(Math.max(0, doseRate * A.sleepHoursPerNight.value * shield * factor * (1 + N.doseSdFraction.value * u.dose)), 1),
+        dose_uGy: round(night.dose * shield, 1),
         dir: sectorWeight.map(function (w, i) {
           var mean = A.dirCountsPerNight.value * w / weightSum;
           return Math.max(0, Math.round(mean + Math.sqrt(mean) * u.dir[i]));
         }),
-        spe: !!ev.spe
+        spe: !!night.spe,
+        measured: night.measured
       } : null;
+      if (hasRad && night.events !== undefined) rad.events = night.events;
 
       expected.push(surf ? round(planMuscle[planTransitDays + md + 1], 3) : 0);
       records.push({

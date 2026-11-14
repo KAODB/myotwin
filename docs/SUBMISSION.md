@@ -111,7 +111,7 @@ Other references. "Computes" means the code uses the number; "cites" means the t
 - Rutkove SB et al., Clin Neurophysiol 2006 (V10). EIM test-retest variability; computes (muscle thresholds). https://doi.org/10.1016/j.clinph.2005.12.029
 - Barger LK et al., Lancet Neurol 2014 (V11). ISS sleep 6.09 h; computes (the red sleep line, an assumption). https://doi.org/10.1016/S1474-4422(14)70122-X
 - Barger LK et al., Lancet Neurol 2014, full text (V18). NASA regulations mandate 8.5 hours of protected time for sleep each night; cites. https://pmc.ncbi.nlm.nih.gov/articles/PMC4188436/
-- Zhang S et al., Sci Adv 2020 (V12). Lunar surface dose, 13.2 uGy/h in silicon, from the LND instrument on the Chang'E-4 lander; computes (simulated lunar dose). This is not NASA or partner data. https://doi.org/10.1126/sciadv.aaz1334
+- LRO CRaTER dose rates (V61), instrument team at the University of New Hampshire, NASA LRO mission; computes (replayed lunar dose). https://crater-web.sr.unh.edu/data/craterProducts/doserates/doserates_nospe.txt
 - Watson NF et al., Sleep 2015 (V25). Adults aged 18 to 60 should sleep 7 or more hours; computes (amber sleep threshold; used for the older adult as an assumption). https://pmc.ncbi.nlm.nih.gov/articles/PMC4434546/
 - Liebetruth M et al., Sensors 2024 (V23). Systematic review of radar breathing and heart rate monitoring; cites. https://pmc.ncbi.nlm.nih.gov/articles/PMC10857015/
 - Scharfetter H et al. 1997; Zhu F et al. 1998 (V28). Leg bioimpedance drifts after lying down; anchors the assumed fluid offset; cites. https://pubmed.ncbi.nlm.nih.gov/9688726/

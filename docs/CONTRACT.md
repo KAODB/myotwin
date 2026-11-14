@@ -90,9 +90,15 @@ One record per night. Pre-departure baseline nights have a negative `missionDay`
     movement: 0.21                // movement index 0..1
   },
   rad: {                          // null when no data
-    dose_uGy: 104.5,              // absorbed dose in silicon over the sleep period
-    dir: [n0, n1, ..., n7],       // particle counts in 8 azimuth sectors, sector 0 = toward the head
-    spe: false                    // solar particle event flag from the detector
+    dose_uGy: 104.5,              // dose over the sleep period, replayed from a measurement x shielding factor
+                                  // (Mars: Curiosity RAD, silicon; Moon: LRO CRaTER, water-corrected)
+    dir: [n0, n1, ..., n7],       // particle counts in 8 azimuth sectors, sector 0 = toward the head (simulated)
+    spe: false,                   // solar particle event flag (S3: from DONKI records of GOES instruments, see sim.ASSUMPTIONS.speRule)
+    measured: {                   // provenance of dose_uGy
+      dataset: 'msl-rad',         // 'msl-rad' (data/msl-rad.js) or 'lro-crater' (data/lro-crater.js)
+      sol: 61, date: '2012-10-07' // msl-rad: sol and its UTC date; lro-crater: { date, pair: 'D5&6' }, date = night start (UTC)
+    },
+    events: [{ id, start }]       // S3 only: GOES DONKI SEP records matching the night, by start time; null when DONKI was not checked for that night
   },
   log: { exercise_done: true, note: '' },   // countermeasure log for the day before
   _truth: {                       // simulator only; the engine must never read this
@@ -159,7 +165,7 @@ On a grey card `extra` holds whatever is known and null for the rest.
 
 ### sim (`js/sim.js`)
 
-- `sim.SCENARIOS` : `{ S1, S2, S3, S4 }`, each `{ id, title, env, summary, baselineNights, phases, events }`.
+- `sim.SCENARIOS` : `{ S1, S2, S3, S4 }`, each `{ id, title, env, summary, baselineNights, phases, events }`, plus `rad` (which real dataset and window the radiation replays; absent for S4).
 - `sim.generate(scenarioId, opts) -> { scenario, records, plan }`
   `opts = { seed = 1, exerciseAdherence?, gravityShape?, sleepOpportunityH?, shieldingFactor? }`.
   Deterministic for a given seed. `records` is a `NightRecord[]` sorted by night.
@@ -225,6 +231,20 @@ shared and captured:
 - Any value in the address that is unknown, rejected or changed to fit (for example a day outside
   the scenario) falls back as before and shows the notice "This link could not be opened; showing
   the default view." An unknown evidence id (`ev`) shows "That source is not in the evidence list."
+
+Measured radiation data on the page (space scenarios only; none of it appears when `s=S4`):
+
+- `index.html` loads `data/msl-rad.js`, `data/lro-crater.js`, `data/donki-sep-2017.js` and
+  `data/omni-protons.js` before `js/sim.js` (checked by `test/page.test.js`).
+- Card tags: the radiation card carries "Measured, replayed" (on nights with `rad`), the other
+  three cards "Simulated". Under the cards, `#rad-source` says where tonight's dose comes from,
+  built from `rad.measured` (V60 for Curiosity RAD, V61 for LRO CRaTER), and, on a night with
+  `rad.events`, the first DONKI record (linked to V62 only when it is that record, otherwise its id).
+- Trend panel, radiation card, solar-event scenario (S3): `#flux-fig` draws the OMNI2 hourly
+  proton flux above 10 MeV, 4 to 16 September 2017, on a log10 axis (`charts.logSeries`), with the
+  selected night's 22:00 to 06:00 UTC window shaded; caption links V63.
+- `#measured`, just above the evidence drawer: one row per data module (`name`, what it drives,
+  `source`, link to `url`, `retrieved`, `terms`) and the line "Everything else on this page is simulated."
 
 ## Status rules (interim, unvalidated; a flight surgeon decides)
 

@@ -107,6 +107,7 @@
         <span class="card-delta">Change vs baseline: —</span>
         <span class="card-extra"></span>
         <span class="card-reason">Calf impedance phase, 7-night median.</span>
+        <span class="card-tags"><span class="tag">Simulated</span></span>
       </button>
       <button type="button" class="card st-grey" data-card="sleep" aria-pressed="false">
         <span class="card-top"><span class="card-name">Sleep</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span>
@@ -114,6 +115,7 @@
         <span class="card-delta">Change vs baseline: —</span>
         <span class="card-extra"></span>
         <span class="card-reason">Hours asleep, 7-night mean, from radar.</span>
+        <span class="card-tags"><span class="tag">Simulated</span></span>
       </button>
       <button type="button" class="card st-grey" data-card="cardio" aria-pressed="false">
         <span class="card-top"><span class="card-name">Heart and breathing</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span>
@@ -121,14 +123,21 @@
         <span class="card-delta">Change vs baseline: —</span>
         <span class="card-extra"></span>
         <span class="card-reason">Night heart and breathing rate, 3-night medians.</span>
+        <span class="card-tags"><span class="tag">Simulated</span></span>
       </button>
       <button type="button" class="card st-grey" data-card="radiation" aria-pressed="false">
         <span class="card-top"><span class="card-name">Radiation</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span>
         <span class="card-value"><span class="num">—</span> <span class="unit">µGy</span></span>
         <span class="card-delta">Change vs recent nights: —</span>
         <span class="card-extra"></span>
-        <span class="card-reason">Dose over the sleep period, in silicon.</span>
+        <span class="card-reason">Dose over the sleep period.</span>
+        <span class="card-tags" id="rad-tag" hidden><span class="tag">Measured, replayed</span></span>
       </button>
+    </div>
+    <!-- Where tonight's radiation number comes from; outside the card button so the evidence links can be links. -->
+    <div class="rad-source" id="rad-source" hidden>
+      <p id="rad-measured"></p>
+      <p id="rad-donki" hidden></p>
     </div>
   </section>
 
@@ -158,6 +167,10 @@
         <svg id="trend-chart" class="chart" role="img" aria-label="Trend chart, not yet drawn"></svg>
         <ul class="legend" id="trend-legend" aria-label="Chart legend"></ul>
         <p id="trend-note" class="trend-note muted"></p>
+        <figure id="flux-fig" class="flux-fig" hidden>
+          <svg id="flux-chart" class="chart chart-flux" role="img" aria-label="Proton flux chart, not yet drawn"></svg>
+          <figcaption class="caption">Hourly flux of protons above 10 MeV near Earth, 4 to 16 September 2017, from NASA's OMNI2 data (measured by GOES at geostationary orbit; flux, not dose). Logarithmic scale; the shaded band is the selected night's 22:00 to 06:00 UTC sleep window. <a id="flux-ev" class="ev-link" href="#evidence">V63</a></figcaption>
+        </figure>
         <p id="projection" class="projection" hidden></p>
         <figure id="rose-fig" class="rose-fig" hidden>
           <svg id="rose" class="rose" role="img" aria-label="Direction rose, not yet drawn"></svg>
@@ -268,10 +281,17 @@
         <li class="space-only"><p><strong>Not accounted for:</strong> Radar vital signs in space.</p><p><strong>Next step:</strong> Test in a mock sleep station and in an analogue.</p></li>
         <li><p><strong>Not accounted for:</strong> Detection accuracy. The simulated nights and the plan come from the same model, so this page shows the workflow, not how well a real decline would be caught.</p><p><strong>Next step:</strong> Test the rules on recorded bed-rest data.</p></li>
         <li class="space-only"><p><strong>Not accounted for:</strong> The transit. In weightlessness the sleeper does not rest on the panel, so MyoTwin starts at arrival.</p><p><strong>Next step:</strong> Pair it with a worn sensor for the transit.</p></li>
-        <li class="space-only"><p><strong>Not accounted for:</strong> Effective dose. The radiation card shows absorbed dose in silicon.</p><p><strong>Next step:</strong> Add the conversion with a validated transport model.</p></li>
+        <li class="space-only"><p><strong>Not accounted for:</strong> Effective dose. The radiation card shows absorbed dose: in silicon on Mars, water-corrected by the instrument team on the Moon.</p><p><strong>Next step:</strong> Add the conversion with a validated transport model.</p></li>
       </ol>
-      <p class="limits-close">All data here are simulated, the sensor panel has not been built, and the status rules are interim and unvalidated.</p>
+      <p class="limits-close">All data here are simulated<span class="space-only"> except the replayed radiation measurements</span>, the sensor panel has not been built, and the status rules are interim and unvalidated.</p>
     </article>
+  </section>
+
+  <!-- 7b. Real measurements replayed on this page (space scenarios only) -->
+  <section id="measured" class="panel measured space-only" aria-labelledby="measured-title">
+    <h2 id="measured-title" class="section-title">Measured data used on this page</h2>
+    <ul id="measured-list" class="measured-list"><li>Listed when the page loads.</li></ul>
+    <p>Everything else on this page is simulated.</p>
   </section>
 
   <!-- 8. Evidence drawer -->
@@ -289,7 +309,7 @@
 
 <!-- 9. Footer -->
 <footer class="footer">
-  <p><strong>Not a medical device.</strong> MyoTwin is concept software built for the 2026 NASA Space Apps Challenge. It does not diagnose or treat. All data shown are simulated.</p>
+  <p><strong>Not a medical device.</strong> MyoTwin is concept software built for the 2026 NASA Space Apps Challenge. It does not diagnose or treat. All data shown are simulated<span class="space-only">, except the replayed radiation measurements listed above the evidence</span>.</p>
   <p>Code, simulated data and text were produced with an SI tool (Claude) and reviewed by the team. The concept and all clinical judgement are the team's.</p>
   <p class="footer-links"><a href="https://github.com/KAODB/myotwin">Source code</a> <span aria-hidden="true">·</span> <a href="demo/slides/MyoTwin-demo.pdf">Demo slides (PDF)</a> <span aria-hidden="true">·</span> Licence: <a href="LICENSE">Apache-2.0</a></p>
   <p>No network requests; runs entirely in this page.</p>
@@ -297,6 +317,10 @@
 
 <script src="js/evidence.js"></script>
 <script src="js/model.js"></script>
+<script src="data/msl-rad.js"></script>
+<script src="data/lro-crater.js"></script>
+<script src="data/donki-sep-2017.js"></script>
+<script src="data/omni-protons.js"></script>
 <script src="js/sim.js"></script>
 <script src="js/rules.js"></script>
 <script src="js/engine.js"></script>

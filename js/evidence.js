@@ -551,14 +551,6 @@
 
     // ---- Radiation environment ------------------------------------------------
     {
-      id: 'V12', topic: 'radiation', status: 'verified', level: 'full-text',
-      claim: 'Lunar surface (Chang\'E-4 LND): absorbed dose rate 13.2 +/- 1 uGy/h in silicon; dose equivalent 1369 uSv/day.',
-      values: { doseRateUGyPerH: 13.2, doseRateSd: 1, neutralUGyPerH: 3.1, doseEquivalentUSvPerDay: 1369, chargedDoseEquivalentUSvPerH: 57.1 },
-      quote: 'We measured an average total absorbed dose rate in silicon of 13.2 +/- 1 uGy/hour and a neutral particle dose rate of 3.1 +/- 0.5 uGy/hour. ... LND measured an average dose equivalent of 1369 uSv/day on the surface of the Moon.',
-      source: 'Zhang S et al. Sci Adv 2020;6:eaaz1334. PMCID PMC7518862',
-      url: 'https://doi.org/10.1126/sciadv.aaz1334'
-    },
-    {
       id: 'V15', topic: 'radiation', status: 'verified', level: 'press-release',
       claim: 'Mars surface (MSL/RAD): average GCR dose equivalent rate 0.67 mSv/day, August 2012 to June 2013.',
       values: { doseEquivalentMSvPerDay: 0.67 },
@@ -573,6 +565,40 @@
       quote: null,
       source: 'NASA Planetary Data System, MSL-M-RAD-3-RDR-V1.0, sol 90 (2012-311), observation 00, fields DOSIMETRY_TOTAL_DOSE_B and _E',
       url: 'https://pds-ppi.igpp.ucla.edu/data/MSL-M-RAD-3-RDR-V1.0/'
+    },
+    // V60-V63: the real-data files in data/ that the simulator replays. Every
+    // number below is recomputed from those files in test/data.test.js.
+    {
+      id: 'V60', topic: 'radiation', status: 'verified', level: 'dataset-record',
+      claim: 'Mars surface (Curiosity RAD, detector B, dose in silicon), sols 13-112 (2012-08-18 to 2012-11-28), 94 sols with data: the per-sol median dose rate ranges from 8.623 to 9.313 uGy/h, mean 8.97 uGy/h. Sols 29-33 and 64 have no file.',
+      values: { sols: 94, firstSol: 13, lastSol: 112, firstDate: '2012-08-18', lastDate: '2012-11-28', meanOfSolMediansUGyPerH: 8.97, minSolMedianUGyPerH: 8.623, maxSolMedianUGyPerH: 9.313, missingSols: [29, 30, 31, 32, 33, 64] },
+      quote: null,
+      source: 'NASA Planetary Data System, MSL-M-RAD-3-RDR-V1.0, field DOSIMETRY_TOTAL_DOSE_B, all observations of sols 13-112; per-sol medians in data/msl-rad.js',
+      url: 'https://pds-ppi.igpp.ucla.edu/data/MSL-M-RAD-3-RDR-V1.0/'
+    },
+    {
+      id: 'V61', topic: 'radiation', status: 'verified', level: 'dataset-record',
+      claim: 'Moon (LRO CRaTER, scaled by the instrument team from lunar orbit to the lunar surface, water-corrected): over the sleep window 22:00-06:00 UTC, the quiet median of 60 nights (21 Apr to 19 Jun 2017) is 89.6 uGy behind detector pair D5&6 and 91.3 uGy behind D1&2. The night starting 10 Sep 2017 gave 43538.8 uGy behind D5&6 (486 times quiet) and 166218.8 uGy behind D1&2 (1821 times).',
+      values: { quietNights: 60, quietMedianD56UGyPerNight: 89.6, quietMedianD12UGyPerNight: 91.3, sep10D56UGyPerNight: 43538.8, sep10D12UGyPerNight: 166218.8, sep10MultipleD56: 486, sep10MultipleD12: 1821 },
+      quote: 'All dose rate units: cGy / day. All dose rates have a silicon to water correction applied and are altitude corrected to the lunar surface.',
+      source: 'LRO CRaTER instrument team (University of New Hampshire, NASA LRO mission), doserates_nospe.txt and doserates_standard_2017262_31days_allevents.txt, columns D1&2 and D5&6; nightly sums in data/lro-crater.js',
+      url: 'https://crater-web.sr.unh.edu/data/craterProducts/doserates/doserates_nospe.txt'
+    },
+    {
+      id: 'V62', topic: 'radiation', status: 'verified', level: 'dataset-record',
+      claim: 'NASA CCMC DONKI records solar energetic particle event 2017-09-10T16:45:00-SEP-001 (GOES13 above 10 MeV), starting 2017-09-10 16:45 UTC, linked to flare 2017-09-10T15:35:00-FLR-001 and coronal mass ejection 2017-09-10T16:09:00-CME-001.',
+      values: { id: '2017-09-10T16:45:00-SEP-001', start: '2017-09-10T16:45Z', instruments: ['GOES13: SEM/EPS >10 MeV'], flareId: '2017-09-10T15:35:00-FLR-001', cmeId: '2017-09-10T16:09:00-CME-001' },
+      quote: null,
+      source: 'NASA CCMC DONKI, SEP records for September 2017 via api.nasa.gov; data/donki-sep-2017.js',
+      url: 'https://api.nasa.gov/DONKI/SEP?startDate=2017-09-01&endDate=2017-09-30'
+    },
+    {
+      id: 'V63', topic: 'radiation', status: 'verified', level: 'dataset-record',
+      claim: 'OMNI2 hourly integral proton flux above 10 MeV (from GOES) peaked at 1208.39 protons per cm2 s sr in the hour starting 2017-09-11 11:00 UTC (4-16 Sep 2017).',
+      values: { peakGt10MeVPfu: 1208.39, peakHour: '2017-09-11T11:00Z' },
+      quote: null,
+      source: 'NASA GSFC SPDF OMNI2 hourly data, omni2_2017.dat, word 46; data/omni-protons.js',
+      url: 'https://spdf.gsfc.nasa.gov/pub/data/omni/low_res_omni/omni2_2017.dat'
     },
     {
       id: 'V17', topic: 'radiation', status: 'verified', level: 'full-text',
