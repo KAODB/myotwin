@@ -46,3 +46,23 @@ test('the five resources listed on the challenge page are present, verified and 
   assert.equal(evidence.value('V44', 'muscleRisk'), 'Risk of Reduced Cardiorespiratory and Musculoskeletal Fitness');
   assert.equal(evidence.value('V43', 'hazards').length, 5);
 });
+
+test('the twelve NASA pages linked from the challenge resources are present, verified and quoted', () => {
+  const items = evidence.items.filter((it) => it.topic === 'linked from the challenge resources');
+  assert.equal(items.length, 12);
+  for (const it of items) {
+    assert.equal(it.status, 'verified', it.id);
+    assert.ok(it.quote && it.quote.length > 40, it.id + ' needs a quote');
+    assert.match(it.url, /^https:\/\/www\.nasa\.gov\//, it.id + ' must be a nasa.gov page');
+  }
+  assert.equal(evidence.value('V48', 'crewOver20PctHigh'), 38);
+  assert.equal(evidence.value('V48', 'avgLossPctLow'), 10);
+  assert.equal(evidence.value('V53', 'boneLossPctPerMonthHigh'), 1.5);
+  assert.equal(evidence.value('V54', 'commDelayMinutesOneWay'), 20);
+  // The sentences shown to the user as "what NASA says" must be inside the checked quote.
+  for (const id of ['V48', 'V49', 'V50', 'V51', 'V52']) {
+    const it = evidence.get(id);
+    assert.ok(it.quote.includes(it.values.says), id + ' says');
+    assert.ok(it.quote.includes(it.values.canBeDone), id + ' canBeDone');
+  }
+});
