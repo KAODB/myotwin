@@ -24,7 +24,8 @@ voice generator was used.
 - **Simulated and measured data.** Writing the seeded simulator in `js/sim.js`
   that produces the crew member's readings, and the scripts in `tools/data/`
   that turn the NASA downloads into the small files in `data/` (the radiation
-  dose of each night is a replayed measurement, V60 and V61). There are no real
+  dose of each night is a replayed measurement, V60 and V61; the rat data that
+  check the muscle model are V90 and V91). There are no real
   measurements of any person in this repository.
 - **Text.** Drafting the README, these documents and the project page text.
 - **Demo.** Building the seven-slide deck in `demo/slides/` from screenshots of

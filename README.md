@@ -49,7 +49,9 @@ node --test "test/*.test.js"
   Mars nights replay Curiosity's RAD from NASA's Planetary Data System (V60).
   Moon nights replay LRO's CRaTER, including the solar particle events of
   September 2017 (V61). NASA's DONKI records mark the nights with an event
-  (V62), and a chart shows NASA's OMNI proton flux (V63). The files are in
+  (V62), and a chart shows NASA's OMNI proton flux (V63). The muscle model's
+  partial-gravity assumption is checked, in its own panel, against rats at 40%
+  weight bearing from NASA's Open Science Data Repository (V90, V91). The files are in
   `data/`, each with its source, units, processing and terms, and the scripts
   in `tools/data/` rebuild them from the downloads. See
   [data/README.md](data/README.md). Replaying a 2012 or 2017 night for a
