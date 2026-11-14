@@ -165,6 +165,170 @@
       url: 'https://www.nasa.gov/reference/artemis-ii-standard-measures/'
     },
 
+    // ---- NASA risk ratings, requirements and research records -----------------
+    // Human Research Roadmap rating tables (read on 2026-11-14), NASA-STD-3001
+    // requirements, OCHMO technical briefs, evidence reports and Task Book records.
+    {
+      id: 'V70', topic: 'nasa ratings and requirements', status: 'verified', level: 'official-database',
+      claim: "NASA's Human Research Roadmap rates the risk \"Muscle and aerobic fitness\" 5x3 for operations on a long lunar-surface mission (Requires Mitigation) and 5x4 on a Mars planetary mission (Requires Mitigation). Likelihood by consequence; read from the rating table.",
+      values: { card: "muscle", risk: "Risk of Mission Performance Decrements and Adverse Health Outcomes Resulting from Reduced Cardiorespiratory and Musculoskeletal Fitness", lunarSurfaceLongOps: "5x3", lunarSurfaceLongOpsDisposition: "Requires Mitigation", lunarSurfaceLongHealth: "5x2", lunarSurfaceLongHealthDisposition: "Requires Characterization", marsPlanetaryOps: "5x4", marsPlanetaryOpsDisposition: "Requires Mitigation", marsPlanetaryHealth: "5x3", marsPlanetaryHealthDisposition: "Requires Mitigation", lastPublished: "05/13/25", gapId: "MA-201", gapText: "Determine the required exercise countermeasure or countermeasures (i.e., modality or modalities, prescription, monitoring) to protect mission-specific task performance and crew health outcomes.", gap2Id: "MA-101", gap2Text: "Characterize the effects of the spaceflight environment, including reduced gravity (i.e., weightlessness, partial gravity), countermeasures, and individual variability, on physiological and functional measures of muscular and cardio-respiratory fitness and performance." },
+      quote: "The HSRB's LxC and risk dispositions for the two standalone risks are identical and are represented above for reference (approved by HSRB in 4/2024). ... Determine the required exercise countermeasure or countermeasures (i.e., modality or modalities, prescription, monitoring) to protect mission-specific task performance and crew health outcomes. ... Characterize the effects of the spaceflight environment, including reduced gravity (i.e., weightlessness, partial gravity), countermeasures, and individual variability, on physiological and functional measures of muscular and cardio-respiratory fitness and performance.",
+      source: "NASA Human Research Roadmap, Risk of Mission Performance Decrements and Adverse Health Outcomes Resulting from Reduced Cardiorespiratory and Musculoskeletal Fitness (risk page 180)",
+      url: 'https://humanresearchroadmap.nasa.gov/Risks/?i=180'
+    },
+    {
+      id: 'V71', topic: 'nasa ratings and requirements', status: 'verified', level: 'official-database',
+      claim: "NASA's Human Research Roadmap rates the risk \"Sleep loss, circadian desynchronization and work overload\" 5x2 for operations on a long lunar-surface mission (Requires Characterization) and 5x2 on a Mars planetary mission (Requires Mitigation). Likelihood by consequence; read from the rating table.",
+      values: { card: "sleep", risk: "Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload", lunarSurfaceLongOps: "5x2", lunarSurfaceLongOpsDisposition: "Requires Characterization", lunarSurfaceLongHealth: "3x1", lunarSurfaceLongHealthDisposition: "Accepted with Monitoring", marsPlanetaryOps: "5x2", marsPlanetaryOpsDisposition: "Requires Mitigation", marsPlanetaryHealth: "4x2", marsPlanetaryHealthDisposition: "Requires Mitigation", lastPublished: "05/13/25", gapId: "Sleep-102", gapText: "We need to identify and develop an integrated, individualized suite of scheduling tools that predict the effects of sleep-wake cycles and light on performance, with validated countermeasures and on-board systems to monitor, prevent and/or treat chronic partial sleep loss, work overload, and/or circadian shifting in spaceflight." },
+      quote: "The information above was last approved by the Human System Risk Board in 3/2022. ... We need to identify and develop an integrated, individualized suite of scheduling tools that predict the effects of sleep-wake cycles and light on performance, with validated countermeasures and on-board systems to monitor, prevent and/or treat chronic partial sleep loss, work overload, and/or circadian shifting in spaceflight.",
+      source: "NASA Human Research Roadmap, Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload (risk page 100)",
+      url: 'https://humanresearchroadmap.nasa.gov/Risks/?i=100'
+    },
+    {
+      id: 'V72', topic: 'nasa ratings and requirements', status: 'verified', level: 'official-database',
+      claim: "NASA's Human Research Roadmap rates the risk \"Cardiovascular adaptations\" 4x3 for operations on a long lunar-surface mission (Requires Characterization) and 4x4 on a Mars planetary mission (Requires Mitigation/Standard Refinement). Likelihood by consequence; read from the rating table.",
+      values: { card: "cardio", risk: "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes", lunarSurfaceLongOps: "4x3", lunarSurfaceLongOpsDisposition: "Requires Characterization", lunarSurfaceLongHealth: "1x2", lunarSurfaceLongHealthDisposition: "Accepted with Monitoring", marsPlanetaryOps: "4x4", marsPlanetaryOpsDisposition: "Requires Mitigation/Standard Refinement", marsPlanetaryHealth: "2x4", marsPlanetaryHealthDisposition: "Requires Mitigation/Standard Refinement", lastPublished: "05/13/25", gapId: "CV-203", gapText: "Evaluate candidate countermeasures in astronauts, including monitoring strategies, that prevent or mitigate spaceflight- and/or radiation-induced cardiovascular structural and functional adaptations in a spaceflight environment that contribute to an increased risk of a cardiovascular event and/or disease." },
+      quote: "The information above was last approved by the Human System Risk Board in 5/2024. ... Evaluate candidate countermeasures in astronauts, including monitoring strategies, that prevent or mitigate spaceflight- and/or radiation-induced cardiovascular structural and functional adaptations in a spaceflight environment that contribute to an increased risk of a cardiovascular event and/or disease.",
+      source: "NASA Human Research Roadmap, Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (risk page 179)",
+      url: 'https://humanresearchroadmap.nasa.gov/Risks/?i=179'
+    },
+    {
+      id: 'V73', topic: 'nasa ratings and requirements', status: 'verified', level: 'official-database',
+      claim: "NASA's Human Research Roadmap rates the long-term health risk \"Radiation carcinogenesis\" 3x2 for a long lunar-surface mission (Requires Characterization) and 3x3 for a Mars planetary mission (Requires Mitigation); the in-mission operations rating is 1x1 (Accepted). Likelihood by consequence under the previous 3x4 matrix; read from the rating table.",
+      values: { card: "radiation", risk: "Risk of Radiation Carcinogenesis", lunarSurfaceLongOps: "1x1", lunarSurfaceLongOpsDisposition: "Accepted", lunarSurfaceLongHealth: "3x2", lunarSurfaceLongHealthDisposition: "Requires Characterization", marsPlanetaryOps: "1x1", marsPlanetaryOpsDisposition: "Accepted", marsPlanetaryHealth: "3x3", marsPlanetaryHealthDisposition: "Requires Mitigation", lastPublished: "08/17/26", gapId: "Cancer-402", gapText: "Identify and/or develop monitoring tools to support spaceflight research, long-term health surveillance, and countermeasure implementation." },
+      quote: "The information above was last approved by the Human System Risk Board (HSRB) under the previous 3x4 LxC matrix. ... Identify and/or develop monitoring tools to support spaceflight research, long-term health surveillance, and countermeasure implementation.",
+      source: "NASA Human Research Roadmap, Risk of Radiation Carcinogenesis (risk page 96)",
+      url: 'https://humanresearchroadmap.nasa.gov/Risks/?i=96'
+    },
+    {
+      id: 'V74', topic: 'nasa ratings and requirements', status: 'verified', level: 'official-database',
+      claim: "NASA's Human Research Roadmap rates the risk \"Medical conditions that occur in mission\" 5x4 for operations on a long lunar-surface mission (Requires Mitigation) and 5x4 on a Mars planetary mission (Requires Mitigation). Likelihood by consequence; read from the rating table.",
+      values: { card: "medical", risk: "Risk of Adverse Health Outcomes and Decrements in Performance Due to Medical Conditions that occur in Mission, as well as Long Term Health Outcomes Due to Mission Exposures", lunarSurfaceLongOps: "5x4", lunarSurfaceLongOpsDisposition: "Requires Mitigation", lunarSurfaceLongHealth: "4x4", lunarSurfaceLongHealthDisposition: "Requires Characterization", marsPlanetaryOps: "5x4", marsPlanetaryOpsDisposition: "Requires Mitigation", marsPlanetaryHealth: "5x4", marsPlanetaryHealthDisposition: "Requires Characterization", lastPublished: "05/13/25", gapId: "Medical-701", gapText: "We need to increase inflight medical capabilities and identify new capabilities that (a) maximize benefit and/or (b) reduce “costs” on human system/mission/vehicle resources." },
+      quote: "The information above was last approved by the Human System Risk Board in 5/2021. ... We need to increase inflight medical capabilities and identify new capabilities that (a) maximize benefit and/or (b) reduce “costs” on human system/mission/vehicle resources.",
+      source: "NASA Human Research Roadmap, Risk of Adverse Health Outcomes and Decrements in Performance Due to Medical Conditions that occur in Mission, as well as Long Term Health Outcomes Due to Mission Exposures (risk page 95)",
+      url: 'https://humanresearchroadmap.nasa.gov/Risks/?i=95'
+    },
+    {
+      id: 'V75', topic: 'nasa ratings and requirements', status: 'verified', level: 'official-database',
+      claim: "NASA's Human Research Roadmap rates the risk \"Earth-independent human-systems operations\" 5x3 for operations on a long lunar-surface mission (Requires Mitigation) and 5x5 on a Mars planetary mission (Requires Mitigation). Likelihood by consequence; read from the rating table.",
+      values: { card: "autonomy", risk: "Risk of Adverse Mission Outcomes Due to Earth Independent Human-Systems Operations", lunarSurfaceLongOps: "5x3", lunarSurfaceLongOpsDisposition: "Requires Mitigation", lunarSurfaceLongHealth: "Not Applicable", lunarSurfaceLongHealthDisposition: "Not Applicable", marsPlanetaryOps: "5x5", marsPlanetaryOpsDisposition: "Requires Mitigation", marsPlanetaryHealth: "Not Applicable", marsPlanetaryHealthDisposition: "Not Applicable", lastPublished: "05/13/25", gapId: "EIHSO-301", gapText: "We need to determine the on-board, intelligent systems that will support crew health and performance, and we need to establish the thresholds that will define how these systems should be implemented (including in-mission and at landing).", gap2Id: "EIHSO-701", gap2Text: "We need to determine how human-automation-robotic systems can be optimized for effective enhancement and monitoring of crew capabilities, health, and performance, during increasingly earth-independent, future exploration missions (including in-mission and at landing)." },
+      quote: "The information above was last approved by the Human System Risk Board in 2/2023. ... We need to determine the on-board, intelligent systems that will support crew health and performance, and we need to establish the thresholds that will define how these systems should be implemented (including in-mission and at landing). ... We need to determine how human-automation-robotic systems can be optimized for effective enhancement and monitoring of crew capabilities, health, and performance, during increasingly earth-independent, future exploration missions (including in-mission and at landing).",
+      source: "NASA Human Research Roadmap, Risk of Adverse Mission Outcomes Due to Earth Independent Human-Systems Operations (risk page 175)",
+      url: 'https://humanresearchroadmap.nasa.gov/Risks/?i=175'
+    },
+    {
+      id: 'V76', topic: 'nasa ratings and requirements', status: 'verified', level: 'official-document',
+      claim: "NASA-STD-3001 requires every programme to provide in-mission capabilities to monitor physiological and psychosocial well-being, including periodic monitoring of general health status.",
+      values: {},
+      quote: "All programs shall provide training, in-mission capabilities, and resources to monitor physiological and psychosocial well-being and enable delivery of in-mission preventive health care ... Periodic monitoring of general health status.",
+      source: "NASA-STD-3001 Volume 1, Revision C, requirement [V1 3003] In-Mission Preventive Health Care",
+      url: 'https://www.nasa.gov/wp-content/uploads/2023/11/nasa-std-3001-vol-1-rev-c-with-signature.pdf'
+    },
+    {
+      id: 'V77', topic: 'nasa ratings and requirements', status: 'verified', level: 'official-document',
+      claim: "NASA-STD-3001 lists, among the in-mission medical capabilities to provide, assessing, recording, monitoring and trending vital signs and other physiological and behavioural health signs, and a means of autonomous medical care.",
+      values: {},
+      quote: "Assessing, recording, monitoring, and trending vital signs and additional physiological and behavioral health signs. ... Means of providing autonomous medical care and advanced life support.",
+      source: "NASA-STD-3001 Volume 1, Revision C, requirement [V1 3004] In-Mission Medical Care",
+      url: 'https://www.nasa.gov/wp-content/uploads/2023/11/nasa-std-3001-vol-1-rev-c-with-signature.pdf'
+    },
+    {
+      id: 'V78', topic: 'nasa ratings and requirements', status: 'verified', level: 'official-document',
+      claim: "The rationale of NASA-STD-3001 [V1 6001] recommends an 8.5-hour sleep period. It is a recommendation in a rationale, not a required sleep duration.",
+      values: { recommendedSleepPeriodHours: 8.5 },
+      quote: "Recommended 8.5 hr. sleep period (need to also include pre sleep of 2 hrs./post sleep of 1.5 hrs.)",
+      source: "NASA-STD-3001 Volume 1, Revision C, rationale of [V1 6001] Circadian Shifting Operations and Fatigue Management",
+      url: 'https://www.nasa.gov/wp-content/uploads/2023/11/nasa-std-3001-vol-1-rev-c-with-signature.pdf'
+    },
+    {
+      id: 'V79', topic: 'nasa ratings and requirements', status: 'verified', level: 'official-document',
+      claim: "A NASA technical brief states that an average adult needs 7 to 9 hours of sleep and that astronauts sleep about six hours on average in space.",
+      values: { adultSleepHoursLow: 7, adultSleepHoursHigh: 9, inSpaceSleepHoursAbout: 6 },
+      quote: "According to the National Sleep Foundation and American Academy of Sleep Medicine, an average adult needs 7-9 hours of sleep for optimal daytime functioning. ... These studies have shown that astronauts sleep an average of about six hours while in space, irrespective of the spaceflight mission examined or methodology used to quantify sleep.",
+      source: "NASA OCHMO-TB-041, Sleep Accommodations (2023)",
+      url: 'https://www.nasa.gov/wp-content/uploads/2023/12/ochmo-tb-041-sleep-accommodations.pdf'
+    },
+    {
+      id: 'V80', topic: 'nasa ratings and requirements', status: 'verified', level: 'official-document',
+      claim: "NASA-STD-3001 requires horizontal sleep surfaces in partial gravity, naming lunar (1/6) and Mars (1/3) gravity.",
+      values: {},
+      quote: "The system shall provide for horizontal sleep surface areas for partial-g and 1-g environments. ... Partial-g, i.e., lunar (1/6) and Mars (1/3) gravity, defines the orientation of the volume.",
+      source: "NASA-STD-3001 Volume 2, Revision F, requirement [V2 7073] Partial-g Sleeping",
+      url: 'https://www.nasa.gov/wp-content/uploads/2025/05/nasa-std-3001-vol-2.pdf'
+    },
+    {
+      id: 'V81', topic: 'nasa ratings and requirements', status: 'verified', level: 'official-document',
+      claim: "NASA-STD-3001 [V1 4024] sets the 80% in-mission strength line because losses of up to 20% did not impair mission objectives and could be reconditioned after flight.",
+      values: { minStrengthFraction: 0.8 },
+      quote: "Countermeasures shall maintain in-mission skeletal muscle strength at or above 80% of baseline values. ... The 80% minimum was determined using historical (including ISS) study data showing decrements up to 20% do not impair mission objectives and can be reconditioned to pre-flight muscular strength during post-flight reconditioning",
+      source: "NASA-STD-3001 Volume 1, Revision C, requirement [V1 4024] In-Mission Skeletal Muscle Strength, with its rationale",
+      url: 'https://www.nasa.gov/wp-content/uploads/2023/11/nasa-std-3001-vol-1-rev-c-with-signature.pdf'
+    },
+    {
+      id: 'V82', topic: 'nasa ratings and requirements', status: 'verified', level: 'official-document',
+      claim: "A 2026 NASA bulletin says ISS crew strength is measured with an isometric mid-thigh pull and an isometric bench press, exercises that are location specific and need specialized equipment.",
+      values: {},
+      quote: "For ISS crewmembers, isometric mid-thigh pull (IMTP) and isometric bench press (IBP) are the lower and upper body exercise protocols used to measure crewmember strength across their mission, but these exercises are location specific requiring specialized equipment.",
+      source: "NASA OCHMO Technical Bulletin, NASA-STD-3001 Guidance for Strength and Human Performance for Extraterrestrial EVA Standard (2026)",
+      url: 'https://www.nasa.gov/wp-content/uploads/2026/07/guidance-for-strength-and-human-performance-on-extraterrestrial-surface-eva-07222026.pdf'
+    },
+    {
+      id: 'V83', topic: 'nasa ratings and requirements', status: 'verified', level: 'official-document',
+      claim: "For habitats used longer than 60 days, NASA-STD-3001 limits the effective dose rate from galactic cosmic rays to less than 0.9 mSv per day on planetary surfaces and 1.3 mSv per day in free space.",
+      values: { surfaceLimitMSvPerDay: 0.9, freeSpaceLimitMSvPerDay: 1.3 },
+      quote: "rate of 1.3 mSv/day for systems in free space and to less than 0.9 mSv/day for systems on planetary surfaces.",
+      source: "NASA-STD-3001 Volume 1, Revision C, requirement [V1 4033] Crew Radiation Limits from Galactic Cosmic Radiation",
+      url: 'https://www.nasa.gov/wp-content/uploads/2023/11/nasa-std-3001-vol-1-rev-c-with-signature.pdf'
+    },
+    {
+      id: 'V84', topic: 'nasa ratings and requirements', status: 'verified', level: 'official-document',
+      claim: "NASA-STD-3001 requires radiation monitoring in habitable volumes that reports dose, intensity and angles of incidence, and an alert to the crew when exposure rates exceed thresholds, even without ground communication.",
+      values: {},
+      quote: "Appropriate dose monitoring provides data on the radiation type, linear energy transfer (LET), intensity, and angles of incidence. ... Timepix-based instruments have been used by past programs to characterize the ionizing radiation inside crewed vehicles and to measure the dose and dose rates. ... The radiation monitoring system shall alert the crew and operations teams when radiation exposure rates exceed predefined thresholds. ... The crew must be alerted even if ground communication is disrupted or is unviable.",
+      source: "NASA-STD-3001 Volume 2, Revision F, requirements [V2 6161] Intravehicular Area Monitoring and [V2 6164] Alerting",
+      url: 'https://www.nasa.gov/wp-content/uploads/2025/05/nasa-std-3001-vol-2.pdf'
+    },
+    {
+      id: 'V85', topic: 'muscle', status: 'verified', level: 'official-document',
+      claim: "NASA's evidence report on muscle and aerobic capacity states that no standard in-flight measurement of strength exists and that the strength requirement is tested about a week after landing. With ISS countermeasures, knee strength falls about 15% on average and about 31% of crew lose more than 20%.",
+      values: { avgKneeStrengthLossPct: 15, crewLosingOver20Pct: 31, testDaysAfterLandingAbout: 7 },
+      quote: "It is also important to keep in mind that the medical requirements testing is conducted approximately 1 week after landing ... Isokinetic knee strength is reduced on average about 15% from pre to postflight with ISS countermeasures provided to crew ... About 31% of crew lose greater than 20% knee muscle strength ... Currently, no standard in-flight measurement of strength exists.",
+      source: "NASA Human Research Program Evidence Report, Risk of Impaired Performance due to Reduced Muscle Mass, Strength and Endurance and Risk of Reduced Physical Performance Capabilities due to Reduced Aerobic Capacity (approved for public release 22 January 2023)",
+      url: 'https://humanresearchroadmap.nasa.gov/evidence/reports/Evidence%20report%20aerobic%20and%20muscle_FINAL%204-3-2024.pdf'
+    },
+    {
+      id: 'V86', topic: 'sleep', status: 'verified', level: 'official-document',
+      claim: "NASA's evidence report on sleep states that astronauts sleep about six hours on average in space, and that about three-quarters of Shuttle and ISS astronauts reported using sleep medication.",
+      values: { inSpaceSleepHoursAbout: 6 },
+      quote: "These studies show that astronauts sleep an average of about six hours while in space, irrespective of the spaceflight mission examined or methodology used to quantify sleep. ... about three-quarters of both Shuttle and ISS astronauts reported using sleep medications during their missions",
+      source: "NASA Human Research Program Evidence Report, Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload (2016)",
+      url: 'https://humanresearchroadmap.nasa.gov/evidence/reports/Sleep.pdf'
+    },
+    {
+      id: 'V87', topic: 'eim', status: 'verified', level: 'official-database',
+      claim: "A NASA-funded study of astronauts (2019 to 2034) performs non-invasive electrical impedance myography before and after flight.",
+      values: {},
+      quote: "In addition, we will perform in vivo, non-invasive electrical impedance myography pre- and post-flight to supplement function assessments of muscle being conducted as part of the standard measures in the integrated One-Year Mission Project.",
+      source: "NASA Task Book, Time Course of Spaceflight-Induced Adaptations in Bone Morphology, Bone Strength and Muscle Quality (principal investigator M. Bouxsein)",
+      url: 'https://taskbook.nasaprs.com/tbp/index.cfm?action=public_query_taskbook_content&TASKID=07387AE7B0ED65293EFA45E8203BB732'
+    },
+    {
+      id: 'V88', topic: 'eim', status: 'verified', level: 'official-database',
+      claim: "A NASA-funded study of partial weight bearing in rats (2019 to 2022) assessed muscle weekly with limb girth, electrical impedance myography, nerve conduction and grip force.",
+      values: {},
+      quote: "Muscle health and function were assessed weekly using limb girth, intra-muscular electrical impedance myography (EIM), nerve conduction studies, and grip force.",
+      source: "NASA Task Book, Approaching Gravity As a Continuum: Musculoskeletal Effects of Fractional Reloading (principal investigator S. Rutkove)",
+      url: 'https://taskbook.nasaprs.com/tbp/index.cfm?action=public_query_taskbook_content&TASKID=38338644ADB4036AF95D603F056A97FA'
+    },
+    {
+      id: 'V89', topic: 'muscle', status: 'verified', level: 'agency-web-page',
+      claim: "ESA's MARES dynamometer on the ISS weighs 200 kg and is described by ESA as too complex for everyday exercise.",
+      values: { massKg: 200 },
+      quote: "The machine is too complex for everyday exercise ... Mass: 200 kg",
+      source: "European Space Agency, Muscle Atrophy Research and Exercise System (MARES)",
+      url: 'https://www.esa.int/Science_Exploration/Human_and_Robotic_Exploration/Columbus/Muscle_Atrophy_Research_and_Exercise_System'
+    },
+
     // ---- NASA standards and statements -------------------------------------
     {
       id: 'V1', topic: 'muscle', status: 'verified', level: 'official-document',

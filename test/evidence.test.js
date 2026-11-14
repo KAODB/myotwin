@@ -66,3 +66,27 @@ test('the twelve NASA pages linked from the challenge resources are present, ver
     assert.ok(it.quote.includes(it.values.canBeDone), id + ' canBeDone');
   }
 });
+
+test('Human Research Roadmap ratings and NASA-STD-3001 requirements are present and well formed', () => {
+  const cards = { V70: 'muscle', V71: 'sleep', V72: 'cardio', V73: 'radiation', V74: 'medical', V75: 'autonomy' };
+  for (const id of Object.keys(cards)) {
+    const v = evidence.get(id).values;
+    assert.equal(v.card, cards[id], id);
+    for (const k of ['lunarSurfaceLongOps', 'marsPlanetaryOps']) assert.match(v[k], /^[1-5]x[1-5]$/, id + ' ' + k);
+    for (const k of ['lunarSurfaceLongOpsDisposition', 'marsPlanetaryOpsDisposition', 'gapId', 'gapText', 'lastPublished', 'risk']) assert.ok(v[k], id + ' ' + k);
+    assert.match(evidence.get(id).url, /^https:\/\/humanresearchroadmap\.nasa\.gov\/Risks\/\?i=\d+$/);
+  }
+  // Values read from the rating tables on 2026-11-14; a change here must be deliberate.
+  assert.equal(evidence.value('V70', 'marsPlanetaryOps'), '5x4');
+  assert.equal(evidence.value('V70', 'lunarSurfaceLongOps'), '5x3');
+  assert.equal(evidence.value('V75', 'marsPlanetaryOps'), '5x5');
+  assert.equal(evidence.value('V73', 'marsPlanetaryHealth'), '3x3');
+  assert.equal(evidence.value('V83', 'surfaceLimitMSvPerDay'), 0.9);
+  assert.equal(evidence.value('V78', 'recommendedSleepPeriodHours'), 8.5);
+  assert.equal(evidence.value('V85', 'crewLosingOver20Pct'), 31);
+  for (const id of ['V76', 'V77', 'V78', 'V79', 'V80', 'V81', 'V82', 'V83', 'V84', 'V85', 'V86', 'V87', 'V88', 'V89']) {
+    const it = evidence.get(id);
+    assert.equal(it.status, 'verified', id);
+    assert.ok(it.quote && it.quote.length > 20, id + ' needs a quote');
+  }
+});
