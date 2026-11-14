@@ -58,6 +58,25 @@
     return String(+v.toFixed(d));
   }
 
+  /** Dose in the card's units, as [number, unit]: µGy below 1,000, mGy with one decimal from 1,000 up. */
+  function doseParts(uGy) { return uGy >= 1000 ? [(uGy / 1000).toFixed(1), 'mGy'] : [String(Math.round(uGy)), 'µGy']; }
+  /** Axis tick for a dose: the card's units and rounding without a trailing ".0" (1000 -> "1 mGy"). */
+  function doseTick(uGy) { var p = doseParts(uGy); return String(+p[0]) + ' ' + p[1]; }
+
+  /** True when the positive values span more than `ratio` (default 50), largest over smallest. */
+  function useLogScale(values, ratio) {
+    var v = (values || []).filter(function (x) { return x != null && isFinite(x) && x > 0; });
+    if (v.length < 2) return false;
+    return Math.max.apply(null, v) / Math.min.apply(null, v) > (ratio || 50);
+  }
+
+  /** log10 axis from lo to hi (positive) over [top, top + height]: y mapping and the decade ticks inside. */
+  function logAxis(lo, hi, top, height) {
+    var l0 = Math.log10(lo), l1 = Math.log10(hi), ticks = [];
+    for (var k = Math.ceil(l0 - 1e-9); k <= l1 + 1e-9; k++) ticks.push(Math.pow(10, k));
+    return { ticks: ticks, y: function (v) { return top + (1 - (Math.log10(v) - l0) / (l1 - l0)) * height; } };
+  }
+
   function lerp(a, b, t) { return a + (b - a) * t; }
   function clamp01(t) { return t < 0 ? 0 : t > 1 ? 1 : t; }
 
@@ -138,7 +157,9 @@
    *   baseline: {median, low, high}|null, expected: [{missionDay, low, high}]|null,
    *   thresholds: [{value, label, shortLabel?, status}], markers: [{missionDay, label, shortLabel?}],
    *   exercise: [{missionDay, done}]|null, statusAt: (missionDay) => status,
-   *   selectedDay, unit, yLabel, xTitle = 'Mission day', axisBreak: missionDay|null }
+   *   selectedDay, unit, yLabel, xTitle = 'Mission day', axisBreak: missionDay|null,
+   *   logY: false, yFormat: (value) => tick text }
+   * `logY` draws the vertical axis on a log10 scale with decade ticks (non-positive values are gaps).
    * `series` is the line the status is judged on (status-shaped markers); `raw` are the
    * nightly readings drawn as small neutral dots. `axisBreak` draws a break in the x axis
    * just before that day and never joins the line across it.
@@ -149,7 +170,9 @@
     var size = sizeOf(svg, 640, 260);
     var W = size.w, H = size.h;
     var hasEx = opts.exercise && opts.exercise.length;
-    var m = { l: 62, r: 16, t: 14, b: hasEx ? 50 : 38 };
+    var logY = !!opts.logY;
+    var m = { l: logY ? 78 : 62, r: 16, t: 14, b: hasEx ? 50 : 38 };
+    function ok(v) { return v != null && isFinite(v) && (!logY || v > 0); }
     // Event labels sit in a strip above the plot, so no data point or selected-night line runs under them.
     var nLab = (opts.markers || []).filter(function (mk) { return mk.label; }).length;
     var rows = Math.min(nLab, W - m.l - m.r < 420 ? 3 : 2);
@@ -160,7 +183,7 @@
     var xTitle = opts.xTitle || 'Mission day';
     var raw = opts.raw || [];
     var label = (opts.yLabel || 'Value') + (opts.unit ? ' (' + opts.unit + ')' : '') +
-      ' by ' + xTitle.toLowerCase() + ', ' + series.filter(function (p) { return p.value != null; }).length + ' nights with data';
+      ' by ' + xTitle.toLowerCase() + ', ' + series.filter(function (p) { return p.value != null; }).length + ' nights with data' + (logY ? ', logarithmic scale' : '');
     svg.setAttribute('aria-label', label);
     el('title', null, svg).textContent = label;
 
@@ -177,17 +200,24 @@
     if (opts.baseline) ys.push(opts.baseline.low, opts.baseline.high, opts.baseline.median);
     (opts.expected || []).forEach(function (p) { ys.push(p.low, p.high); });
     (opts.thresholds || []).forEach(function (t) { ys.push(t.value); });
-    ys = ys.filter(function (v) { return v != null && isFinite(v); });
+    ys = ys.filter(ok);
     var y0 = ys.length ? Math.min.apply(null, ys) : 0, y1 = ys.length ? Math.max.apply(null, ys) : 1;
-    var pad = (y1 - y0 || Math.abs(y1) || 1) * 0.08;
-    y0 -= pad; y1 += pad;
-    var yt = niceTicks(y0, y1, Math.max(3, Math.floor((H - m.t - m.b) / 44)));
-    if (yt.length) { y0 = Math.min(y0, yt[0]); y1 = Math.max(y1, yt[yt.length - 1]); }
-
-    var pw = W - m.l - m.r, ph = H - m.t - m.b;
+    var pw = W - m.l - m.r, ph = H - m.t - m.b, yt, Y;
+    if (logY) {
+      // Whole decades with a little room, so no point sits on the plot edge.
+      y0 = Math.pow(10, Math.floor(Math.log10((ys.length ? y0 : 1) / 1.2)));
+      y1 = Math.pow(10, Math.ceil(Math.log10((ys.length ? y1 : 10) * 1.2)));
+      var ax = logAxis(y0, y1, m.t, ph);
+      yt = ax.ticks; Y = ax.y;
+    } else {
+      var pad = (y1 - y0 || Math.abs(y1) || 1) * 0.08;
+      y0 -= pad; y1 += pad;
+      yt = niceTicks(y0, y1, Math.max(3, Math.floor((H - m.t - m.b) / 44)));
+      if (yt.length) { y0 = Math.min(y0, yt[0]); y1 = Math.max(y1, yt[yt.length - 1]); }
+      Y = function (v) { return m.t + (1 - (v - y0) / (y1 - y0)) * ph; };
+    }
     function X(d) { return m.l + (d - x0) / (x1 - x0) * pw; }
     var labels = [];
-    function Y(v) { return m.t + (1 - (v - y0) / (y1 - y0)) * ph; }
 
     // Baseline period shading (mission days below 0)
     if (x0 < 0) {
@@ -199,7 +229,7 @@
     // Grid and y axis
     yt.forEach(function (v) {
       el('line', { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), 'class': 'grid' }, svg);
-      text(svg, m.l - 8, Y(v) + 4, fmt(v), 'ax-label', 'end');
+      text(svg, m.l - 8, Y(v) + 4, (opts.yFormat || fmt)(v), 'ax-label', 'end');
     });
     if (opts.yLabel) {
       var yl = text(svg, 0, 0, opts.yLabel + (opts.unit ? ' (' + opts.unit + ')' : ''), 'ax-title');
@@ -278,7 +308,7 @@
 
     // Nightly readings: small neutral dots
     raw.forEach(function (p) {
-      if (p.value == null || !isFinite(p.value)) return;
+      if (!ok(p.value)) return;
       el('circle', { cx: X(p.missionDay).toFixed(1), cy: Y(p.value).toFixed(1), r: 1.8, 'class': 'raw-dot' }, svg);
     });
 
@@ -287,14 +317,14 @@
     series.forEach(function (p) {
       if (brk != null && prev != null && prev < brk && p.missionDay >= brk) pen = false;
       prev = p.missionDay;
-      if (p.value == null || !isFinite(p.value)) { pen = false; return; }
+      if (!ok(p.value)) { pen = false; return; }
       path += (pen ? 'L' : 'M') + X(p.missionDay).toFixed(1) + ',' + Y(p.value).toFixed(1);
       pen = true;
     });
     if (path) el('path', { d: path, 'class': 'series' }, svg);
     var r = series.length > 120 ? 2.5 : 3.5;
     series.forEach(function (p) {
-      if (p.value == null || !isFinite(p.value)) return;
+      if (!ok(p.value)) return;
       var st = opts.statusAt ? opts.statusAt(p.missionDay) : 'green';
       var big = p.missionDay === opts.selectedDay;
       var node = marker(svg, X(p.missionDay), Y(p.value), st, big ? r + 2.5 : r);
@@ -461,18 +491,16 @@
     svg.setAttribute('aria-label', opts.label || 'Chart');
     el('title', null, svg).textContent = opts.label || 'Chart';
     var pw = W - m.l - m.r, ph = H - m.t - m.b;
-    var l0 = Math.log10(opts.yMin), l1 = Math.log10(opts.yMax);
+    var ax = logAxis(opts.yMin, opts.yMax, m.t, ph), Y = ax.y;
     function X(t) { return m.l + (t - opts.from) / (opts.to - opts.from) * pw; }
-    function Y(v) { return m.t + (1 - (Math.log10(v) - l0) / (l1 - l0)) * ph; }
     if (opts.shade) {
       var s0 = Math.max(opts.from, opts.shade.from), s1 = Math.min(opts.to, opts.shade.to);
       if (s1 > s0) el('rect', { x: X(s0), y: m.t, width: X(s1) - X(s0), height: ph, 'class': 'flux-shade' }, svg);
     }
-    for (var k = Math.ceil(l0); k <= l1; k++) {
-      var v = Math.pow(10, k);
+    ax.ticks.forEach(function (v) {
       el('line', { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), 'class': 'grid' }, svg);
       text(svg, m.l - 8, Y(v) + 4, String(v), 'ax-label', 'end');
-    }
+    });
     if (opts.yLabel) {
       var yl = text(svg, 0, 0, opts.yLabel, 'ax-title');
       yl.setAttribute('transform', 'translate(13,' + (m.t + ph / 2) + ') rotate(-90)');
@@ -553,6 +581,9 @@
     statusIconEl: statusIconEl,
     niceTicks: niceTicks,
     format: fmt,
+    doseParts: doseParts,
+    doseTick: doseTick,
+    useLogScale: useLogScale,
     colormap: colormap,
     normalise: normalise,
     line: line,
