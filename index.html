@@ -1,21 +1,273 @@
 <!doctype html>
+<!--
+  MyoTwin page shell: the morning brief (whole-body image, four status cards),
+  timeline, trend, guidance, what-if controls, how it works, evidence drawer.
+  Structure only; js/app.js fills it from the simulated data modules.
+  All data shown are simulated. Not a medical device.
+
+  Written with an SI tool (Claude) and reviewed by the team.
+-->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MyoTwin</title>
-<style>
-  body { margin: 0; font: 16px/1.5 system-ui, sans-serif; background: #0e1420; color: #e8edf5; display: grid; place-items: center; min-height: 100vh; }
-  main { max-width: 34rem; padding: 2rem; }
-  h1 { font-size: 2rem; margin: 0 0 .5rem; }
-  p { color: #aab6c8; }
-</style>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="dark light">
+<meta name="description" content="MyoTwin: a morning health brief built from passive sleep-station sensing on the Moon and Mars. Concept software with simulated data.">
+<link rel="icon" href="data:,">
+<title>MyoTwin: the health check that happens while you sleep</title>
+<link rel="stylesheet" href="css/style.css">
 </head>
-<body>
-<main>
-  <h1>MyoTwin</h1>
-  <p>The health check that happens while you sleep.</p>
-  <p>This page is being built during the 2026 NASA Space Apps Challenge. The working version will appear here shortly.</p>
+<body class="mode-astronaut">
+
+<!-- Status icons: a shape for every status so colour is never the only cue. -->
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <symbol id="st-green" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="currentColor"/><path d="M4.8 8.2l2.2 2.2 4.2-4.6" fill="none" class="ink-s" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="st-amber" viewBox="0 0 16 16"><path d="M8 1.3l7 12.9H1z" fill="currentColor"/><path d="M8 6v3.8" class="ink-s" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="12" r="1" class="ink-f"/></symbol>
+  <symbol id="st-red" viewBox="0 0 16 16"><path d="M5.3 1h5.4L15 5.3v5.4L10.7 15H5.3L1 10.7V5.3z" fill="currentColor"/><path d="M8 4.2v4.6" class="ink-s" stroke-width="1.9" stroke-linecap="round"/><circle cx="8" cy="11.5" r="1.1" class="ink-f"/></symbol>
+  <symbol id="st-grey" viewBox="0 0 16 16"><rect x="2" y="6.6" width="12" height="2.8" rx="1.4" fill="currentColor"/></symbol>
+</svg>
+
+<a class="skip" href="#brief">Skip to the morning brief</a>
+
+<header class="topbar">
+  <div class="brand">
+    <svg class="logo" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><circle cx="16" cy="16" r="14.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5 18h5l2.5-6 4 11 3-8 2 3h5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div>
+      <p class="brand-name">MyoTwin</p>
+      <p class="tagline">The health check that happens while you sleep.</p>
+    </div>
+  </div>
+  <div class="controls">
+    <label class="field">
+      <span class="field-label">Scenario</span>
+      <select id="scenario" disabled>
+        <option value="">Loading scenarios</option>
+      </select>
+    </label>
+    <p class="env-badge" id="env-badge"><span class="field-label">Habitat</span> <span id="env-name">Not loaded</span></p>
+    <div class="segmented" role="group" aria-label="Display mode">
+      <button type="button" class="seg" data-mode="astronaut" aria-pressed="true">Astronaut</button>
+      <button type="button" class="seg" data-mode="eldercare" aria-pressed="false">Eldercare</button>
+    </div>
+  </div>
+  <ul class="badges" aria-label="About this page">
+    <li class="badge badge-sim"><svg aria-hidden="true" focusable="false" viewBox="0 0 16 16"><path d="M8 1.5l6.5 3.7v5.6L8 14.5l-6.5-3.7V5.2z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v6M5 8h6" stroke="currentColor" stroke-width="1.5"/></svg>Simulated data — concept demonstration</li>
+    <li class="badge badge-offline"><svg aria-hidden="true" focusable="false" viewBox="0 0 16 16"><path d="M3 9.5a5 5 0 0 1 10 0" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 9.5v4M6 12l2 1.8 2-1.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Works offline</li>
+  </ul>
+</header>
+
+<main id="main">
+
+  <!-- 2. Morning brief -->
+  <section id="brief" class="brief" aria-labelledby="brief-title">
+    <div class="brief-head">
+      <h1 id="brief-title" class="eyebrow">Morning brief <span id="brief-date" class="muted">no night selected</span></h1>
+      <p id="headline" class="headline" aria-live="polite">The brief appears here once the simulated mission loads.</p>
+      <noscript><p class="notice">MyoTwin needs JavaScript to build the brief. Nothing is sent anywhere; it runs entirely in this page.</p></noscript>
+    </div>
+
+    <figure class="panel body-image" aria-labelledby="image-caption">
+      <div class="panel-bar">
+        <div class="segmented" role="group" aria-label="Image layer">
+          <button type="button" class="seg" data-layer="density" aria-pressed="true">Density</button>
+          <button type="button" class="seg" data-layer="pressure" aria-pressed="false">Pressure</button>
+          <button type="button" class="seg" data-layer="impedance" aria-pressed="false">Impedance</button>
+        </div>
+        <div class="segmented" role="group" aria-label="Image view">
+          <button type="button" class="seg" data-view="raw" aria-pressed="true">Raw</button>
+          <button type="button" class="seg" data-view="diff" aria-pressed="false">Change vs baseline</button>
+        </div>
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="body-canvas" width="120" height="360" role="img" aria-label="Whole-body image, not yet drawn"></canvas>
+        <p class="canvas-empty" id="canvas-empty">Image not drawn yet</p>
+      </div>
+      <div class="colorbar" id="colorbar"></div>
+      <figcaption id="image-caption" class="caption">Simplified supine body seen from above, head at the top. Simulated image.</figcaption>
+    </figure>
+
+    <div class="cards" id="cards">
+      <button type="button" class="card st-grey" data-card="muscle" aria-pressed="true">
+        <span class="card-top"><span class="card-name">Muscle</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span>
+        <span class="card-value"><span class="num">—</span> <span class="unit">deg</span></span>
+        <span class="card-delta">Change vs baseline: —</span>
+        <span class="card-reason">Calf impedance phase, 7-night median.</span>
+      </button>
+      <button type="button" class="card st-grey" data-card="sleep" aria-pressed="false">
+        <span class="card-top"><span class="card-name">Sleep</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span>
+        <span class="card-value"><span class="num">—</span> <span class="unit">h</span></span>
+        <span class="card-delta">Change vs baseline: —</span>
+        <span class="card-reason">Hours asleep, 7-night mean, from radar.</span>
+      </button>
+      <button type="button" class="card st-grey" data-card="cardio" aria-pressed="false">
+        <span class="card-top"><span class="card-name">Heart and breathing</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span>
+        <span class="card-value"><span class="num">—</span> <span class="unit">bpm</span></span>
+        <span class="card-delta">Change vs baseline: —</span>
+        <span class="card-reason">Night heart and breathing rate, 3-night medians.</span>
+      </button>
+      <button type="button" class="card st-grey" data-card="radiation" aria-pressed="false">
+        <span class="card-top"><span class="card-name">Radiation</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span></span>
+        <span class="card-value"><span class="num">—</span> <span class="unit">µGy</span></span>
+        <span class="card-delta">Change vs recent nights: —</span>
+        <span class="card-reason">Dose over the sleep period, in silicon.</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- 3. Timeline -->
+  <section id="timeline" class="panel timeline" aria-labelledby="timeline-title">
+    <h2 id="timeline-title" class="section-title">Mission timeline</h2>
+    <div class="timeline-row">
+      <button type="button" id="play" class="btn btn-icon" aria-pressed="false" disabled>
+        <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path class="i-play" d="M4 2.5v11l9-5.5z" fill="currentColor"/><path class="i-pause" d="M3.5 2.5h3v11h-3zM9.5 2.5h3v11h-3z" fill="currentColor"/></svg>
+        <span class="btn-text">Play</span>
+      </button>
+      <label class="slider">
+        <span class="visually-hidden">Mission day</span>
+        <input type="range" id="day" min="0" max="1" step="1" value="0" disabled>
+      </label>
+      <p class="day-readout"><output id="day-out" for="day">Day —</output> <span id="date-out" class="muted">no date</span></p>
+    </div>
+    <p class="timeline-legend muted">Days below 0 are the 14 pre-departure baseline nights.</p>
+  </section>
+
+  <div class="split">
+    <!-- 4. Trend -->
+    <section id="trend" class="panel trend" aria-labelledby="trend-title">
+      <h2 id="trend-title" class="section-title">Trend <span id="trend-card" class="muted">Muscle</span></h2>
+      <svg id="trend-chart" class="chart" role="img" aria-label="Trend chart, not yet drawn"></svg>
+      <ul class="legend" aria-label="Chart legend">
+        <li><span class="key key-baseline" aria-hidden="true"></span>Own baseline range</li>
+        <li><span class="key key-expected" aria-hidden="true"></span>Model expectation</li>
+        <li><span class="key key-threshold" aria-hidden="true"></span>Threshold</li>
+        <li><span class="key key-selected" aria-hidden="true"></span>Selected night</li>
+      </ul>
+      <p id="projection" class="projection muted">Projection appears when enough nights are available.</p>
+      <figure id="rose-fig" class="rose-fig" hidden>
+        <svg id="rose" class="rose" role="img" aria-label="Direction rose, not yet drawn"></svg>
+        <figcaption class="caption">Where tonight's particles came from. Sector at the top points toward the head.</figcaption>
+      </figure>
+    </section>
+
+    <!-- 5. Guidance -->
+    <section id="guidance" class="panel guidance" aria-labelledby="guidance-title">
+      <h2 id="guidance-title" class="section-title">What it means <span id="guidance-card" class="muted">Muscle</span></h2>
+      <dl class="guide">
+        <dt>What it means</dt>
+        <dd id="g-meaning">Shown once a night is assessed.</dd>
+        <dt>What to do now</dt>
+        <dd><ul id="g-actions" class="actions"><li>Shown once a night is assessed.</li></ul></dd>
+        <dt>Who decides</dt>
+        <dd id="g-decides">Shown once a night is assessed.</dd>
+        <dt>Evidence behind this</dt>
+        <dd><ul id="g-sources" class="sources"><li>Listed once a night is assessed.</li></ul></dd>
+      </dl>
+      <p class="disclaimer"><strong>Not a medical device.</strong> Thresholds are interim and unvalidated. MyoTwin flags; a flight surgeon or clinician decides.</p>
+    </section>
+  </div>
+
+  <!-- 6. What-if -->
+  <section id="whatif" class="panel whatif" aria-labelledby="whatif-title">
+    <h2 id="whatif-title" class="section-title">What if</h2>
+    <p class="muted section-lede">Change an assumption and the simulated mission is regenerated.</p>
+    <div class="whatif-grid">
+      <label class="knob">
+        <span class="knob-label">Exercise adherence <output id="adherence-out" for="adherence">—</output></span>
+        <input type="range" id="adherence" min="0" max="100" step="5" value="100" disabled>
+        <span class="knob-hint">Share of planned countermeasure sessions done.</span>
+      </label>
+      <label class="knob">
+        <span class="knob-label">Partial-gravity shape <output id="shape-out" for="shape">—</output></span>
+        <input type="range" id="shape" min="0.5" max="2" step="0.1" value="1" disabled>
+        <span class="knob-hint">How strongly partial gravity protects muscle. 1 is linear; an assumption.</span>
+      </label>
+      <label class="knob">
+        <span class="knob-label">Habitat shielding <output id="shield-out" for="shield">—</output></span>
+        <input type="range" id="shield" min="0.2" max="1" step="0.05" value="1" disabled>
+        <span class="knob-hint">Relative shielding around the sleep station; 1 is the scenario default.</span>
+      </label>
+    </div>
+    <button type="button" id="whatif-reset" class="btn" disabled>Reset to scenario defaults</button>
+  </section>
+
+  <!-- 7. How it works -->
+  <section id="how" class="how" aria-labelledby="how-title">
+    <h2 id="how-title" class="section-title">How it works</h2>
+    <p class="section-lede muted">An assumed sensor panel in the sleep station. Nothing is worn, nothing to remember.</p>
+    <div class="how-grid">
+      <article class="panel sensor">
+        <svg class="sensor-art" viewBox="0 0 160 80" aria-hidden="true" focusable="false">
+          <path class="art-body" d="M12 38c20-10 60-12 96-6 14 2 26 2 36-2v12c-12 6-24 6-38 4-34-6-74-2-94 6z"/>
+          <rect class="art-strip" x="60" y="56" width="70" height="6" rx="3"/>
+          <path class="art-accent" d="M72 52v-6M88 52v-6M104 52v-6M120 52v-6"/>
+        </svg>
+        <h3>Impedance strip under the calves</h3>
+        <p>Dry electrodes in the mattress pass a tiny 50 kHz current through the calf. The phase angle falls as muscle is lost, so a nightly reading tracks muscle without anyone doing a test.</p>
+      </article>
+      <article class="panel sensor">
+        <svg class="sensor-art" viewBox="0 0 160 80" aria-hidden="true" focusable="false">
+          <rect class="art-strip" x="16" y="10" width="20" height="12" rx="2"/>
+          <path class="art-accent" d="M44 22c8 6 8 18 0 24M54 18c12 9 12 27 0 36M64 14c16 12 16 36 0 48"/>
+          <path class="art-body" d="M80 52c20-6 44-6 68-2v10c-24-4-48-4-68 2z"/>
+        </svg>
+        <h3>60 GHz radar above the bunk</h3>
+        <p>A low-power radar reads chest movement from a distance: breathing rate, heart rate, sleep time and restlessness. No contact, no camera.</p>
+      </article>
+      <article class="panel sensor">
+        <svg class="sensor-art" viewBox="0 0 160 80" aria-hidden="true" focusable="false">
+          <path class="art-plane" d="M14 12h132M14 18h132M14 62h132M14 68h132"/>
+          <path class="art-body" d="M24 36c30-6 80-6 112 0v8c-32 6-82 6-112 0z"/>
+          <path class="art-accent" d="M40 4l14 72M92 4l-8 72M120 4l10 72"/>
+        </svg>
+        <h3>Particle trackers above and below</h3>
+        <p>Tracker planes record the path of each cosmic-ray particle passing through the sleeper. That gives the night's dose, the direction it came from, and, summed over many tracks, a density image of the body.</p>
+      </article>
+    </div>
+    <article class="panel limits">
+      <h3>What this version does not account for, and the next step</h3>
+      <ul>
+        <li>All data are simulated. No sensor in this design has been built or flown.</li>
+        <li>The link between calf impedance phase and muscle loss is an assumption based on cast and bed-rest studies on Earth, not on spaceflight data.</li>
+        <li>Bed-integrated dry-electrode impedance has not been studied; contact and fluid shifts after lying down can move the reading.</li>
+        <li>Radar vital signs have not been tested in space.</li>
+        <li>Dose is absorbed dose in silicon over the sleep period, not effective dose to the person.</li>
+        <li>The body image comes from a simplified phantom on a 2 cm grid.</li>
+        <li>Thresholds are interim and unvalidated.</li>
+      </ul>
+      <p><strong>Next step:</strong> run the panel alongside standard tests in a ground bed-rest study, and fit the thresholds to the measured night-to-night noise.</p>
+    </article>
+  </section>
+
+  <!-- 8. Evidence drawer -->
+  <section id="evidence" class="evidence" aria-labelledby="evidence-title">
+    <details class="panel drawer">
+      <summary><h2 id="evidence-title" class="section-title">Evidence behind every number</h2><span class="muted" id="evidence-count">Sources and their checking status</span></summary>
+      <p class="muted">Each entry is marked verified (checked against the source text), secondary (taken from another citation) or assumption (a modelling choice).</p>
+      <ol id="evidence-list" class="evidence-list">
+        <li class="muted">The list is built from the evidence table when the page loads.</li>
+      </ol>
+    </details>
+  </section>
+
 </main>
+
+<!-- 9. Footer -->
+<footer class="footer">
+  <p><strong>Not a medical device.</strong> MyoTwin is concept software built for the 2026 NASA Space Apps Challenge. It does not diagnose or treat. All data shown are simulated.</p>
+  <p>Code, simulated data and text were produced with an SI tool (Claude) and reviewed by the team. The concept and all clinical judgement are the team's.</p>
+  <p>Licensed under the Apache License 2.0. No network requests; runs entirely in this page.</p>
+</footer>
+
+<script src="js/evidence.js"></script>
+<script src="js/model.js"></script>
+<script src="js/sim.js"></script>
+<script src="js/rules.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/phantom.js"></script>
+<script src="js/imaging.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>
