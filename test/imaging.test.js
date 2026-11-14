@@ -90,6 +90,14 @@ test('density: doubling the track count lowers noise by 0.6-0.82', () => {
   assert.ok(ratio > 0.6 && ratio < 0.82, String(ratio));
 });
 
+test('density: relative noise is momentumSpreadFactor x sqrt(1 / tracks per cell), factor 5', () => {
+  assert.equal(imaging.ASSUMPTIONS.find((a) => a.name === 'momentumSpreadFactor').value, 5);
+  const p = phantom.build({});
+  const n = rmsNoise(imaging.render('density', p, { tracksPerCm2: 2000, seed: 5 }), p);
+  const want = 5 * Math.sqrt(1 / (2000 * p.cellCm * p.cellCm));
+  assert.ok(Math.abs(n / want - 1) < 0.1, n + ' vs ' + want);
+});
+
 test('density: femur centre line is 10-30% denser than neighbouring thigh tissue', () => {
   const p = phantom.build({});
   const img = imaging.render('density', p, { tracksPerCm2: HUGE });

@@ -44,3 +44,18 @@ test('shape slider runs 0.25 to 4 in steps of 0.25; old and new address values l
   assert.equal(snap('4.5', gs), 1);
   assert.equal(snap('nope', gs), 1);
 });
+
+// The shielding what-if acts on the tracks only and runs 0.6 to 1.
+test('shielding slider runs 0.6 to 1 in steps of 0.1 and matches WHATIF.sh; the dose note is gone', () => {
+  const input = html.match(/<input type="range" id="shield"[^>]*>/)[0];
+  const attr = (k) => parseFloat(input.match(new RegExp(k + '="([^"]+)"'))[1]);
+  assert.deepStrictEqual([attr('min'), attr('max'), attr('step'), attr('value')], [0.6, 1, 0.1, 1]);
+  assert.match(html, /this setting does not change the dose/);
+  const app = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8');
+  const sh = new Function('return ' + app.match(/sh: (\{[^}]+\})/)[1])();
+  assert.deepStrictEqual(sh, { min: 0.6, max: 1, step: 0.1, def: 1 });
+  const snap = new Function('return ' + app.match(/function snap\(v, o\) \{[\s\S]*?\n  \}/)[0])();
+  assert.equal(snap('0.6', sh), 0.6);
+  assert.equal(snap('0.3', sh), 1);      // an old link below 0.6: the default and the notice
+  assert.doesNotMatch(app, /shieldNote|CRATER_SHIELD|behind about 8 cm/);
+});

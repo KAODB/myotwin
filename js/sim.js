@@ -50,16 +50,17 @@
     eimNoiseSdMax: a(0.2, 'fraction of value', 'Largest accepted what-if EIM noise (opts.eimNoiseSdFraction); other values are ignored.'),
     movement: a(0.2, '0..1', 'Mean movement index.'),
     sleepHoursPerNight: a(8, 'h', 'Hours of dose accumulation per sleep period. On Mars nights the replayed sol median dose rate is multiplied by it.'),
-    shieldingFactor: a(1, 'fraction', 'Default multiplier on dose and tracks for habitat shielding at the sleep station (1 = as measured by the instrument).'),
+    shieldingFactor: a(1, 'fraction', 'Default share of cosmic-ray tracks that still cross the sleeper behind habitat shielding (1 = none; the what-if control goes down to 0.6). Not applied to the dose: on quiet nights the two LRO CRaTER detector pairs at opposite ends of the telescope read within 2% of each other (V61), and NASA\'s guidance says adding more than 20 g/cm2 of shielding does not help against cosmic rays (V37).', ['V61', 'V37']),
+    trackQuietMaxRatio: a(1.15, 'x scenario median dose', 'A night counts as quiet for the density image when no solar particle event is on record and its measured dose is at most this multiple of the scenario median. On other nights solar protons are present: most stop inside the body or cross it with far lower momentum than cosmic rays, so that night\'s tracks are left out of the density image. A real system would gate on a proton monitor. Quiet nights in the replayed data reach 1.13.', ['V61', 'V62']),
     sleepWindowUtc: a('22:00-06:00', 'UTC', 'Fixed sleep window used to sum the hourly LRO CRaTER dose rates of a Moon night (eight hourly values; nights with fewer are dropped, none were in the two windows used). A real crew schedule would differ.', ['V61']),
-    craterPair: a('D5&6', 'detector pair', 'LRO CRaTER pair behind both tissue-equivalent plastic blocks (about 81 mm, from the instrument paper), used as the stand-in for someone inside a habitat. It is not a habitat measurement; D1&2, behind the thinnest shielding, is kept in the data file for comparison.', ['V61']),
+    craterPair: a('D5&6', 'detector pair', 'LRO CRaTER detector pair at the Moon-facing end of the telescope. On quiet nights it reads within 2% of the thinly shielded pair D1&2; on the night of 10 September 2017 it read about a quarter of it (43.5 against 166 mGy). It is a detector on an orbiter, not a habitat measurement; D1&2 is kept in the data file for comparison.', ['V61']),
     moonNightMapping: a({ S1: '2017-04-21', S3: '2017-08-21' }, 'first replayed night (UTC date)', 'Mission night k replays the CRaTER night starting k days after this date: S1 the quiet window 2017-04-21 to 2017-06-19, S3 the window that contains the September 2017 events, so that mission night 20 is the night starting 2017-09-10. The choice of windows is ours.', ['V61']),
     marsNightMapping: a('sols 13-108', 'Curiosity RAD sols', 'Mars night k replays the k-th of the 94 sols with data between sol 13 and sol 112 (sols 29-33 and 64 have no file and are skipped, not filled), using the median of detector B over that sol (dose in silicon). Sol length (24 h 40 min) is ignored.', ['V60']),
     speRule: a(16, 'h before the sleep window opens', 'A night is flagged as a solar particle event when a DONKI SEP record from a GOES instrument (near Earth, in geostationary orbit) starts between 16 h before the sleep window opens and the moment it closes (start inclusive, end exclusive). Records from STEREO A (far from the Earth-Moon system), from SOHO (at the Sun-Earth L1 point) and from a model are left out. Only S3 is checked; DONKI records were retrieved for September 2017 only, so nights whose look-up span leaves that month carry events = null (not checked), and S1 and S2 nights are never flagged.', ['V62']),
     hotSectorIndex: a(2, 'sector', 'Azimuth sector facing a thinner-shielded side.'),
     hotSectorExcess: a(0.3, 'fraction', 'Extra particle count in the hot sector versus the other sectors.'),
     dirCountsPerNight: a(100, 'counts', 'Total counts in the 8-sector direction histogram (a fixed sample, not scaled with dose).'),
-    verticalIntensity: a(0.2, 'per cm2 per s per sr', 'Vertical GCR intensity; inside the 0.12-0.40 range implied by V33 (1.5-5.0 per cm2 per s over 4 pi). Used for moon and mars alike (the Mars atmosphere is ignored).', ['V33']),
+    verticalIntensity: a(0.2, 'per cm2 per s per sr', 'Vertical GCR intensity; inside the 0.12-0.40 range implied by V33 (1.5-5.0 per cm2 per s over 4 pi). The same value is used for the Moon and Mars; on Mars about 20 g/cm2 of air removes roughly a quarter of the usable tracks (our estimate), which this version does not apply.', ['V33']),
     coneHalfAngleDeg: a(20, 'deg', 'Half-angle of the accepted track cone.'),
     s2TransitDays: a(180, 'days', 'Earth-Mars transit at g = 0 before the first surface night.'),
     s2TransitAdherence: a(0.9, 'fraction', 'Exercise adherence during the transit.'),
@@ -122,7 +123,7 @@
     S3: {
       id: 'S3', title: 'Moon base, solar particle event', env: 'moon', baselineNights: 14, transitDays: 0, sleepMeanH: 7.5,
       person: ASSUMPTIONS.personS3.value, seed: ASSUMPTIONS.scenarioSeeds.value.S3,
-      summary: 'Forty-five nights at a lunar base. Radiation replays LRO CRaTER, 21 Aug to 4 Oct 2017, with the solar particle events of September; night 20 is 10 Sep. The rest is simulated.',
+      summary: 'Forty-five nights at a lunar base. Radiation replays LRO CRaTER, 21 Aug to 4 Oct 2017, with the solar particle events of September; night 20 is 10 Sep. The rest is simulated. In a real event the crew would move to a storm shelter; the replay shows what a lightly shielded detector on an orbiter recorded.',
       rad: { dataset: 'lro-crater', window: 'event', checkSpe: true },
       phases: [{ days: 45, g: G.moon, exerciseAdherence: 1 }],
       planPhases: [{ days: 45, g: G.moon, exerciseAdherence: 1 }],
@@ -168,7 +169,7 @@
     return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
   }
 
-  // Measured, unshielded sleep-period dose and provenance for each surface night of a scenario.
+  // Measured sleep-period dose and provenance for each surface night of a scenario.
   function replay(sc, nights) {
     var H = 3600000, out = [];
     for (var k = 0; k < nights; k++) {
@@ -276,9 +277,10 @@
 
       var night = surf && measured ? measured[md] : null;
       var hasRad = !!night;
-      var factor = hasRad ? night.dose / usualDose : 1;
+      // Solar-event and raised-dose nights keep the usual cosmic-ray tracks and are flagged unusable.
+      var quiet = hasRad && !night.spe && night.dose <= A.trackQuietMaxRatio.value * usualDose;
       var rad = hasRad ? {
-        dose_uGy: round(night.dose * shield, 1),
+        dose_uGy: round(night.dose, 1),
         dir: sectorWeight.map(function (w, i) {
           var mean = A.dirCountsPerNight.value * w / weightSum;
           return Math.max(0, Math.round(mean + Math.sqrt(mean) * u.dir[i]));
@@ -299,7 +301,8 @@
         log: { exercise_done: u.exercise < adherence, note: ev.label || '' },
         _truth: {
           muscleChangePct: round(change, 3),
-          tracksPerCm2: hasRad ? Math.round(tracksBase * factor) : null
+          tracksPerCm2: hasRad ? Math.round(tracksBase * (quiet ? night.dose / usualDose : 1)) : null,
+          tracksUsable: hasRad ? quiet : null
         }
       });
     }
