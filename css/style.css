@@ -216,7 +216,7 @@ main { max-width: 1400px; margin: 0 auto; padding: var(--gap); display: grid; ga
   min-height: 200px;
 }
 /* --fig-h: height of the body figure; the phantom is 1:3 (64 x 192 cm). --hs-room: space for hotspot labels on its right. */
-.canvas-wrap { --fig-h: clamp(200px, calc(100vh - 470px), 380px); --hs-room: 96px; }
+.canvas-wrap { --fig-h: clamp(236px, calc(100vh - 470px), 380px); --hs-room: 96px; }
 .body-fig { position: relative; height: var(--fig-h); width: calc(var(--fig-h) / 3); margin-right: var(--hs-room); }
 #body-canvas {
   display: block; width: 100%; height: 100%;
@@ -506,7 +506,7 @@ body.mode-eldercare .space-only, body:not(.mode-eldercare) .home-only { display:
 body.mode-eldercare .card-value { font-size: clamp(1.8em, 2.6vw, 2.4em); }
 /* The home presentation reads at 19 px; the top bar and the figure keep the space sizes so the first screen still fits. */
 body.mode-eldercare .topbar { font-size: 16px; }
-body.mode-eldercare .canvas-wrap { --fig-h: clamp(200px, calc(100vh - 500px), 380px); }
+body.mode-eldercare .canvas-wrap { --fig-h: clamp(260px, calc(100vh - 500px), 380px); }
 body.mode-eldercare .chart { height: 320px; }
 body.mode-eldercare .ax-label, body.mode-eldercare .ax-title { font-size: 13.5px; }
 body.mode-eldercare .mk { stroke: #fff; }
