@@ -68,7 +68,7 @@ test('the page limits list has the same number of items as the SUBMISSION limits
   const n = (sec.match(/^\d+\. /gm) || []).length;
   const ol = html.match(/<ol class="limits-list">([\s\S]*?)<\/ol>/)[1];
   const items = ol.match(/<li[^>]*>[\s\S]*?<\/li>/g);
-  assert.strictEqual(n, 12);
+  assert.strictEqual(n, 13);
   assert.strictEqual(items.length, n);
   for (const li of items) assert.match(li, /<strong>Not accounted for:<\/strong>[\s\S]*<strong>Next step:<\/strong>/);
 });
@@ -86,4 +86,24 @@ test('no disclaimer words and no home presentation on the page', () => {
     assert.doesNotMatch(src, /mode-eldercare|isHome|HOME_|S4/, f);
   }
   assert.doesNotMatch(html, /data-mode|space-only|home-only|mode-eldercare|class="badges"|id="g-disclaimer"/);
+});
+
+// The morning check-in: its section sits between the night ruler and Plate II, with the controls
+// the page script drives, a line on the first screen and a link in the top bar.
+test('the morning check-in section, its controls, the first-screen line and the nav link exist', () => {
+  const rules = require('../js/rules.js');
+  const sec = html.match(/<section id="checkin" class="checkin reveal" aria-labelledby="checkin-title">([\s\S]*?)\n  <\/section>/);
+  assert.ok(sec, 'section #checkin');
+  assert.ok(html.indexOf('id="timeline"') < html.indexOf('id="checkin"') && html.indexOf('id="checkin"') < html.indexOf('id="checks"'));
+  for (const id of ['checkin-title', 'ci-temp', 'ci-temp-hint', 'ci-baseline', 'ci-clear', 'ci-status', 'ci-meaning', 'ci-actions', 'ci-decides', 'ci-rows', 'ci-method', 'ci-compare']) {
+    assert.match(sec[1], new RegExp('id="' + id + '"'), id);
+  }
+  assert.match(sec[1], /<input type="number" id="ci-temp" min="34" max="42" step="0.1" inputmode="decimal" autocomplete="off"/);
+  rules.CHECKIN.moods.forEach((w, i) => assert.match(sec[1], new RegExp('data-mood="' + (i + 1) + '" aria-pressed="false">' + w + '<'), w));
+  rules.CHECKIN.symptoms.forEach((x) => assert.match(sec[1], new RegExp('data-sym="' + x.letter + '" aria-pressed="false">' + x.label + '<'), x.label));
+  assert.strictEqual(rules.CHECKIN.tempMinC, 34);
+  assert.strictEqual(rules.CHECKIN.tempMaxC, 42);
+  assert.match(sec[1], /class="ci-result" aria-live="polite"/);
+  assert.match(html, /<p id="scenario-summary" class="deck"><\/p>\s*<p id="checkin-line" class="checkin-line">[\s\S]*?id="ci-open"/);
+  assert.match(html, /<a class="nav-link" href="#checkin" data-goto="checkin">Check-in<\/a>\s*<a class="nav-link" href="#checks"/);
 });

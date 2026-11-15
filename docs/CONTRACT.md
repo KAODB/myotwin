@@ -226,6 +226,23 @@ On a grey card `extra` holds whatever is known and null for the rest.
   windows exist, when the trend is not falling, or when the result would be under 1 day.
 - `engine.series(records, key) -> [{ missionDay, value }]`
   Convenience for charts. `key` is one of `eim`, `sleep`, `rr`, `hr`, `dose`.
+- `rules.CHECKIN` : the morning check-in as data: `moods` (five words, 1 to 5), `symptoms`
+  (`[{ id, letter, label, card }]` for legs `l`, not rested `r`, ill `i`), `tempMinC` 34 and `tempMaxC` 42,
+  and every sentence `engine.checkin` writes (meanings, actions, verdicts, summary parts, status words).
+  Thresholds: `checkinTempRiseC` (1.1 °C, V97), `checkinTempDropC` (1.1 °C, assumption),
+  `checkinBaselineTempC` (36.6 °C, assumption),
+  `checkinLowMoodAtMost` (2, assumption).
+- `engine.checkin(input, cards) -> { done, status, flags, temp, meaning, actions, decides, rows, summary }`
+  `input = { mood: 1..5 | null, tempC: number | null, symptoms: { legs, tired, ill } }`; `cards` is
+  `assess(...).cards` for the same night. `status` is `grey` (nothing answered), `amber` (any flag) or
+  `green`; there is no red tier for self-report. `flags` in priority order: `fever` (more than
+  `checkinTempRiseC` over the baseline, compared in whole tenths), `low` (more than
+  `checkinTempDropC` below it), `ill` (not with a fever), `mood`
+  (at most `checkinLowMoodAtMost`), `legs`, `tired`. `temp = { valueC, baselineC, riseC, raised, low } | null`.
+  A mood that is not an integer 1 to 5, or a temperature that is not a finite number, counts as not given.
+  `actions` are de-duplicated, at most 5. `rows` (empty when not done) are muscle, sleep, cardio,
+  radiation: `{ card, said, bunk, verdict }`, verdict one of `agree-clear`, `bunk-only`, `self-only`,
+  `agree-flag`, `no-bunk`, `cannot-feel` (radiation always). `summary` is one line for the first screen.
 
 ### phantom (`js/phantom.js`) and imaging (`js/imaging.js`)
 
@@ -272,6 +289,14 @@ shared and captured:
   source is not in the evidence list." The parser, `hashFor` and the per-scenario memory sit between
   the markers `BEGIN view-state helpers` and `END view-state helpers` in `js/app.js` and are tested
   in Node by `test/address.test.js`.
+- Morning check-in in the address, all optional and absent by default, written after the what-if
+  values and before `ev`: `mo` mood 1 to 5; `tc` temperature 34.0 to 42.0 °C with at most one decimal
+  (`/^\d{2}(\.\d)?$/`; the temperature field uses the same rule, and its state mirrors the field); `sy` the letters of what the person notices in the fixed order `l` (legs),
+  `r` (not rested), `i` (ill), without repeats (`l, r, i, lr, li, ri, lri`). For example
+  `#s=S2&d=62&layer=density&view=raw&card=cardio&mo=2&tc=37.9&sy=li`. An invalid, repeated or altered
+  value shows the notice. A check-in belongs to one morning: when `update()` moves to another night
+  (`d`) or scenario (`s`), `checkinReset` (view-state helpers) clears `mo`, `tc` and `sy`; what-if
+  changes keep them, and a link that carries `d` with check-in keys opens with them intact.
 - Within a page session each scenario remembers its own night, layer and view (memory only):
   switching to another scenario and back returns to them. The address stays the source of truth on
   load and for sharing.

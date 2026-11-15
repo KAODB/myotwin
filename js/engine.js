@@ -284,7 +284,81 @@
     });
   }
 
-  var api = { baseline: baseline, assess: assess, project: project, series: series };
+  // ---- morning check-in --------------------------------------------------------
+  // Judges what the crew member answered (mood 1 to 5, temperature in °C, three symptoms) against
+  // rules.CHECKIN and the check-in thresholds, and sets it beside `cards` (assess(...).cards of
+  // the same night). Temperatures are compared in whole tenths of a degree.
+  function checkin(input, cards) {
+    var C = rules.CHECKIN, words = rules.WORDING;
+    var sym = (input && input.symptoms) || {};
+    var mood = input && [1, 2, 3, 4, 5].indexOf(input.mood) >= 0 ? input.mood : null;
+    var tc = input && typeof input.tempC === 'number' && isFinite(input.tempC) ? input.tempC : null;
+    var done = mood !== null || tc !== null || !!(sym.legs || sym.tired || sym.ill);
+    var limit = t('checkinTempRiseC'), base = t('checkinBaselineTempC');
+    var temp = null;
+    if (tc !== null) {
+      var riseTenths = Math.round(tc * 10) - Math.round(base * 10);
+      temp = { valueC: tc, baselineC: base, riseC: riseTenths / 10, raised: riseTenths > Math.round(limit * 10),
+        low: -riseTenths > Math.round(t('checkinTempDropC') * 10) };
+    }
+    var fever = !!(temp && temp.raised), low = !!(temp && temp.low);
+    var flags = [];
+    if (fever) flags.push('fever');
+    if (low) flags.push('low');
+    if (sym.ill && !fever) flags.push('ill');
+    if (mood !== null && mood <= t('checkinLowMoodAtMost')) flags.push('mood');
+    if (sym.legs) flags.push('legs');
+    if (sym.tired) flags.push('tired');
+
+    var w = { medic: words.medic, base: f(base, 1), limit: f(limit, 1), rise: temp ? f(temp.riseC, 1) : '', drop: temp ? f(-temp.riseC, 1) : '',
+      t: temp ? f(temp.valueC, 1) : '', word: mood !== null ? C.moods[mood - 1].toLowerCase() : '' };
+    var byId = {};
+    (cards || []).forEach(function (c) { byId[c.id] = c.status; });
+    var flagged = function (id) { return byId[id] === 'amber' || byId[id] === 'red'; };
+
+    var meaning = C.meaning.notDone;
+    if (done && !flags.length) meaning = C.meaning.none;
+    if (flags.length) {
+      meaning = C.meaning[flags[0]];
+      if (flags[0] === 'ill' && temp && !temp.raised && !temp.low) meaning += C.meaning.illTempInRange;
+      if (flags.length > 1) meaning += C.meaning.alsoNoted + flags.slice(1).map(function (k) { return C.shortNames[k]; }).join(', ') + '.';
+    }
+
+    var A = C.actions, actions = [];
+    flags.forEach(function (k) {
+      if (k === 'fever') actions = actions.concat(A.fever);
+      if (k === 'low') actions = actions.concat(A.low);
+      if (k === 'ill') actions.push(temp ? A.illWithTemp : A.illNoTemp);
+      if (k === 'mood') actions = actions.concat(A.mood);
+      if (k === 'legs') actions.push(flagged('muscle') ? A.legsFlag : A.again);
+      if (k === 'tired') actions.push(flagged('sleep') ? A.tiredFlag : A.again);
+    });
+    if (done && !flags.length) actions = [A.none];
+    actions = actions.filter(function (a, i) { return actions.indexOf(a) === i; }).slice(0, 5)
+      .map(function (a) { return fill(a, w); });
+
+    var said = { muscle: !!sym.legs, sleep: !!sym.tired, cardio: !!sym.ill || fever, radiation: null };
+    var rows = !done ? [] : ['muscle', 'sleep', 'cardio', 'radiation'].map(function (id) {
+      var bunk = byId[id] || 'grey', s = said[id];
+      var verdict = id === 'radiation' ? 'cannot-feel' : bunk === 'grey' ? 'no-bunk' :
+        s ? (flagged(id) ? 'agree-flag' : 'self-only') : (flagged(id) ? 'bunk-only' : 'agree-clear');
+      return { card: id, said: s, bunk: bunk, verdict: verdict };
+    });
+
+    var parts = [], S = C.summary;
+    if (mood !== null) parts.push(fill(S.mood, w));
+    if (temp) parts.push(fill(S.temp, w) + (fever ? fill(S.raised, w) : low ? fill(S.low, w) : ''));
+    var labels = C.symptoms.filter(function (x) { return sym[x.id]; }).map(function (x) { return x.label.toLowerCase(); });
+    if (!labels.length && parts.length) labels = [S.none];
+
+    return {
+      done: done, status: !done ? 'grey' : flags.length ? 'amber' : 'green', flags: flags, temp: temp,
+      meaning: fill(meaning, w), actions: actions, decides: fill(C.decides, w), rows: rows,
+      summary: parts.concat(labels).join('; ')
+    };
+  }
+
+  var api = { baseline: baseline, assess: assess, project: project, series: series, checkin: checkin };
 
   ns.engine = api;
   if (inNode) module.exports = api;
