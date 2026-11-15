@@ -34,11 +34,18 @@ test('a second sentence follows as `more`, with its leading digit as a word', ()
 });
 
 test('a headline without a colon in its first sentence is one line', () => {
-  for (const h of ['All four checks are in your normal range.', 'No check has enough data tonight.',
-    'The checks with enough data are in your normal range. Not enough data: sleep, radiation.']) {
+  for (const h of ['Nothing to report tonight.', 'The brief appears here once the mission loads. It takes a moment.']) {
     assert.deepStrictEqual(P.splitHeadline(h), { whole: h });
   }
   assert.deepStrictEqual(P.splitHeadline(''), { whole: '' });
+});
+
+// Every headline the engine writes has a lead line and one emphasised line, so the first
+// screen is the same height whatever the night says.
+test('the all-clear and the not-enough-data headlines split like the others', () => {
+  assert.deepStrictEqual(P.splitHeadline('All four checks: in range.'), { lead: 'All four checks', em: 'In range.', more: '', size: 'm' });
+  assert.deepStrictEqual(P.splitHeadline('Not enough data yet: sleep, radiation.'), { lead: 'Not enough data yet', em: 'Sleep, radiation.', more: '', size: 's' });
+  assert.deepStrictEqual(P.splitHeadline('Not enough data yet: all four checks.'), { lead: 'Not enough data yet', em: 'All four checks.', more: '', size: 's' });
 });
 
 test('every headline the engine writes in the three scenarios splits into non-empty parts', () => {
@@ -47,7 +54,7 @@ test('every headline the engine writes in the three scenarios splits into non-em
     g.records.forEach((r, i) => {
       const h = engine.assess(g.records, i, { expectedChangePct: g.plan.expectedChangePct }).headline;
       const p = P.splitHeadline(h);
-      if (p.whole != null) { assert.strictEqual(p.whole, h); return; }
+      assert.strictEqual(p.whole, undefined, s + ' night ' + r.missionDay + ' has a one-line headline: ' + h);
       assert.ok(p.lead && p.em, s + ' ' + h);
       assert.match(p.em, /^[A-Z]/);
       assert.doesNotMatch(p.lead + p.more, /^\d|\. \d/, 'digits become words: ' + h);

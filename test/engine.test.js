@@ -188,7 +188,7 @@ test('overall and headline: all green', () => {
   const a = assessDay(() => ({}));
   assert.deepStrictEqual(a.cards.map((c) => c.id), ['muscle', 'sleep', 'cardio', 'radiation']);
   assert.equal(a.overall, 'green');
-  assert.equal(a.headline, 'All four checks are in your normal range.');
+  assert.equal(a.headline, 'All four checks: in range.');
   assert.equal(a.missionDay, 20);
 });
 
