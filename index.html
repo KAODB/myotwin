@@ -45,6 +45,7 @@
         <option value="">Loading scenarios</option>
       </select>
     </label>
+    <a class="nav-link" href="#checkin" data-goto="checkin">Check-in</a>
     <a class="nav-link" href="#checks" data-goto="checks">The checks</a>
     <a class="nav-link" href="#how" data-goto="how">Method</a>
     <a class="nav-link" href="#evidence" data-goto="evidence">Sources</a>
@@ -60,6 +61,7 @@
       <p id="headline" class="headline" aria-live="polite">The brief appears here once the simulated mission loads.</p>
       <p id="notice" class="notice" role="status" hidden>This link could not be opened; showing the default view.</p>
       <p id="scenario-summary" class="deck"></p>
+      <p id="checkin-line" class="checkin-line">Morning check-in: <button type="button" class="seg" id="ci-open">three questions, about 30 seconds</button>.</p>
       <noscript><p class="notice">MyoTwin needs JavaScript to build the brief. Nothing is sent anywhere; it runs entirely in this page.</p></noscript>
       <p id="image-caption" class="fig-note">
         <b>Fig. 1</b>
@@ -129,6 +131,48 @@
       </label>
     </div>
     <p class="day-readout"><output id="day-out" for="day">Night &#8212;</output> <span id="date-out" class="label">no date</span></p>
+  </section>
+
+  <!-- Morning check-in: three questions answered by the crew member, set beside the bunk's readings. -->
+  <section id="checkin" class="checkin reveal" aria-labelledby="checkin-title">
+    <h2 id="checkin-title" class="label">Morning check-in &nbsp;·&nbsp; three questions, about 30 seconds</h2>
+    <div class="checkin-cols">
+      <div class="ci-ask">
+        <div class="ci-q">
+          <p class="label">How do you feel this morning?</p>
+          <p class="ci-row" role="group" aria-label="How do you feel this morning?"><button type="button" class="seg" data-mood="1" aria-pressed="false">Very low</button>, <button type="button" class="seg" data-mood="2" aria-pressed="false">Low</button>, <button type="button" class="seg" data-mood="3" aria-pressed="false">Even</button>, <button type="button" class="seg" data-mood="4" aria-pressed="false">Good</button>, <button type="button" class="seg" data-mood="5" aria-pressed="false">Very good</button>.</p>
+        </div>
+        <div class="ci-q">
+          <label class="label" for="ci-temp">Your temperature</label>
+          <p class="ci-temp-row"><input type="number" id="ci-temp" min="34" max="42" step="0.1" inputmode="decimal" autocomplete="off" placeholder="00.0" aria-describedby="ci-baseline ci-temp-hint"> <span>°C</span></p>
+          <p id="ci-baseline" class="ci-hint quiet">Your own baseline is 36.6 °C.</p>
+          <p id="ci-temp-hint" class="ci-hint ci-error" hidden>Enter a temperature from 34.0 to 42.0 °C, with one decimal at most.</p>
+        </div>
+        <div class="ci-q">
+          <p class="label">Anything you notice?</p>
+          <p class="ci-row" role="group" aria-label="Anything you notice?"><button type="button" class="seg" data-sym="l" aria-pressed="false">Legs weaker or sore</button>, <button type="button" class="seg" data-sym="r" aria-pressed="false">Not rested</button>, <button type="button" class="seg" data-sym="i" aria-pressed="false">Feeling ill</button>.</p>
+        </div>
+        <button type="button" id="ci-clear" class="text-btn" disabled>Clear the check-in</button>
+      </div>
+      <div class="ci-result" aria-live="polite">
+        <p id="ci-status" class="g-status">Shown once the page loads.</p>
+        <p id="ci-meaning" class="statement">Three questions before breakfast: how you feel, your temperature, and anything you notice.</p>
+        <div id="ci-next" hidden>
+          <h3 class="label">What to do now</h3>
+          <ol id="ci-actions" class="actions"></ol>
+          <h3 class="label">Who decides</h3>
+          <p id="ci-decides"></p>
+        </div>
+      </div>
+    </div>
+    <div id="ci-compare" class="ci-compare" hidden>
+      <h3 class="label">Beside the bunk's readings</h3>
+      <table class="origin-table ci-table">
+        <thead><tr><th scope="col">Check</th><th scope="col">You said</th><th scope="col">The bunk measured</th><th scope="col">Together</th></tr></thead>
+        <tbody id="ci-rows"></tbody>
+      </table>
+    </div>
+    <p id="ci-method" class="fig-note"></p>
   </section>
 
   <!-- Plate II: the selected check -->
@@ -299,7 +343,7 @@
 
     <article class="limits" id="limits" tabindex="-1" aria-labelledby="limits-title">
       <h3 id="limits-title" class="sub-title">What this version does not account for, and the next step</h3>
-      <!-- The same twelve items, in the same order, as "What this version does not account for" in docs/SUBMISSION.md. -->
+      <!-- The same thirteen items, in the same order, as "What this version does not account for" in docs/SUBMISSION.md. -->
       <ol class="limits-list">
         <li><p><strong>Not accounted for:</strong> The momentum of each cosmic-ray particle. Deflection depends on momentum as much as on thickness, and momenta span orders of magnitude.</p><p><strong>Next step:</strong> Measure a reference block beside the sleeper every night, then add a layer that measures momentum.</p></li>
         <li><p><strong>Not accounted for:</strong> Movement during the night and the tails from nuclear interactions. We expect that the statistics support trends over large regions and several weeks, not small features (expected, not computed).</p><p><strong>Next step:</strong> Sort tracks by posture using the pressure map, and run a particle-transport simulation.</p></li>
@@ -312,7 +356,8 @@
         <li><p><strong>Not accounted for:</strong> Radiation. The card shows absorbed dose (in silicon on Mars, water-corrected at the Moon), not effective dose, and neutrons are not measured. The Moon nights replay a lightly shielded detector on an orbiter; behind thick habitat shielding a crew would receive much less from a solar particle event.</p><p><strong>Next step:</strong> Run the measured proton spectrum through a validated transport model of the habitat, and add a neutron channel.</p></li>
         <li><p><strong>Not accounted for:</strong> Detection accuracy. The simulated nights and the plan come from the same model, so this page shows the workflow, not how well a real decline would be caught.</p><p><strong>Next step:</strong> Test the rules on recorded bed-rest data.</p></li>
         <li><p><strong>Not accounted for:</strong> The transit. In weightlessness the sleeper does not rest on the panel, so MyoTwin starts at arrival.</p><p><strong>Next step:</strong> Pair it with a worn sensor for the transit.</p></li>
-        <li><p><strong>Not accounted for:</strong> Mood, air, noise and light are not read.</p><p><strong>Next step:</strong> Show the habitat's environmental sensors beside the brief.</p></li>
+        <li><p><strong>Not accounted for:</strong> Air, noise and light are not read.</p><p><strong>Next step:</strong> Show the habitat's environmental sensors beside the brief.</p></li>
+        <li><p><strong>Not accounted for:</strong> The morning check-in. One question about mood is not a tested scale, the temperature baseline is assumed, and the 1.1 °C step comes from care homes on Earth. Temperature at rest has not been measured in partial gravity.</p><p><strong>Next step:</strong> Learn each person's baseline from their first two weeks of check-ins, and try the questions in an analogue mission.</p></li>
       </ol>
     </article>
   </section>

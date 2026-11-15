@@ -50,7 +50,15 @@
   // Parse a view from the address. Any value that is unknown, repeated, rejected or changed sets
   // `rejected`, so the page can say that the link could not be opened as written. A valid `mode`
   // from an older link is accepted and ignored. An unknown scenario opens the default view.
-  var HASH_KEYS = ['s', 'd', 'layer', 'view', 'mode', 'card', 'ex', 'gs', 'sh', 'nz', 'ev'];
+  var HASH_KEYS = ['s', 'd', 'layer', 'view', 'mode', 'card', 'ex', 'gs', 'sh', 'nz', 'mo', 'tc', 'sy', 'ev'];
+  // Morning check-in: mood 1 to 5, temperature 34.0 to 42.0 °C (one decimal at most), and what
+  // the person notices as the letters l (legs), r (not rested), i (ill) in that order.
+  var SY_VALUES = ['l', 'r', 'i', 'lr', 'li', 'ri', 'lri'];
+  function parseTemp(v) {
+    if (!/^\d{2}(\.\d)?$/.test(v)) return null;
+    var n = parseFloat(v);
+    return n >= 34 && n <= 42 ? Math.round(n * 10) / 10 : null;
+  }
   function parseHash(hash) {
     var q = Object.create(null), bad = false;
     hash.replace(/^#/, '').split('&').forEach(function (kv) {
@@ -73,8 +81,13 @@
       card: check('card', pick(q.card, CARD_IDS, 'muscle')),
       ex: checkNum('ex', snap(q.ex, WHATIF.ex)), gs: checkNum('gs', snap(q.gs, WHATIF.gs)),
       sh: checkNum('sh', snap(q.sh, WHATIF.sh)), nz: checkNum('nz', snap(q.nz, WHATIF.nz)),
+      mo: check('mo', /^[1-5]$/.test(q.mo || '') ? q.mo : null),
+      tc: 'tc' in q ? parseTemp(q.tc) : null,
+      sy: check('sy', SY_VALUES.indexOf(q.sy) >= 0 ? q.sy : null) || '',
       ev: check('ev', /^V\d+$/.test(q.ev || '') ? q.ev : null)
     };
+    if (st.mo != null) st.mo = parseInt(st.mo, 10);
+    if ('tc' in q && st.tc == null) bad = true;
     st.rejected = bad;
     return st;
   }
@@ -84,8 +97,18 @@
     Object.keys(WHATIF).forEach(function (k) {
       if (st[k] !== WHATIF[k].def && st[k] != null) parts.push(k + '=' + st[k]);
     });
+    if (st.mo != null) parts.push('mo=' + st.mo);
+    if (st.tc != null) parts.push('tc=' + st.tc);
+    if (st.sy) parts.push('sy=' + st.sy);
     if (st.ev) parts.push('ev=' + st.ev);
     return '#' + parts.join('&');
+  }
+
+  // A check-in belongs to one morning: moving to another night or scenario clears it.
+  // Returns the changes that clear it, or {} when `changes` keep the same morning.
+  function checkinReset(st, changes) {
+    var moved = (has(changes, 'd') && changes.d !== st.d) || (has(changes, 's') && changes.s !== st.s);
+    return moved ? { mo: null, tc: null, sy: '' } : {};
   }
 
   // Each scenario keeps its own night, layer and view for the page session (memory only; the
@@ -990,6 +1013,112 @@
     }
   }
 
+  // ---- render: morning check-in ------------------------------------------------------
+  var CI = rules.CHECKIN;
+  function checkinResult() {
+    var sym = {};
+    CI.symptoms.forEach(function (x) { sym[x.id] = state.sy.indexOf(x.letter) >= 0; });
+    return engine.checkin({ mood: state.mo, tempC: state.tc, symptoms: sym }, assessment().cards);
+  }
+  function fmtTemp(c) { return c.toFixed(1) + ' °C'; }
+  function clearTempField() { $('ci-temp').value = ''; setTempInvalid(false); }
+  function setTempInvalid(on) {
+    if (on) $('ci-temp').setAttribute('aria-invalid', 'true'); else $('ci-temp').removeAttribute('aria-invalid');
+    $('ci-temp-hint').hidden = !on;
+  }
+
+  function renderCheckin() {
+    var r = checkinResult();
+    pressed('[data-mood]', 'mood', state.mo == null ? '' : String(state.mo));
+    Array.prototype.forEach.call(document.querySelectorAll('[data-sym]'), function (b) {
+      b.setAttribute('aria-pressed', String(state.sy.indexOf(b.dataset.sym) >= 0));
+    });
+    // The field is never rewritten while the person types in it.
+    var input = $('ci-temp'), fieldTc = parseTemp(input.value);
+    if (document.activeElement !== input && fieldTc !== state.tc && !(fieldTc == null && state.tc == null)) {
+      input.value = state.tc == null ? '' : state.tc.toFixed(1);
+      setTempInvalid(false);
+    }
+    $('ci-baseline').textContent = 'Your own baseline is ' + fmtTemp(T.checkinBaselineTempC.value) + '.';
+    $('ci-clear').disabled = !r.done;
+
+    var st = $('ci-status');
+    clear(st);
+    var wrap = el('span', 'status st-' + r.status);
+    wrap.appendChild(charts.statusIconEl(r.status, 16));
+    wrap.appendChild(el('span', 'status-word', CI.statusWords[r.status]));
+    st.appendChild(wrap);
+    $('ci-meaning').textContent = r.meaning;
+    $('ci-meaning').classList.toggle('statement-long', r.meaning.length > 150);
+    $('ci-next').hidden = !r.done;
+    var ol = $('ci-actions');
+    clear(ol);
+    r.actions.forEach(function (a) { ol.appendChild(el('li', null, a)); });
+    $('ci-decides').textContent = r.decides + '.';
+
+    $('ci-compare').hidden = !r.done;
+    var tb = $('ci-rows');
+    clear(tb);
+    r.rows.forEach(function (row) {
+      var tr = el('tr'), th = el('th'), c = card(row.card);
+      th.scope = 'row';
+      var b = el('button', 'seg ci-card', CARD_NAMES[row.card]);
+      b.type = 'button';
+      b.dataset.card = row.card;
+      th.appendChild(b);
+      tr.appendChild(th);
+      var said = '\u2013';
+      if (row.said !== null) {
+        var sx = CI.symptoms.filter(function (x) { return x.card === row.card; })[0];
+        var parts = [];
+        if (state.sy.indexOf(sx.letter) >= 0) parts.push(sx.label);
+        if (row.card === 'cardio' && r.temp && r.temp.raised) parts.push(fmtTemp(r.temp.valueC));
+        said = parts.length ? parts.join('; ') : 'Nothing noticed';
+      }
+      tr.appendChild(el('td', null, said));
+      var L = noteLines(c);
+      tr.appendChild(el('td', null, row.bunk === 'grey' ? charts.STATUS.grey.word : charts.STATUS[row.bunk].word + ': ' + L.num + ' ' + L.unit));
+      var td = el('td', null, CI.verdicts[row.verdict]);
+      if (row.card === 'radiation') withLinks(td, '', ['V56']);
+      tr.appendChild(td);
+      tb.appendChild(tr);
+    });
+
+    var m = $('ci-method');
+    clear(m);
+    withLinks(m, 'The reading is compared with your own baseline. An Earth cut-off would mislead: on the space station, core temperature at rest rose by about ' +
+      Math.round(evidence.value('V98', 'restingRiseC')) + ' °C over the first ' + evidence.value('V98', 'monthsToDevelop') + ' months.', ['V98']);
+    withLinks(m, ' The ' + T.checkinTempRiseC.value.toFixed(1) + ' °C step is the rule used for older adults in long-term care, whose fevers often stay under the usual cut-offs.', ['V97']);
+    withLinks(m, ' Crew in a ' + evidence.value('V99', 'missionDays') + '-day Mars simulation rated themselves between two words, such as happy and unhappy. ' +
+      'The five-word mood question is a simpler form of that.', ['V99']);
+    withLinks(m, ' NASA encourages astronauts to keep a regular journal.', ['V52']);
+
+    // One line on the first screen.
+    var line = $('checkin-line'), open = el('button', r.done ? 'seg' : 'seg ci-cta', !r.done ? 'three questions, about 30 seconds' : r.status === 'amber' ? 'What it means' : 'Change');
+    open.type = 'button';
+    open.id = 'ci-open';
+    clear(line);
+    if (!r.done) {
+      line.appendChild(document.createTextNode('Morning check-in: '));
+    } else {
+      if (r.status === 'amber') {
+        var mk = el('span', 'status st-amber');
+        mk.appendChild(charts.statusIconEl('amber', 14));
+        mk.appendChild(el('span', 'visually-hidden', charts.STATUS.amber.word + ': '));
+        line.appendChild(mk);
+        line.appendChild(document.createTextNode(' '));
+      }
+      line.appendChild(document.createTextNode('You said: ' + r.summary + '. '));
+    }
+    line.appendChild(open);
+    line.appendChild(document.createTextNode('.'));
+  }
+
+  function openCheckin() {
+    $('checkin').scrollIntoView({ block: 'start', behavior: reducedMotion ? 'auto' : 'smooth' });
+    document.querySelector('[data-mood="1"]').focus({ preventScroll: true });
+  }
+
   // ---- render: five hazards ------------------------------------------------------------
   function renderHazards() {
     var ul = $('hazard-list');
@@ -1159,6 +1288,7 @@
     renderTimeline();
     renderTrend();
     renderGuidance();
+    renderCheckin();
     renderHazards();
     renderWhatIf();
     renderGravityCheck();
@@ -1198,6 +1328,9 @@
   }
 
   function update(changes) {
+    var reset = checkinReset(state, changes || {});
+    Object.keys(reset).forEach(function (k) { state[k] = reset[k]; });
+    if (has(reset, 'tc')) clearTempField();
     Object.keys(changes || {}).forEach(function (k) { state[k] = changes[k]; });
     if (!has(changes || {}, 'ev')) state.ev = null;
     $('notice').hidden = true;
@@ -1236,8 +1369,21 @@
       else if (b.dataset.view) update({ view: b.dataset.view });
       else if (b.dataset.card) {
         update({ card: b.dataset.card });
-        if (b.classList.contains('hs') || b.classList.contains('card')) revealGuidance();
+        if (b.classList.contains('hs') || b.classList.contains('card') || b.classList.contains('ci-card')) revealGuidance();
+        // The comparison table is rebuilt on render: keep the focus on the same check's new button.
+        if (b.classList.contains('ci-card')) document.querySelector('#ci-rows [data-card="' + b.dataset.card + '"]').focus({ preventScroll: true });
       }
+      else if (b.dataset.mood) update({ mo: state.mo === +b.dataset.mood ? null : +b.dataset.mood });
+      else if (b.dataset.sym) {
+        var ch = b.dataset.sym;
+        update({ sy: 'lri'.split('').filter(function (x) { return (x === ch) !== (state.sy.indexOf(x) >= 0); }).join('') });
+      }
+      else if (b.id === 'ci-clear') {
+        clearTempField();
+        update({ mo: null, tc: null, sy: '' });
+        document.querySelector('[data-mood="1"]').focus();       // the button is now disabled
+      }
+      else if (b.id === 'ci-open') openCheckin();
       else if (b.id === 'play') setPlaying(!playTimer);
       else if (b.id === 'whatif-reset') update({ ex: WHATIF.ex.def, gs: WHATIF.gs.def, sh: WHATIF.sh.def, nz: WHATIF.nz.def });
     });
@@ -1287,10 +1433,24 @@
     $('shape').addEventListener('input', function (e) { update({ gs: snap(e.target.value, WHATIF.gs) }); });
     $('shield').addEventListener('input', function (e) { update({ sh: snap(e.target.value, WHATIF.sh) }); });
     $('noise').addEventListener('input', function (e) { update({ nz: snap(e.target.value, WHATIF.nz) }); });
+    // Temperature: the state always mirrors the field, with the address rule (parseTemp). An
+    // unfinished entry ("38.", which the field reports as empty and bad) leaves the state alone
+    // while typing; anything else that is not a valid temperature clears it. Leaving the field
+    // shows the hint for a non-empty invalid entry.
+    function tempFromField(e, finished) {
+      var v = e.target.value, bad = e.target.validity.badInput;
+      if (v === '' && bad && !finished) return;
+      var tc = v === '' ? null : parseTemp(v);
+      if (tc != null || (v === '' && !bad)) setTempInvalid(false);
+      else if (finished) setTempInvalid(true);
+      if (tc !== state.tc) update({ tc: tc });
+    }
+    $('ci-temp').addEventListener('input', function (e) { tempFromField(e, false); });
+    $('ci-temp').addEventListener('change', function (e) { tempFromField(e, true); });
     document.addEventListener('keydown', function (e) {
       if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
       if (e.altKey || e.ctrlKey || e.metaKey) return;
-      if (e.target.closest('input, select, textarea, [contenteditable]')) return;
+      if (e.target.closest('input, select, textarea, [contenteditable], #checkin')) return;
       e.preventDefault();
       setPlaying(false);
       stepDay(e.key === 'ArrowRight' ? 1 : -1);

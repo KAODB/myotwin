@@ -45,7 +45,12 @@
     // Projection
     projectionWeeks: assumption(4, 'weeks', 'Most weekly medians used for the trend line.'),
     projectionMinWeeks: assumption(3, 'weeks', 'Fewest weekly medians needed for a trend line.'),
-    projectionMaxDays: assumption(365, 'days', 'Projections further out than this are not shown.')
+    projectionMaxDays: assumption(365, 'days', 'Projections further out than this are not shown.'),
+    // Morning check-in
+    checkinTempRiseC: fromEvidence('V97', 'riseOverBaselineC', '°C', 'A rise of more than this over the person\'s own baseline counts as fever in the guideline for older adults in long-term care (V97). Using it for a crew is this project\'s adaptation.'),
+    checkinTempDropC: assumption(1.1, '°C', 'A reading more than this below the person\'s own baseline is flagged for a repeat measurement. Mirrored from the rise; no source sets it.'),
+    checkinBaselineTempC: assumption(36.6, '°C', 'The usual morning temperature of the crew member shown. A flight system would take the median of the person\'s own earlier check-ins.'),
+    checkinLowMoodAtMost: assumption(2, 'of 5', 'Mood ratings of 1 or 2 out of 5 count as low.')
   };
 
   var WORDING = { clinician: 'flight surgeon', medic: 'crew medical officer', exerciseLog: 'resistance-exercise log', strengthCheck: 'a strength test against the 80% of baseline standard' };
@@ -65,8 +70,8 @@
     },
     cardio: {
       green: { meaning: 'Night-time heart rate and breathing rate are within your own normal range.', actions: ['No change needed.'] },
-      amber: { meaning: 'Night-time heart rate or breathing rate is above your own normal range.', actions: ['Take your temperature and note any symptoms.', "Watch tonight's reading."] },
-      amberSustained: { meaning: 'Night-time heart rate and breathing rate have both been above your own normal range for three nights. This can be an early sign of illness.', actions: ['Take your temperature and note any symptoms.', 'Tell the {medic} today.'] },
+      amber: { meaning: 'Night-time heart rate or breathing rate is above your own normal range.', actions: ['Take your temperature and note any symptoms in the morning check-in.', "Watch tonight's reading."] },
+      amberSustained: { meaning: 'Night-time heart rate and breathing rate have both been above your own normal range for three nights. This can be an early sign of illness.', actions: ['Take your temperature and note any symptoms in the morning check-in.', 'Tell the {medic} today.'] },
       grey: { meaning: 'Not enough radar data.', actions: ['Check the radar unit.'] }
     },
     radiation: {
@@ -165,7 +170,7 @@
   var HAZARDS = [
     { name: HAZARD_NAMES[0], coverage: 'partly', text: 'Nightly dose and arrival direction at the bunk, from charged particles. Neutrons are not measured in this version.',
       fact: { text: "NASA: astronauts cannot see or feel space radiation, and NASA continuously monitors space radiation and astronauts' exposure.", sourceIds: ['V56'] } },
-    { name: HAZARD_NAMES[1], coverage: 'partly', text: 'Sleep is tracked every night. Mood and team factors are not.',
+    { name: HAZARD_NAMES[1], coverage: 'partly', text: 'Sleep is tracked every night, and the morning check-in asks about mood. Team factors are not tracked.',
       fact: { text: 'NASA is developing ways to monitor behavioural health; its scientists use journaling as one tool to assess mental and emotional states.', sourceIds: ['V55'] },
       // Verbatim from NASA's page on behavioural conditions (V52).
       quote: { text: evidence.value('V52', 'says'), sourceIds: ['V52'] } },
@@ -177,7 +182,55 @@
     { name: HAZARD_NAMES[4], coverage: 'not covered', text: "Air, noise, light and microbes are not read. Next step: show the habitat's environmental sensors beside the brief." }
   ];
 
-  var api = { THRESHOLDS: THRESHOLDS, WORDING: WORDING, TEXT: TEXT, COUNTERMEASURES: COUNTERMEASURES, CONTEXT: CONTEXT, NASA: NASA, MISSIONS: MISSIONS, HAZARDS: HAZARDS };
+  // The morning check-in: what the crew member answers and every sentence js/engine.js checkin()
+  // writes from it. {medic}, {rise}, {base}, {limit}, {word} and {t} are filled by the engine.
+  var CHECKIN = {
+    moods: ['Very low', 'Low', 'Even', 'Good', 'Very good'],
+    symptoms: [
+      { id: 'legs', letter: 'l', label: 'Legs weaker or sore', card: 'muscle' },
+      { id: 'tired', letter: 'r', label: 'Not rested', card: 'sleep' },
+      { id: 'ill', letter: 'i', label: 'Feeling ill', card: 'cardio' }
+    ],
+    tempMinC: 34,
+    tempMaxC: 42,
+    statusWords: { grey: 'Not done yet', green: 'In range', amber: 'Watch' },
+    meaning: {
+      notDone: 'Three questions before breakfast: how you feel, your temperature, and anything you notice.',
+      none: 'Nothing in your check-in needs action today.',
+      fever: 'Your temperature is {rise} °C above your own baseline of {base} °C. In care homes on Earth, a rise of more than {limit} °C over a person\'s own baseline counts as fever.',
+      low: 'Your temperature is {drop} °C below your own baseline of {base} °C.',
+      ill: 'You feel ill this morning.',
+      illTempInRange: ' Your temperature is within {limit} °C of your own baseline.',
+      mood: 'You rated your mood {word} this morning.',
+      legs: 'Your legs feel weaker or sore this morning.',
+      tired: 'You did not feel rested this morning.',
+      alsoNoted: ' Also noted: '
+    },
+    shortNames: { low: 'low temperature', ill: 'feeling ill', mood: 'low mood', legs: 'legs weaker or sore', tired: 'not rested' },
+    actions: {
+      fever: ['Tell the {medic} today.', 'Take your temperature again this evening.'],
+      low: ['Take your temperature again.', 'Tell the {medic} if it is still low.'],
+      illNoTemp: 'Take your temperature and enter it here.',
+      illWithTemp: 'Tell the {medic} if you still feel ill this evening.',
+      mood: ['Write a few lines in your journal. NASA encourages a regular journal as self-care.', 'Tell the {medic} if your mood is still low tomorrow.'],
+      legsFlag: 'Do the muscle check\'s actions today.',
+      tiredFlag: 'Do the sleep check\'s actions today.',
+      again: 'Check in again tomorrow.',
+      none: 'No change needed.'
+    },
+    decides: 'You and the {medic}',
+    verdicts: {
+      'agree-clear': 'Agree.',
+      'bunk-only': 'The bunk sees a change you do not feel. Follow this check.',
+      'self-only': 'You notice it and the bunk does not show it. Your answer still counts.',
+      'agree-flag': 'Both agree. Do this check\'s actions today.',
+      'no-bunk': 'No bunk reading to compare with.',
+      'cannot-feel': 'Radiation cannot be felt. Only the bunk can tell you.'
+    },
+    summary: { mood: 'mood {word}', temp: '{t} °C', raised: ' ({rise} °C above your baseline)', low: ' ({drop} °C below your baseline)', none: 'nothing else' }
+  };
+
+  var api = { THRESHOLDS: THRESHOLDS, WORDING: WORDING, TEXT: TEXT, COUNTERMEASURES: COUNTERMEASURES, CONTEXT: CONTEXT, NASA: NASA, MISSIONS: MISSIONS, HAZARDS: HAZARDS, CHECKIN: CHECKIN };
 
   ns.rules = api;
   if (inNode) module.exports = api;

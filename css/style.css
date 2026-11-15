@@ -134,6 +134,8 @@ button, input, select { font: inherit; color: inherit; }
 .headline-long { font-size: clamp(30px, 2.8vw, 42px); line-height: 1.1; }
 .notice { margin: -12px 0 18px; color: var(--blue); font-style: italic; }
 .deck { color: var(--quiet); font-size: 20px; max-width: 17em; }
+.checkin-line { margin-top: 14px; color: var(--quiet); font-size: 18px; max-width: 22em; }
+.checkin-line .st-icon { width: 14px; height: 14px; vertical-align: -1px; }
 .fig-note { margin-top: 30px; font-style: italic; color: var(--quiet); font-size: 16.5px; line-height: 1.5; }
 .fig-note b { font-style: normal; font-weight: 500; color: var(--ink); letter-spacing: 0.04em; margin-right: 4px; }
 .switches { display: block; margin-top: 8px; font-style: normal; }
@@ -241,7 +243,7 @@ button, input, select { font: inherit; color: inherit; }
 #day-out { font-family: var(--font-display); font-weight: 500; font-size: 30px; line-height: 1; }
 
 /* ---- sections below the plate ----------------------------------------------- */
-.plate-two, .whatif, .how, .measured, .evidence {
+.checkin, .plate-two, .whatif, .how, .measured, .evidence {
   max-width: 1440px; margin: 0 auto; padding: 88px var(--gutter) 0;
 }
 .section-title { font-family: var(--font-display); font-weight: 500; font-size: 44px; line-height: 1.05; letter-spacing: -0.01em; margin-bottom: 14px; }
@@ -255,7 +257,39 @@ button, input, select { font: inherit; color: inherit; }
 .text-btn:disabled, .seg:disabled, input:disabled { cursor: not-allowed; opacity: 0.55; }
 
 /* ---- Plate II: the selected check ------------------------------------------- */
-.plate-two { border-top: 1px solid var(--rule); margin-top: 72px; }
+.checkin, .plate-two { border-top: 1px solid var(--rule); margin-top: 72px; }
+
+/* ---- morning check-in ------------------------------------------------------- */
+.checkin-cols { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 72px; align-items: start; margin-top: 30px; }
+.ci-q + .ci-q { margin-top: 26px; }
+.ci-row { margin-top: 4px; }
+.ci-temp-row { display: flex; align-items: baseline; gap: 8px; font-family: var(--font-display); font-weight: 500; font-size: 34px; line-height: 1.1; }
+#ci-temp {
+  width: 2.3em; padding: 0 0 2px; background: transparent; color: var(--ink); border: 0; border-bottom: 1px solid var(--rule-strong); border-radius: 0;
+  font-family: var(--font-display); font-weight: 500; font-size: 34px; line-height: 1.1; -moz-appearance: textfield; appearance: textfield;
+}
+#ci-temp::-webkit-inner-spin-button, #ci-temp::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+#ci-temp::placeholder { color: var(--quiet); opacity: 1; }
+#ci-temp:focus { border-bottom-color: var(--blue); }
+#ci-temp[aria-invalid="true"] { border-bottom-style: dashed; border-bottom-color: var(--blue); }
+.ci-hint { margin-top: 4px; font-size: 16.5px; }
+.ci-error { color: var(--blue); font-style: italic; }
+#ci-clear { margin-top: 30px; }
+.ci-result .statement { margin-bottom: 8px; }
+.ci-result h3 { margin: 26px 0 8px; }
+.ci-compare { margin-top: 56px; }
+.ci-compare > .label { margin-bottom: 10px; }
+/* .origin-table.ci-table: these follow the origin table's own rules, which come later in this file. */
+.origin-table.ci-table { table-layout: fixed; }
+.origin-table.ci-table thead th:nth-child(1) { width: 19%; }
+.origin-table.ci-table thead th:nth-child(2) { width: 22%; }
+.origin-table.ci-table thead th:nth-child(3) { width: 28%; }
+.origin-table.ci-table tbody th { font-family: var(--font-text); font-style: normal; font-weight: 400; font-size: 17.5px; width: auto; white-space: nowrap; }
+.origin-table.ci-table td:nth-child(2) { color: var(--ink); width: auto; }
+.origin-table.ci-table td:nth-child(4) { color: var(--quiet); }
+.ci-card { color: var(--ink); text-align: left; }
+.checkin-line .ci-cta { color: var(--ink); text-decoration-color: var(--blue); }
+.checkin > .fig-note { max-width: 52em; }
 .tabs { display: flex; flex-wrap: wrap; gap: 8px 44px; border-bottom: 1px solid var(--rule); margin: 22px 0 44px; }
 .tab {
   display: inline-flex; align-items: baseline; gap: 10px; padding: 6px 0 12px; margin-bottom: -1px; cursor: pointer;
@@ -500,6 +534,14 @@ input[type="range"]::-moz-range-thumb { width: 2px; height: 18px; background: va
   .card { padding: 11px 0 13px; }
   .card-value { font-size: 40px; }
   .card-sub { font-size: 15.5px; }
+  .checkin-line { margin-top: 8px; font-size: 15.5px; line-height: 1.32; max-width: none; }
+}
+/* Shortest wide screens (about 1280 x 617): tighter spacing in the left column for the check-in line. */
+@media (min-width: 1100px) and (max-height: 640px) {
+  .say .headline { margin: 8px 0 10px; }
+  #brief-title { letter-spacing: 0.14em; }
+  .deck { line-height: 1.32; }
+  .say .fig-note { margin-top: 10px; line-height: 1.38; }
 }
 @media (max-width: 1240px) { .tagline { display: none; } }
 @media (max-width: 1099px) {
@@ -511,7 +553,7 @@ input[type="range"]::-moz-range-thumb { width: 2px; height: 18px; background: va
   .colorbar { bottom: 2%; }
   .notes { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 40px; padding-left: 0; }
   .card:last-child { border-bottom: 0; }
-  .check-cols, .nasa { grid-template-columns: minmax(0, 1fr); gap: 40px; }
+  .check-cols, .checkin-cols, .nasa { grid-template-columns: minmax(0, 1fr); gap: 40px; }
   .how-grid { grid-template-columns: minmax(0, 1fr); gap: 32px; }
   .limits-list { grid-template-columns: minmax(0, 1fr); }
 }
@@ -533,6 +575,12 @@ input[type="range"]::-moz-range-thumb { width: 2px; height: 18px; background: va
   .origin-table td { border-top: 0; padding: 4px 0; }
   .origin-table td:nth-child(2)::before { content: "In a clinic: "; font-style: italic; }
   .origin-table td:nth-child(3)::before { content: "In a bunk: "; font-style: italic; color: var(--quiet); }
+  .origin-table.ci-table { table-layout: auto; }
+  .origin-table.ci-table td:nth-child(n) { width: auto; }
+  .origin-table.ci-table td:nth-child(2)::before { content: "You said: "; }
+  .origin-table.ci-table td:nth-child(3)::before { content: "The bunk measured: "; font-style: italic; color: var(--quiet); }
+  .origin-table.ci-table td:nth-child(4)::before { content: "Together: "; font-style: italic; }
+  .origin-table.ci-table tbody th { font-size: 20px; padding-bottom: 2px; }
   .evidence-list > li { grid-template-columns: 3.2em minmax(0, 1fr); }
   .ev-status { grid-column: 2; justify-self: start; }
   .assumption-list > li { grid-template-columns: minmax(0, 1fr); }

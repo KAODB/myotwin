@@ -133,8 +133,13 @@ evidence table and the data cannot drift apart.
 11. The transit: in weightlessness the sleeper does not rest on the panel, so
     MyoTwin starts at arrival (V42). Next: pair it with a worn sensor for the
     transit.
-12. Mood, air, noise and light are not read (V43). Next: show the habitat's
+12. Air, noise and light are not read (V43). Next: show the habitat's
     environmental sensors beside the brief.
+13. The morning check-in. One question about mood is not a tested scale, the
+    temperature baseline is assumed, and the 1.1 °C step comes from care homes
+    on Earth (V97). Temperature at rest has not been measured in partial
+    gravity (V98). Next: learn each person's baseline from their first two
+    weeks of check-ins, and try the questions in an analogue mission.
 
 ## Use of SI and earlier work
 

@@ -776,3 +776,6 @@ another citation without opening the original; **fitted** means estimated from e
 | projectionWeeks | 4 | weeks | assumption |  | Most weekly medians used for the trend line. |
 | projectionMinWeeks | 3 | weeks | assumption |  | Fewest weekly medians needed for a trend line. |
 | projectionMaxDays | 365 | days | assumption |  | Projections further out than this are not shown. |
+| checkinTempDropC | 1.1 | °C | assumption |  | A reading more than this below the person's own baseline is flagged for a repeat measurement. Mirrored from the rise; no source sets it. |
+| checkinBaselineTempC | 36.6 | °C | assumption |  | The usual morning temperature of the crew member shown. A flight system would take the median of the person's own earlier check-ins. |
+| checkinLowMoodAtMost | 2 | of 5 | assumption |  | Mood ratings of 1 or 2 out of 5 count as low. |
