@@ -456,7 +456,7 @@ Measured radiation data on the page:
   `data/omni-protons.js` and `data/osdr-pwb.js` before `js/sim.js`, and `data/osdr-pwb.js` before
   `js/model.js` (checked by `test/page.test.js`).
 - The radiation note says "measured by NASA" in its qualifier (on nights with a measured dose). In the
-  open radiation row, `#rad-source` says in one sentence who measured tonight's dose and when, built
+  open radiation row, `#rad-source` says in one sentence that last night's dose replays a NASA measurement, and which, built
   from `rad.measured` (Curiosity RAD on Mars, or LRO in lunar orbit).
 - Radiation row, solar-event scenario (S3): the sub-row "The solar storm, hour by hour" draws the OMNI2
   hourly proton flux above 10 MeV, 4 to 16 September 2017, on a log10 axis (`charts.logSeries`), with

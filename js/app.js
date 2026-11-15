@@ -424,7 +424,7 @@
     if (c.id === 'radiation') {
       var dose = c.value != null && isFinite(c.value) ? doseParts(c.value) : ['–', 'µGy'];
       var measured = !!(rec().rad && rec().rad.measured);
-      if (flag && x.ratio != null) sub = 'Tonight was ' + fmtRatio(Math.round(x.ratio * 10) / 10) + ' the usual level.';
+      if (flag && x.ratio != null) sub = 'Last night was ' + fmtRatio(Math.round(x.ratio * 10) / 10) + ' the usual level.';
       return { num: dose[0], unit: dose[1] + (measured ? ', measured by NASA' : ''), sub: sub };
     }
     return { num: fmtValue(c.value, c.unit), unit: c.id === 'sleep' ? 'h asleep' : unitLabel(c.unit), sub: sub };
@@ -475,20 +475,24 @@
     sub.hidden = !L.sub;
   }
 
-  // ---- radiation card: where tonight's number comes from (data/*.js, replayed) --------
+  // Where the most particles came from, as a part of the rose picture (head at the top), in sector order.
+  var ROSE_SIDES = ['the head end (the top of the picture)', 'the top right of the picture', 'the right side of the picture',
+    'the bottom right of the picture', 'the feet end (the bottom of the picture)', 'the bottom left of the picture',
+    'the left side of the picture', 'the top left of the picture'];
+  // ---- radiation card: where last night's number comes from (data/*.js, replayed) --------
   var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   function longDate(iso) {
     var p = iso.split('-');
     return Number(p[2]) + ' ' + MONTHS[Number(p[1]) - 1] + ' ' + p[0];
   }
-  // One sentence under the radiation chart: who measured tonight's number, and when.
+  // One sentence under the radiation chart: last night's dose replays which NASA measurement, and when.
   function renderRadSource() {
     var r = rec(), m = r.rad && r.rad.measured, p = $('rad-source');
     p.hidden = !m || state.card !== 'radiation';
     if (p.hidden) return;
     p.textContent = m.dataset === 'msl-rad' ?
-      'Tonight\'s dose was measured on Mars by NASA\'s Curiosity rover on sol ' + m.sol + ', ' + longDate(m.date) + '.' :
-      'Tonight\'s dose was measured in lunar orbit by NASA\'s Lunar Reconnaissance Orbiter on the night of ' + longDate(m.date) + '.';
+      'Last night\'s dose replays what NASA\'s Curiosity rover measured on Mars on sol ' + m.sol + ', ' + longDate(m.date) + '.' :
+      'Last night\'s dose replays what NASA\'s Lunar Reconnaissance Orbiter measured in lunar orbit on the night of ' + longDate(m.date) + '.';
   }
 
   // ---- render: whole-body image ----------------------------------------------------
@@ -616,7 +620,7 @@
       label = 'Change since arrival: ' + state.layer + ', ' + (left ? kept.length + ' of the last ' : 'last ') + nights.length +
         (nights.length === 1 ? ' night' : ' nights') + ' accumulated' + (left ? ' (' + left + ' left out: raised radiation)' : '') +
         ', compared with the first ' + WINDOW + ' nights, averaged per body region';
-      cap = 'Change in ' + LAYER_WORDS[state.layer] + ' since arrival, the last week against the first. Blue dots are loss, ink dots gain' +
+      cap = 'Change in ' + LAYER_WORDS[state.layer] + ' since arrival, the last week against the first. Blue dots are loss, white dots gain' +
         (state.layer === 'density' && !outlineOnly ? '; the smallest dots are below the noise.' : '.');
       if (outlineOnly) {
         cap = note = 'Radiation was raised on every night of the last week, so there is no density image for this week.';
@@ -635,7 +639,7 @@
         if (r._truth.tracksUsable === false) {
           outlineOnly = true;
           overlay = outlineOverlay(shown, ph, none);
-          cap = note = 'Radiation was raised tonight, so tonight\'s tracks are left out of the density image.';
+          cap = note = 'Radiation was raised last night, so last night\'s tracks are left out of the density image.';
         }
       } else if (state.layer === 'pressure') {
         shown = imaging.render('pressure', ph, { env: r.env });
@@ -915,7 +919,8 @@
         if (x.rad && x.rad.dir) x.rad.dir.forEach(function (n, j) { sum[j] += n; });
       });
       var k = charts.rose($('rose'), sum, { highlightMax: true });
-      $('rose-reading').textContent = 'Most particles arrive from the ' + charts.ROSE_DIRECTIONS[k] + ' side.';
+      // The rose is drawn with the head at the top and Left and Right marked on the picture's own sides.
+      $('rose-reading').textContent = 'Most particles arrive from ' + ROSE_SIDES[k] + '.';
     }
   }
 

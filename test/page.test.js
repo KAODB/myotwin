@@ -224,3 +224,23 @@ test('trend charts: a plain title per check, "your" for the person\'s data and "
   assert.match(app, /\$\('trend-title'\)\.textContent = t\.opts\.title;/);
   assert.doesNotMatch(fs.readFileSync(path.join(root, 'js/charts.js'), 'utf8'), /'Own baseline'/);
 });
+
+// The brief is read in the morning: the night the readings come from is "last night".
+test('wording: "last night" for the night just slept, plain table and what-if words, the rose names a side of the picture', () => {
+  const app = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8');
+  const rules = require('../js/rules.js');
+  assert.match(html, /data-view="raw" aria-pressed="true">Last night<\/button>/);
+  assert.match(html, /The bunk ran four checks while you slept\. Nothing for you to do\./);
+  assert.match(html, /The nights are recalculated\./);
+  assert.match(html, /<th scope="col">Taken together<\/th>/);
+  for (const s of ["'Last night was '", "'Last night\\'s dose replays what NASA\\'s Curiosity rover measured on Mars on sol '",
+    "'Last night\\'s dose replays what NASA\\'s Lunar Reconnaissance Orbiter measured in lunar orbit on the night of '",
+    "'Radiation was raised last night, so last night\\'s tracks are left out of the density image.'", 'Blue dots are loss, white dots gain',
+    "'the right side of the picture'"]) assert.ok(app.includes(s), s);
+  assert.doesNotMatch(app, /ink dots gain|' side\.'|Tonight/);
+  assert.strictEqual(rules.CHECKIN.verdicts['agree-clear'], 'You and the bunk agree: nothing has changed.');
+  assert.match(rules.CHECKIN.verdicts['agree-flag'], /^You and the bunk both notice a change\./);
+  assert.match(rules.THRESHOLDS.radiationAmberRatio.note, /^Last night /);
+  const bodyText = html.slice(html.indexOf('<body')).replace(/<!--[\s\S]*?-->/g, '');
+  assert.doesNotMatch(bodyText, /Tonight|tonight/);
+});

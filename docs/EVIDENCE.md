@@ -771,8 +771,8 @@ another citation without opening the original; **fitted** means estimated from e
 | cardioMinNights | 2 | nights | assumption |  | Fewest radar nights in the last 3 before the card is judged. |
 | radiationHistoryNights | 30 | nights | assumption |  | Earlier mission nights used for the usual dose. |
 | radiationMinHistory | 7 | nights | assumption |  | Fewest earlier mission nights with dose data before the card is judged. |
-| radiationAmberRatio | 2 | x usual | assumption |  | Tonight above twice the usual dose. |
-| radiationRedRatio | 10 | x usual | assumption |  | Tonight above ten times the usual dose. |
+| radiationAmberRatio | 2 | x usual | assumption |  | Last night above twice the usual dose. |
+| radiationRedRatio | 10 | x usual | assumption |  | Last night above ten times the usual dose. |
 | projectionWeeks | 4 | weeks | assumption |  | Most weekly medians used for the trend line. |
 | projectionMinWeeks | 3 | weeks | assumption |  | Fewest weekly medians needed for a trend line. |
 | projectionMaxDays | 365 | days | assumption |  | Projections further out than this are not shown. |
