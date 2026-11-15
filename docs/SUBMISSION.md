@@ -44,9 +44,9 @@ Each morning MyoTwin answers three questions for the person who slept in the bun
 - **Radiation.** The dose over the sleep period, how it compares with a usual night, and the running total.
 - **Morning check-in.** Three questions, about 30 seconds: how the crew member feels on a five-step scale, their temperature, and whether their legs feel weaker, they did not feel rested, or they feel ill. Each answer is set beside the bunk's reading for the same part of the body.
 
-The first screen leads with three steps: check in, open a check, do today. The body figure is the way in to each check: select the head, the chest or the calves, or the whole body for radiation. Each check shows its status in words (In range, Watch, Report, No data), what it means, what to do now and who decides. Everything below the first screen is a row that shows only its title until it is opened. One row inside each check gives the NASA context: the Human Research Program risk it relates to, NASA's rating of that risk for the mission selected, two sentences from NASA's own page on the risk, and the NASA standard that applies. The page is written for the person using it; the sources, the limits and the method are in this text, the slides and the repository.
+The page opens on a start screen: one sentence on what this is, a start button, and three step cards that a navigation bar repeats. Step 1, Overnight, is what the bunk measured while the crew member slept: one headline, the body image and the four checks. Step 2, Check-in, is the one part the crew member fills in, on its own block of blue so the two are not confused. Step 3, Today, is one list of what to do, from the bunk's readings and from the answers. The body figure is a way in to each check: select the head, the chest or the calves, or the whole body for radiation. Each check shows its status in words (In range, Watch, Report, No data), what it means, what to do now and who decides. Each check opens to its trend. One row inside each check gives the NASA context: the Human Research Program risk it relates to, NASA's rating of that risk for the mission selected, two sentences from NASA's own page on the risk, and the NASA standard that applies. Orange appears only where something needs attention. The page is written for the person using it; the sources, the limits and the method are in this text, the slides and the repository.
 
-Every morning also brings a whole-body image in three layers: a density map made from the scattering of the cosmic rays that already pass through the sleeper, a pressure map, and the calf impedance. The density layer is experimental.
+Every morning also brings a whole-body image in three layers: a density map made from the scattering of the cosmic rays that already pass through the sleeper, a pressure map, and the calf impedance. One sentence under the switches says what the layer on screen shows. The density layer is experimental.
 
 There are three scenarios: a Moon base for 60 nights; the first 90 nights on Mars after a 180-day transit, with a three-week exercise lapse and a short illness; and a Moon base during the solar particle events of September 2017.
 
@@ -97,7 +97,7 @@ The check-in follows the same route. In long-term care, older adults often stay 
 
 ### Tools and languages
 
-Plain HTML, CSS and JavaScript with no build step and no server; two open-licence typefaces (Cormorant Garamond and EB Garamond) served from the repository; Anime.js 4.5.0 (MIT) for motion, served from the repository; Node.js tests; Python scripts (standard library only) that rebuild the data files from the NASA downloads; GitHub Pages; pptxgenjs for the slides; Claude through Claude Code.
+Plain HTML, CSS and JavaScript with no build step and no server; the typefaces already on the reader's device, so no font is loaded; Anime.js 4.5.0 (MIT) for motion, served from the repository; Node.js tests; Python scripts (standard library only) that rebuild the data files from the NASA downloads; GitHub Pages; pptxgenjs for the slides; Claude through Claude Code.
 
 ## Use of Super Intelligence (SI)
 
@@ -172,6 +172,13 @@ Other references. "Computes" means the code uses the number; "cites" means the t
 - High KP et al., Clin Infect Dis 2009 (V97). Guideline of the Infectious Diseases Society of America on fever in older adults in long-term care, including a rise of more than 1.1 °C over the person's own baseline; computes (the temperature rule of the check-in). https://doi.org/10.1086/595683
 - Stahn AC et al., Sci Rep 2017 (V98). Core body temperature at rest rose by about 1 °C in 11 astronauts on the ISS; cites. https://doi.org/10.1038/s41598-017-15560-w
 - Basner M et al., PLoS ONE 2014 (V99). Self-rating scales and the differences between crew members in a 520-day Mars simulation; cites. https://doi.org/10.1371/journal.pone.0093298
+
+Code and tools from others:
+
+- Anime.js 4.5.0 by Julian Garnier, MIT licence. The motion library, served unchanged from the repository (`vendor/`). https://animejs.com
+- pptxgenjs, MIT licence. Builds the slide file. https://github.com/gitbrent/PptxGenJS
+- LibreOffice turns the slide file into the PDF. Headless Chrome takes the screenshots and runs the page checks. Node.js runs the tests. Python (standard library only) rebuilds the data files. GitHub Pages hosts the page.
+- Claude through Claude Code, the one SI tool used; see the SI field.
 
 Earlier work of my own:
 

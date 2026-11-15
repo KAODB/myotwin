@@ -25,10 +25,12 @@ bunk on the Moon or Mars.
 
 Ids such as (V85) are entries in [docs/EVIDENCE.md](docs/EVIDENCE.md).
 
-The page is written for the crew member using it: three steps on the first
-screen (check in, open a check, do today) and rows that open on click. The
-sources, the limits and the method are in this file, in `docs/` and in the
-slides, not on the page.
+The page is written for the crew member using it. It opens on a start screen
+with one button and three steps: Overnight (measured while you slept),
+Check-in (the part you fill in, on its own block of blue) and Today (what to
+do). A navigation bar carries the steps, and each part sits in its own card.
+The sources, the limits and the method are in this file, in `docs/` and in
+the slides, not on the page.
 
 Live page: https://kaodb.github.io/myotwin/
 
@@ -36,15 +38,17 @@ Demo, seven slides: [PDF](https://kaodb.github.io/myotwin/demo/slides/MyoTwin-de
 
 Screenshots:
 
-![Morning brief on Mars, night 45. On the left the headline, which reports muscle, and a three-step guide: check in, open a check, do today. In the middle the sleeper drawn as a stipple of dots inside a square and a circle. On the right the four checks as notes, and along the bottom the nights as a ruler](demo/screenshots/brief-mars-day45.png)
+![The start screen on Mars, night 45: the navigation with the three numbered steps, the title, a start button and three step cards. The first card says one check needs attention; the second, in blue, is the check-in the crew member fills in](demo/screenshots/brief-mars-day45.png)
 
-![Below the first screen, seven rows that show only a title until opened: Morning check-in, Muscle, Sleep, Heart and breathing, Radiation, How the bunk measures, What if I miss exercise sessions. Each check row carries a small trend line, its status and its value](demo/screenshots/rows-closed.png)
+![Step 1 on Mars, night 42, measured while the crew member slept: the body image with switches for three layers and one sentence that explains the layer shown, the sleeper drawn as a stipple of dots, and four readings beside it; muscle is on Watch](demo/screenshots/overnight-mars-day42.png)
+
+![Step 2 on Mars, night 62, the part the crew member fills in, on a blue block: mood, temperature and what they notice on the left; what it means and what to do on the right](demo/screenshots/checkin-mars-day62.png)
+
+![Step 3 on Mars, night 62: one card from the bunk for heart and breathing and one from the check-in, each with numbered actions and who decides; the night ruler below](demo/screenshots/today-mars-day62.png)
 
 ![The muscle check, opened on Mars night 42: what it means, three numbered actions, who decides, and the trend against the crew member's own baseline and the mission plan](demo/screenshots/row-muscle-open.png)
 
-![The morning check-in on Mars, night 62. On the left the three questions: mood, temperature and what the crew member notices. On the right what it means and what to do, and below a table that sets each answer beside the bunk's reading](demo/screenshots/checkin-mars-day62.png)
-
-![The plate on Mars, night 45: change in density since arrival, with blue dots where the legs have lost](demo/screenshots/wholebody-density-diff.png)
+![The body image on Mars, night 45: change in density since arrival, with blue dots where the legs have lost, and the sentence that explains the view](demo/screenshots/wholebody-density-diff.png)
 
 ## Run it
 
@@ -172,5 +176,10 @@ hackathon; everything else was written during it. Details:
 ## Licence
 
 Apache License 2.0. See [LICENSE](LICENSE).
+
+Code from others: Anime.js 4.5.0 by Julian Garnier (MIT), used unchanged for
+motion; see [vendor/README.md](vendor/README.md). The page loads no font
+files; the Garamond files in `fonts/` (SIL OFL 1.1) are from an earlier
+version and are no longer used.
 
 MyoTwin is not a medical device. It does not diagnose or treat.
