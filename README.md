@@ -4,7 +4,7 @@
 
 MyoTwin is concept software for the 2026 NASA Space Apps Challenge
 (*Create Health Monitoring Software for Astronauts on Space Missions*), team
-spacesim, Kaohsiung.
+MyoTwin, Kaohsiung.
 
 On the Moon or Mars a crew member has to notice changes in their own body: a
 message from Mars can take up to 20 minutes one way (V54). NASA requires crews

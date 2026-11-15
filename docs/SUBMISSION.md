@@ -2,7 +2,7 @@
 
 Text for each field of the 2026 NASA Space Apps Challenge project page.
 Challenge: Create Health Monitoring Software for Astronauts on Space Missions.
-Team: spacesim (one person). Local event: Kaohsiung.
+Team: MyoTwin (one person). Local event: Kaohsiung.
 
 Sources are named in the text. The lists under "NASA Data" and "Space Agency
 Partner Data and Other References" give each source its id in the evidence
