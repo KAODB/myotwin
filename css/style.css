@@ -385,6 +385,8 @@ button, input, select { font: inherit; color: inherit; }
 .threshold-label { fill: var(--st-text); font-size: 11.5px; }
 .event { stroke: var(--quiet); stroke-width: 1; stroke-dasharray: 1 3; }
 .event-label { fill: var(--quiet); font-size: 11.5px; }
+.you-label { fill: var(--ink); font-weight: 600; }
+.line-reference { stroke-dasharray: 5 4; }
 .threshold-label, .event-label, .band-label { paint-order: stroke; stroke: var(--panel); stroke-width: 4px; stroke-linejoin: round; }
 .selected-day { stroke: var(--blue); stroke-width: 1.6; }
 .series { fill: none; stroke: var(--ink); stroke-width: 1.4; stroke-linejoin: round; }
@@ -403,6 +405,7 @@ button, input, select { font: inherit; color: inherit; }
 
 /* The trend chart's readout: a hairline at the night under the pointer and one line of text above the plot. */
 #trend-chart { cursor: pointer; }
+.trend-title { font-size: 15px; font-weight: 600; line-height: 1.4; color: var(--ink); margin-bottom: 4px; }
 .trend-readout { min-height: 1.45em; margin-bottom: 2px; font-size: 13.5px; color: var(--quiet); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .readout-line { stroke: var(--ink); stroke-opacity: 0.55; stroke-width: 1; pointer-events: none; }
 
@@ -417,6 +420,7 @@ button, input, select { font: inherit; color: inherit; }
 .key-watch { height: 0; border-top: 1.4px dotted var(--accent); }
 .key-event { width: 0; height: 14px; border-left: 1px dotted var(--quiet); }
 .key-exercise { width: 10px; height: 8px; border-left: 1.4px solid var(--ink); border-right: 1.4px solid var(--quiet); }
+.key-usual { height: 0; border-top: 1px dashed var(--quiet); }
 .key-selected { width: 0; height: 14px; border-left: 2px solid var(--blue); }
 .key-break { width: 14px; height: 10px; border-left: 1px solid var(--ink); border-right: 1px solid var(--ink); transform: skewX(-24deg); }
 

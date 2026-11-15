@@ -208,3 +208,19 @@ test('index.html loads vendor/anime.umd.min.js and js/motion.js before js/app.js
   assert.doesNotMatch(fs.readFileSync(path.join(root, 'js/app.js'), 'utf8'), /\banime\./);
   assert.doesNotMatch(fs.readFileSync(path.join(root, 'js/motion.js'), 'utf8'), /innerHTML|splitText|scrambleText|createSpring/);
 });
+
+// The trend charts say which marks are the person's and which are expected (js/app.js trendSpec).
+test('trend charts: a plain title per check, "your" for the person\'s data and "expected" for the plan', () => {
+  const app = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8');
+  for (const t of ["'Your calf muscle signal each night, against what the mission plan expects.'",
+    "'Your hours asleep each night, against the ' + x.amberHours + '-hour line.'",
+    "'Your night-time heart rate, against your own normal range.'",
+    "'The dose over each sleep period, against a usual night.'"]) assert.ok(app.includes("o.title = " + t), t);
+  for (const t of ["'Your nightly reading'", "'Your ' + WINDOW + '-night median'", "'Your baseline range (before departure)'",
+    "'Expected by the mission plan (Watch below this band)'", "'Your ' + WINDOW + '-night mean'", "'Your normal range (before departure)'",
+    "'A usual night'", "o.youLabel = 'You'", "o.expectedLabel = 'Expected: mission plan'", "o.baselineLabel = 'Your baseline'",
+    "o.baselineLabel = 'Your normal range'", "label: 'Usual night'", "o.yTitle = 'Calf muscle signal (phase, deg)'"]) assert.ok(app.includes(t), t);
+  assert.doesNotMatch(app, /'Own baseline range'|'Plan \(Watch below this band\)'|\['dot', 'Nightly reading'\]/);
+  assert.match(app, /\$\('trend-title'\)\.textContent = t\.opts\.title;/);
+  assert.doesNotMatch(fs.readFileSync(path.join(root, 'js/charts.js'), 'utf8'), /'Own baseline'/);
+});

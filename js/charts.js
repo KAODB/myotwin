@@ -177,6 +177,33 @@
     return el('rect', { x: x - r, y: y - 1.25, width: 2 * r, height: 2.5, 'class': cls }, parent);
   }
 
+  // ---- labels inside a chart ----------------------------------------------------
+  /**
+   * Place labels without overlap. `items` come in order of importance; each is { id, w, h, options:
+   * [{ x, y }] } where (x, y) is the left end of the text's baseline, in the order to try. A label's
+   * box is x .. x + w across and y - h + 3 .. y + 3 down. An option is taken when its box lies inside
+   * `bounds` ({ x0, y0, x1, y1 }) and clears every box in `obstacles` ([{ x0, y0, x1, y1 }]) and every
+   * label already placed, with `gap` px to spare; a label with no such option is left out (the legend
+   * still names it). Returns [{ id, x, y, box }] for the labels placed, in the order given.
+   */
+  function labelBox(x, y, w, h) { return { x0: x, y0: y - h + 3, x1: x + w, y1: y + 3 }; }
+  function boxesMeet(a, b, gap) { return a.x0 < b.x1 + gap && b.x0 < a.x1 + gap && a.y0 < b.y1 + gap && b.y0 < a.y1 + gap; }
+  function placeLabels(items, obstacles, bounds, gap) {
+    gap = gap == null ? 2 : gap;
+    var taken = obstacles.slice(), out = [];
+    items.forEach(function (it) {
+      for (var i = 0; i < it.options.length; i++) {
+        var o = it.options[i], b = labelBox(o.x, o.y, it.w, it.h);
+        if (b.x0 < bounds.x0 || b.x1 > bounds.x1 || b.y0 < bounds.y0 || b.y1 > bounds.y1) continue;
+        if (taken.some(function (t) { return boxesMeet(b, t, gap); })) continue;
+        taken.push(b);
+        out.push({ id: it.id, x: o.x, y: o.y, box: b });
+        return;
+      }
+    });
+    return out;
+  }
+
   // ---- line chart --------------------------------------------------------------
   /**
    * Draw a time series into an <svg>.
@@ -185,7 +212,13 @@
    *   thresholds: [{value, label, shortLabel?, status}], markers: [{missionDay, label, shortLabel?, tinyLabel?}],
    *   exercise: [{missionDay, done}]|null, statusAt: (missionDay) => status,
    *   selectedDay, unit, yLabel, xTitle = 'Mission day', axisBreak: missionDay|null,
-   *   logY: false, yFormat: (value) => tick text, upTo: missionDay|null }
+   *   logY: false, yFormat: (value) => tick text, upTo: missionDay|null,
+   *   title, yTitle, youLabel, baselineLabel, expectedLabel, reference: {value, label}|null }
+   * `title` is the chart's plain sentence (its accessible name); `yTitle` replaces the axis title
+   * built from yLabel and unit. `reference` draws a quiet dashed line (for example a usual night).
+   * The person's line, the bands and the reference line are labelled inside the plot (youLabel,
+   * baselineLabel, expectedLabel, reference.label), placed by placeLabels clear of the threshold and
+   * event labels, the selected-night line and the data; a label with no room is left out.
    * `logY` draws the vertical axis on a log10 scale with decade ticks (non-positive values are gaps).
    * `series` is the line the status is judged on (status-shaped markers); `raw` are the
    * nightly readings drawn as small neutral dots. `axisBreak` draws a break in the x axis
@@ -212,8 +245,10 @@
     svg.setAttribute('role', 'img');
     var xTitle = opts.xTitle || 'Mission day';
     var raw = opts.raw || [];
-    var label = (opts.yLabel || 'Value') + (opts.unit ? ' (' + opts.unit + ')' : '') +
-      ' by ' + xTitle.toLowerCase() + ', ' + shown(series).filter(function (p) { return p.value != null; }).length + ' nights with data' + (logY ? ', logarithmic scale' : '');
+    var nData = shown(series).filter(function (p) { return p.value != null; }).length;
+    var label = opts.title ? opts.title + ' ' + nData + ' nights with data' + (logY ? ', logarithmic scale' : '') + '.' :
+      (opts.yLabel || 'Value') + (opts.unit ? ' (' + opts.unit + ')' : '') +
+      ' by ' + xTitle.toLowerCase() + ', ' + nData + ' nights with data' + (logY ? ', logarithmic scale' : '');
     svg.setAttribute('aria-label', label);
     el('title', null, svg).textContent = label;
 
@@ -261,8 +296,8 @@
       el('line', { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), 'class': 'grid' }, svg);
       text(svg, m.l - 8, Y(v) + 4, (opts.yFormat || fmt)(v), 'ax-label', 'end');
     });
-    if (opts.yLabel) {
-      var yl = text(svg, 0, 0, opts.yLabel + (opts.unit ? ' (' + opts.unit + ')' : ''), 'ax-title');
+    if (opts.yTitle || opts.yLabel) {
+      var yl = text(svg, 0, 0, opts.yTitle || opts.yLabel + (opts.unit ? ' (' + opts.unit + ')' : ''), 'ax-title');
       yl.setAttribute('transform', 'translate(13,' + (m.t + ph / 2) + ') rotate(-90)');
     }
 
@@ -291,8 +326,10 @@
       var b = opts.baseline;
       el('rect', { x: m.l, y: Y(b.high), width: pw, height: Math.max(0, Y(b.low) - Y(b.high)), 'class': 'band-baseline' }, svg);
       if (b.median != null) el('line', { x1: m.l, x2: W - m.r, y1: Y(b.median), y2: Y(b.median), 'class': 'line-median' }, svg);
-      if (pw >= 420) labels.push(function () { text(svg, W - m.r - 4, Y(b.high) - 4, 'Own baseline', 'band-label', 'end'); });
     }
+    // A quiet dashed reference line (for example a usual night).
+    var ref = opts.reference && ok(opts.reference.value) && opts.reference.value >= y0 && opts.reference.value <= y1 ? opts.reference : null;
+    if (ref) el('line', { x1: m.l, x2: W - m.r, y1: Y(ref.value), y2: Y(ref.value), 'class': 'line-median line-reference' }, svg);
 
     // Expected band
     if (opts.expected && opts.expected.length > 1) {
@@ -388,7 +425,96 @@
 
     // Labels last, over every line and mark; their halo (CSS paint-order) keeps them readable.
     labels.forEach(function (draw) { draw(); });
+    plotLabels();
     return { x: X, y: Y, top: m.t, bottom: m.t + ph, left: m.l, right: W - m.r, days: series.map(function (p) { return p.missionDay; }) };
+
+    // "You" at the person's line, and the names of the bands and the reference line, inside the plot.
+    function plotLabels() {
+      var LH = 12, obstacles = [];
+      // What the labels must clear: the threshold and event labels, the threshold lines, the
+      // selected-night line, and the data (readings, judged points, the line between them).
+      Array.prototype.forEach.call(svg.childNodes || svg.children || [], function (n) {
+        var c = (n.getAttribute && n.getAttribute('class')) || '';
+        if (/threshold-label|event-label/.test(c)) {
+          var w = widthOf(n), x = +n.getAttribute('x'), a = n.getAttribute('text-anchor');
+          if (a === 'end') x -= w; else if (a === 'middle') x -= w / 2;
+          obstacles.push(labelBox(x, +n.getAttribute('y'), w, LH));
+        }
+      });
+      (opts.thresholds || []).forEach(function (t) {
+        if (ok(t.value) && t.value >= y0 && t.value <= y1) obstacles.push({ x0: m.l, x1: W - m.r, y0: Y(t.value) - 1, y1: Y(t.value) + 1 });
+      });
+      if (opts.selectedDay != null && opts.selectedDay >= x0 && opts.selectedDay <= x1) {
+        obstacles.push({ x0: X(opts.selectedDay) - 2, x1: X(opts.selectedDay) + 2, y0: m.t, y1: m.t + ph });
+      }
+      shown(raw).forEach(function (p) { if (ok(p.value)) obstacles.push({ x0: X(p.missionDay) - 2.5, x1: X(p.missionDay) + 2.5, y0: Y(p.value) - 2.5, y1: Y(p.value) + 2.5 }); });
+      var pts = [], last = null;
+      shown(series).forEach(function (p) {
+        if (!ok(p.value)) { last = null; return; }
+        var q = [X(p.missionDay), Y(p.value)];
+        if (last && !(brk != null && last.d < brk && p.missionDay >= brk)) {
+          var steps = Math.ceil(Math.hypot(q[0] - last.q[0], q[1] - last.q[1]) / 3);
+          for (var k = 1; k < steps; k++) pts.push([lerp(last.q[0], q[0], k / steps), lerp(last.q[1], q[1], k / steps), 1.5]);
+        }
+        pts.push([q[0], q[1], r + 2.5]);
+        last = { q: q, d: p.missionDay };
+      });
+      pts.forEach(function (q) { obstacles.push({ x0: q[0] - q[2], x1: q[0] + q[2], y0: q[1] - q[2], y1: q[1] + q[2] }); });
+
+      var items = [], texts = {};
+      function measure(id, str, cls) {
+        var n = text(svg, 0, 0, str, cls, 'start');
+        texts[id] = n;
+        return widthOf(n);
+      }
+      // The person's line: beside its latest drawn point.
+      var end = null;
+      shown(series).forEach(function (p) { if (ok(p.value)) end = [X(p.missionDay), Y(p.value)]; });
+      if (end && opts.youLabel) {
+        var w = measure('you', opts.youLabel, 'band-label chart-label you-label'), px = end[0], py = end[1];
+        items.push({ id: 'you', w: w, h: LH, options: [
+          { x: px + 9, y: py + 4 }, { x: px - 9 - w, y: py - 9 }, { x: px - 9 - w, y: py + 16 }, { x: px - w / 2, y: py - 11 },
+          { x: px - w / 2, y: py + 19 }, { x: px + 9, y: py - 10 }, { x: px + 9, y: py + 18 }, { x: px - 9 - w, y: py + 4 },
+          { x: px - w / 2, y: py - 25 }, { x: px - w / 2, y: py + 33 }
+        ].concat([-24, 30, -38, 44, -52, 58].reduce(function (a, dy) {
+          return a.concat({ x: px - 9 - w, y: py + dy }, { x: px + 9, y: py + dy }, { x: px - 14 - w, y: py + dy });
+        }, [])) });
+      }
+      // A band or a line: the label's right end at a series of points from right to left, just
+      // above its top edge, just below its bottom edge, or inside it when it is tall enough.
+      function alongBand(id, str, topAt, botAt) {
+        var w = measure(id, str, 'band-label chart-label'), opts2 = [];
+        for (var f = 1; f >= 0.05; f -= 0.05) {
+          var xe = m.l + 4 + (pw - 8) * f, xm = xe - w / 2, top = topAt(xm), bot = botAt(xm);
+          opts2.push({ x: xe - w, y: top - 4 }, { x: xe - w, y: bot + LH + 1 });
+          if (bot - top > LH + 6) opts2.push({ x: xe - w, y: (top + bot) / 2 + 4 });
+        }
+        items.push({ id: id, w: w, h: LH, options: opts2 });
+      }
+      if (opts.expected && opts.expected.length > 1 && opts.expectedLabel) {
+        var exs = opts.expected.slice().sort(function (a, c) { return a.missionDay - c.missionDay; });
+        var at = function (px, key) {
+          var d = x0 + (px - m.l) / pw * (x1 - x0), j = 0;
+          if (d <= exs[0].missionDay) return Y(exs[0][key]);
+          while (j < exs.length - 1 && exs[j + 1].missionDay < d) j++;
+          var a = exs[j], c = exs[Math.min(j + 1, exs.length - 1)], t = c.missionDay > a.missionDay ? clamp01((d - a.missionDay) / (c.missionDay - a.missionDay)) : 0;
+          return Y(lerp(a[key], c[key], t));
+        };
+        alongBand('expected', opts.expectedLabel, function (px) { return at(px, 'high'); }, function (px) { return at(px, 'low'); });
+      }
+      if (opts.baseline && opts.baseline.low != null && opts.baseline.high != null && opts.baselineLabel) {
+        alongBand('baseline', opts.baselineLabel, function () { return Y(opts.baseline.high); }, function () { return Y(opts.baseline.low); });
+      }
+      if (ref && ref.label) alongBand('reference', ref.label, function () { return Y(ref.value); }, function () { return Y(ref.value); });
+
+      var placed = placeLabels(items, obstacles, { x0: m.l + 2, y0: m.t, x1: W - m.r - 2, y1: m.t + ph });
+      Object.keys(texts).forEach(function (id) {
+        var p = placed.filter(function (q) { return q.id === id; })[0];
+        if (!p) { svg.removeChild(texts[id]); return; }
+        texts[id].setAttribute('x', p.x.toFixed(1));
+        texts[id].setAttribute('y', p.y.toFixed(1));
+      });
+    }
   }
 
   /** The day among `days` whose x (by X) is nearest to px, or null when there is none. */
@@ -905,6 +1031,7 @@
   }
 
   var api = {
+    placeLabels: placeLabels,
     bodyBox: bodyBox,
     plateLayout: plateLayout,
     stippleDot: stippleDot,
