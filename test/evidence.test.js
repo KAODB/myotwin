@@ -123,3 +123,19 @@ test('V94-V96 (sarcopenia consensus tools and phase angle review) are verified, 
   assert.ok(evidence.get('V96').quote.includes('PhA is decreased in sarcopenic subjects'));
   assert.deepStrictEqual([evidence.value('V96', 'cutoffLowDeg'), evidence.value('V96', 'cutoffHighDeg')], [4.05, 5.05]);
 });
+
+test('V97-V99 (morning check-in: fever over baseline, core temperature in orbit, self-rating in a Mars simulation) are verified, quoted and carry their numbers', () => {
+  for (const id of ['V97', 'V98', 'V99']) {
+    const it = evidence.get(id);
+    assert.equal(it.status, 'verified', id);
+    assert.equal(it.topic, 'morning check-in', id);
+    assert.equal(it.level, 'full-text', id);
+    assert.ok(it.quote && it.quote.length > 100, id + ' needs a quote');
+  }
+  assert.ok(evidence.get('V97').quote.includes('an increase in temperature of >2°F (>1.1°C) over the baseline temperature'));
+  assert.deepStrictEqual([evidence.value('V97', 'riseOverBaselineC'), evidence.value('V97', 'singleOralAboveC')], [1.1, 37.8]);
+  assert.ok(evidence.get('V98').quote.includes('This increase of about 1 °C developed gradually over 2.5 months'));
+  assert.deepStrictEqual([evidence.value('V98', 'restingRiseC'), evidence.value('V98', 'astronauts')], [1.01, 11]);
+  assert.ok(evidence.get('V99').quote.includes('happy – unhappy; healthy – sick'));
+  assert.deepStrictEqual([evidence.value('V99', 'crew'), evidence.value('V99', 'missionDays'), evidence.value('V99', 'depressionWeeksPct')], [6, 520, 93]);
+});

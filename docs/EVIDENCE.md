@@ -423,6 +423,29 @@ another citation without opening the original; **fitted** means estimated from e
 - Source: seca mBCA 525 instructions for use (2024); Chabin X et al. Clin Nutr 2019;38:806; Ha et al. Heart Rhythm 2023;20:561. <https://www.seca.com/fileadmin/documents/manual/seca_man_mBCA_Go_525c_en.pdf>
 - Quote: "Bioimpedance measurements may not be performed on individuals exhibiting the following characteristics: Electronic implants, e.g. cardiac pacemakers"
 
+### morning check-in
+
+**V97**. For older adults in long-term care, the Infectious Diseases Society of America defines fever as a single oral temperature above 37.8 °C, repeated oral temperatures above 37.2 °C, or a rise of more than 1.1 °C over the person's own baseline. The guideline says basal body temperature falls with age and frailty, so classic definitions of fever are reached less often.
+
+- Status: verified (full-text)
+- Source: High KP et al. Clinical practice guideline for the evaluation of fever and infection in older adult residents of long-term care facilities: 2008 update by the Infectious Diseases Society of America. Clin Infect Dis 2009;48:149-171 (PMID 19072244). Full text read at the publisher. <https://doi.org/10.1086/595683>
+- Quote: "Typical symptoms and signs of infection are frequently absent in LTCF residents, and as one ages and becomes more frail, basal body temperature decreases, making it less likely that one will achieve classic definitions of fever. ... Fever, defined as: (1) A single oral temperature >100°F (>37.8°C); or (2) repeated oral temperatures >99°F (>37.2°C) or rectal temperatures >99.5°F (>37.5°C); or (3) an increase in temperature of >2°F (>1.1°C) over the baseline temperature"
+- Values: `riseOverBaselineC` = 1.1; `singleOralAboveC` = 37.8; `repeatedOralAboveC` = 37.2
+
+**V98**. In 11 astronauts on six-month missions on the International Space Station, core body temperature at rest rose by about 1 °C over the first 2.5 months, and rose higher and faster during exercise than on Earth. The study was done in weightlessness with a forehead sensor; it has no partial-gravity data.
+
+- Status: verified (full-text)
+- Source: Stahn AC et al. Increased core body temperature in astronauts during long-duration space missions. Sci Rep 2017;7:16180 (PMCID PMC5701078). Full text read. <https://doi.org/10.1038/s41598-017-15560-w>
+- Quote: "Moreover, we observed for the first time a sustained increased astronauts’ CBT also under resting conditions. This increase of about 1 °C developed gradually over 2.5 months ... At rest CBT was increased by about 1.01 °C on the ISS compared to baseline ... Eleven astronauts (7 men, 4 women) participated in the study."
+- Values: `restingRiseC` = 1.01; `astronauts` = 11; `monthsToDevelop` = 2.5; `exerciseRiseC` = 1.39
+
+**V99**. In a 520-day simulated mission to Mars, six crew members rated their own state on short scales with paired words (happy or unhappy, healthy or sick, fresh or tired, and sleep quality in the morning). People reacted very differently: one reported symptoms of depression in 93% of mission weeks, and two showed no disturbance or distress.
+
+- Status: verified (full-text)
+- Source: Basner M et al. Psychological and behavioral changes during confinement in a 520-day simulated interplanetary mission to Mars. PLoS ONE 2014;9(3):e93298 (PMCID PMC3968121). Full text read. <https://doi.org/10.1371/journal.pone.0093298>
+- Quote: "The crewmember with the highest average POMS total mood disturbance score throughout the mission also reported symptoms of depression in 93% of mission weeks ... Two crewmembers showed neither behavioral disturbances nor reports of psychological distress during the 17-month period of mission confinement. ... Crewmembers indicated their current status on 100 mm visual analogue scales (VAS) with the following binary anchors: happy – unhappy; healthy – sick; energetic – physically exhausted; mentally sharp – mentally fatigued; not stressed – very stressed; fresh/ready to go – tired; good sleep quality – poor sleep quality (morning only)"
+- Values: `crew` = 6; `missionDays` = 520; `depressionWeeksPct` = 93; `crewWithoutDistress` = 2
+
 ### Radiation environment
 
 **V21**. NASA career effective dose limit is 600 mSv.
