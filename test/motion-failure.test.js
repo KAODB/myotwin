@@ -1,7 +1,6 @@
 // js/motion.js when Anime.js fails: a fake `anime` whose animate() throws from its Nth call (N = 1
 // to 8) against a minimal fake DOM. After the failure the page must look exactly as without motion
-// (no inline opacity or transform, no drawing attributes, no data-wait, rings at their own radius,
-// the figure drawn in full), nothing is thrown to the caller and motion stays off.
+// (no inline opacity or transform, no drawing attributes, no data-wait, rings at their own radius), nothing is thrown to the caller and motion stays off.
 // Also the count guard: a change to or from "no value" never counts.
 //
 // Written with an SI tool (Claude) and reviewed by the team.
@@ -65,21 +64,13 @@ function setup(N) {
   const motion = require(file);
   // The parts of the page motion touches.
   const els = {
-    headline: makeEl('p'), guide: [makeEl('li'), makeEl('li'), makeEl('li')], notes: [makeEl('b'), makeEl('b'), makeEl('b'), makeEl('b')],
-    frame: [makeEl('rect'), makeEl('circle')], tracks: [makeEl('line')], leaders: [makeEl('polyline'), makeEl('polyline')],
-    rings: [makeEl('circle', { r: '9' }), makeEl('circle', { r: '6.5' })], marks: [makeEl('line'), makeEl('circle')], sweep: makeEl('span'),
+    hero: [makeEl('p'), makeEl('h1'), makeEl('p'), makeEl('p'), makeEl('p')], steps: [makeEl('li'), makeEl('li'), makeEl('li')],
     blocks: [makeEl('div'), makeEl('div'), makeEl('div')], series: makeEl('path'), num: makeEl('span'), ring: makeEl('circle', { r: '9' }),
     icons: [makeEl('svg')], rows: [makeEl('tr'), makeEl('tr')]
   };
-  const ink = makeEl('svg');
-  ink.querySelectorAll = (sel) => sel === '.frame' ? els.frame : sel === '.frame-axis, .track' ? els.tracks :
-    sel === '.leaders polyline' ? els.leaders : sel === '.rings circle' ? els.rings : [];
-  const ruler = makeEl('svg');
-  ruler.querySelectorAll = () => els.marks;
-  const figure = [];
-  const parts = { headline: els.headline, guide: els.guide, drawFigure: (p) => figure.push(p), ink, notes: els.notes, ruler, sweep: els.sweep };
-  const tick = (to) => { while (timer && now < to) { now += 10; timer.onUpdate(); } if (timer && now >= 1600) timer.onComplete(); };
-  return { motion, els, parts, tick, figure, html, info: () => ({ calls, after, failed }) };
+  const parts = { hero: els.hero, steps: els.steps };
+  const tick = (to) => { while (timer && now < to) { now += 10; timer.onUpdate(); } if (timer && now >= 1200) timer.onComplete(); };
+  return { motion, els, parts, tick, html, info: () => ({ calls, after, failed }) };
 }
 
 function leftovers(env) {
@@ -91,7 +82,7 @@ function leftovers(env) {
     if (e.hasAttribute('style')) bad.push(name + ' has a style attribute');
     for (const a of ['pathLength', 'stroke-dasharray', 'stroke-dashoffset', 'draw']) if (e.hasAttribute(a)) bad.push(name + ' ' + a);
   }
-  if (env.els.rings[0].getAttribute('r') !== '9' || env.els.rings[1].getAttribute('r') !== '6.5' || env.els.ring.getAttribute('r') !== '9') bad.push('ring radius not restored');
+  if (env.els.ring.getAttribute('r') !== '9') bad.push('ring radius not restored');
   if (env.html.hasAttribute('data-wait')) bad.push('data-wait ' + env.html.getAttribute('data-wait'));
   return bad;
 }
@@ -99,10 +90,9 @@ function leftovers(env) {
 for (let N = 1; N <= 8; N++) {
   test('library throws from animate call ' + N + ' during the landing sequence: page as without motion, motion off', () => {
     const env = setup(N), m = env.motion;
-    assert.doesNotThrow(() => { m.intro(env.parts); env.tick(1700); });
+    assert.doesNotThrow(() => { m.intro(env.parts); env.tick(1300); });
     assert.ok(env.info().failed, 'the library failed');
     assert.deepStrictEqual(leftovers(env), []);
-    assert.strictEqual(env.figure[env.figure.length - 1], 1, 'figure drawn in full');
     assert.strictEqual(m.introRunning(), false);
     // Motion stays off: nothing reaches the library again and every call returns false.
     assert.strictEqual(m.rowOpened(null, env.els.blocks, env.els.series), false);

@@ -274,7 +274,7 @@ shared and captured:
 - `s` scenario id, `d` mission day, `layer` image layer (`density|pressure|impedance`),
   `view` (`raw|diff`), `card` the open check row (`muscle|sleep|cardio|radiation`), written only
   while a check row is open; absent on a plain landing. Opening a row (its title, its margin note,
-  its hotspot on the body figure, or the guide) sets it; closing the row removes it. A link with a
+  its hotspot on the body figure, or its name in Today) sets it; closing the row removes it. A link with a
   valid `card` opens that row on load; an invalid one shows the notice.
 - What-if values in the address: `ex` 0 to 1 (step 0.05; the one what-if slider on the page, "Sessions done"), `gs` 0.25 to 4 (step 0.25, default 1;
   older links with 1 to 4 in steps of 0.5 still load), `sh` 0.6 to 1 (step 0.1; the share of
@@ -315,48 +315,62 @@ shared and captured:
   `test/page.test.js` checks that no element `#origin`, `#gcheck`, `#hazards`, `#limits`,
   `#measured` or `#evidence` and no `data-ev` link is on the page, and that no evidence id appears in
   the page or in the strings of `js/app.js`.
-- Top bar: the brand, the tagline and the scenario select; no section links.
-- First screen (Plate I): the brief label, the headline (split by `splitHeadline`, tested by
-  `test/presentation.test.js`) and a three-step guide (`ol#guide`): "Check in" (`#guide-checkin`:
-  opens the check-in row and focuses its first answer; its one-line detail is the check-in `summary`
-  once done, with the Watch mark when it is on Watch), "Open a check" (`#guide-check`: opens the most
-  urgent check row) and "Do today" (`#guide-do`: the first action of the most urgent source and
-  "+N more", on up to two lines; one button throughout, which opens that source's row, or reads
-  "Nothing new. Keep the plan." with `aria-disabled` when there is nothing to open). The
-  choice for rows 2 and 3 is `todayStep(cards, checkin) -> { card, target, text, more }` in the
-  presentation helpers block of `js/app.js`: `card` is the first check on Report, else the first on
-  Watch, else muscle; the action comes from cards on Report, then on Watch, then the check-in when it
-  is on Watch (`target` is that card id or `'checkin'`, null when there is none). The details of rows
-  1 and 2 are one line, cut with an ellipsis, with the whole text in `title`. The brief label stays
-  on one line at every desktop width (baseline nights read "Baseline night N").
-  The plate: the sleeper drawn as a stipple (`charts.stipple`, one dot per phantom cell, radius and
-  brightness from the value; in the change view a loss is blue, a gain ink, cells below the noise the
-  smallest quiet dots; a left-out density night is hollow dots along the outline) inside a hairline
-  square and circle with dotted cosmic-ray tracks (`charts.plateFrame`). One line of figure controls
-  sits at the top of the plate, above the body (layer: Density, Pressure, Impedance; view: Tonight,
-  Change since arrival); under 600 px it stands above the plate. Four hotspot rings sit on the body
-  parts (`hotspotCm`, tested by `test/figure.test.js`) and are tied by hairline leaders to the four
-  checks, set as margin notes (`#cards .card`). The night ruler (`charts.ruler`) is fixed to the
-  bottom and is the slider: a real `<input type="range" id="day">` for keyboard and screen readers,
-  and pressing or dragging anywhere on the ruler moves the night (`charts.rulerIndex`). At 1920 x 937,
-  1536 x 730, 1440 x 900, 1440 x 657, 1366 x 657, 1280 x 680, 1280 x 641, 1280 x 617, 1280 x 600 and
-  1120 x 650 the left column and all four notes sit above the ruler and the controls line clears the
-  body and the hotspots. Under 1100 px the layout stacks; under 600 px the notes are one column.
-- Below the first screen, seven rows as native `<details class="row">`, all closed on a plain
-  landing, each a title, a meta text and a "+" that becomes "−": "Morning check-in" (`#checkin`;
-  meta "Not done yet · about 30 seconds" or the status), the four checks (`details.check-row` with
-  `data-card`, `name="check"` so one is open at a time; meta: status and the margin note's value),
-  "How the bunk measures" (`#how`) and "What if I miss exercise sessions?" (`#whatif`). One shared
-  detail block (`#check-detail`) moves into the open check row: the meaning (the status is in the row
-  title), numbered actions,
-  who decides, the muscle projection; the trend chart with the engine's `reason` under it and the
-  legend; for radiation `#rad-source` (one sentence: who measured tonight's dose and when) and two
-  closed sub-rows, "The solar storm, hour by hour" (solar-event scenario) and "Where the particles came
-  from"; and in every check a closed sub-row "NASA on this risk" (risk, rating sentence for the
-  mission type, NASA's two sentences as quotations, the standard, then the `rules.CONTEXT` note). The open row follows `state.card`
-  (`open` is set only when it differs). A click on a check row's title updates the state at once (so
-  the detail is inside the row in the same task); `toggle` events cover any other opening. The "+"
-  and "−" are `aria-hidden` spans, so a title's accessible name has no sign.
+- Navigation: a floating bar fixed at the top (`header.nav`): the name with a ring mark (a link to
+  the landing section), `nav[aria-label="Steps"]` with five links ("Start", "1 Overnight", "2
+  Check-in", "3 Today", "How it works", to `#top`, `#overnight`, `#checkin-zone`, `#today`,
+  `#how-zone`) and the scenario select. The link of the zone crossing a thin band a little above
+  the middle of the viewport carries `aria-current="true"` (one IntersectionObserver). Every in-page
+  link to a zone (navigation, landing buttons, step cards, "Next" buttons, Today's "Answer now")
+  scrolls the zone to just below the bar (`scroll-padding-top`) and moves the focus to its heading
+  (`tabindex="-1"`); the address keeps the view (the click is handled, so the hash is not replaced).
+  Under 900 px the links are one horizontally scrollable row under the name; above it the scenario
+  pill shrinks with an ellipsis, so the bar always holds its content.
+- Landing section (`section.hero#top`, at least one screen tall): label, the page's only `h1`
+  (`#hero-title`), the lead, "Start this morning's brief" (to Step 1) and "How it works", the live
+  line `#hero-place` ("Mars, night 42"; baseline nights "Baseline night N"), and three step
+  cards (`ol#steps`, links to the three steps; Step 2's card is Electric Blue with night text). Each
+  card's state line comes from `stepStates(cards, checkin) -> [{ status, text, go }]` (presentation
+  helpers, `test/presentation.test.js`): Step 1 "All four checks in range" / "N check(s) need(s)
+  attention" / "Not enough data yet" with its status mark; Step 2 "Not done yet · 30 seconds" /
+  "Done · nothing flagged" / "Done · N things flagged" (the check-in's `flags`); Step 3 "Nothing new
+  today" / "N things to do" (all actions in Today's list). The section carries `.hero-attn` (a small
+  orange light at its foot) only while a check is on Watch or Report.
+- Step 1 (`#overnight`): label, the engine headline (`splitHeadline`; the emphasised line in the
+  accent on Watch or Report), `#brief-title` ("Morning brief · Mars, night 42", the zone heading
+  and the skip link's target), the notice. Card 1 (`#brief`): a toolbar (label, "Three ways to
+  look at last night's scan.", layer pills, view pills), one sentence `#image-explain` from
+  `imageExplain(layer, view) -> { name, text }` (presentation helpers; one sentence per layer and
+  view, naming every mark that view draws) followed by "Select a ring on the body, or one of the four
+  readings, to open that check.", then the plate (stipple, frame,
+  tracks, rings, leaders) and the four readings (`#cards .card`). Card 2, "The four checks": four
+  native `<details class="check-row">` (`data-card`, `name="check"`, closed in the markup). One
+  shared detail block (`#check-detail`) moves into the open row: meaning, numbered actions, who
+  decides, the muscle projection; the trend chart with the engine's `reason` and the legend; for
+  radiation `#rad-source` and the closed sub-rows "The solar storm, hour by hour" (S3) and "Where the
+  particles came from"; in every check a closed sub-row "NASA on this risk". The open row follows
+  `state.card`; a click on a title updates the state at once; `toggle` covers other openings.
+- Step 2 (`#checkin-zone`, a block of Electric Blue): heading "Morning check-in.", and the check-in
+  always visible on one night card (`#checkin`, not a `<details>`): pill toggles, the temperature
+  field, `#checkin-meta` (status or "Not done yet · about 30 seconds"), the result, and the
+  comparison table once done.
+- Step 3 (`#today`): one card per source that asks for something, from
+  `todayPlan(cards, checkin) -> [{ kind, card, status, name, from, actions, decides }]`
+  (presentation helpers): checks on Report, then on Watch (assessment order), then the check-in on
+  Watch; each with its status, name (a check's name is a button that opens its row in Step 1 and
+  moves the focus to the row's title), origin ("from the bunk" / "from you"), all its actions and
+  who decides. With no source, "Nothing new today. Keep the plan."; while the check-in is not done,
+  a last card "Your check-in" with "Answer now".
+- The night ruler (`#timeline`) is the last child of the wrapper `.step-zones` around the three
+  steps and is `position: sticky; bottom: 14px`: a floating bar on screen only while the steps are,
+  never over the landing section's first screen, "How it works" or the footer. It is the slider: a
+  real `<input type="range" id="day">` and pressing or dragging anywhere on it moves the night
+  (`charts.rulerIndex`), with Play, the event brackets and the readout. `scroll-padding-bottom`
+  keeps a focused control clear of it.
+- How it works (`#how-zone`): the three sensors as three cards and the exercise what-if as a fourth
+  card (`#whatif`, "What if I miss exercise sessions?", the slider `#adherence`, "Back to the plan").
+- Layout: at 1440 x 900 and 1280 x 720 the first screen shows the navigation, the title, the lead,
+  the buttons and at least the top half of the three step cards, with no ruler; at 390 x 844 the
+  navigation, the title, the lead and the buttons. No horizontal scroll from 360 to 1920 px.
 - Trend charts (`charts.line` with `upTo`) draw the readings, the judged line, its points and the
   exercise ticks only up to the selected night; the axes span the whole scenario and the plan band
   and thresholds stay. Event markers are drawn for events that started by the selected night; a
@@ -366,23 +380,25 @@ shared and captured:
 
 Colour scheme and type (`css/style.css`, palette at the top; `test/palette.test.js` checks it):
 
-- Two quiet colours and one loud one: night `#02070A` (ground), ink `#EAF2F7` (text and marks),
-  quiet `#8FA3B1` (secondary text), hairlines rule `#1B2C37` and rule-strong `#2E4859`; blue
-  `#0297DE` is the working colour (selection, the selected night, links, focus, cosmic-ray tracks,
-  a loss in the change view); every text pair meets WCAG AA.
-- The accent `#FC734D` (`--accent`) is reserved for Watch and Report (marks, words, leaders,
-  chart points and threshold lines) and the emphasised word of the headline when a shown check is
-  on Watch or Report (`.headline-attn`). Watch is an outlined triangle, Report a solid octagon,
-  In range a small ring.
-- Type: Cormorant Garamond (display) and EB Garamond (text), SIL OFL 1.1, served from `fonts/`
-  with their licence texts (`font-src 'self'` in the Content Security Policy). No sans-serif.
-- No cards, filled panels, shadows, gradients or rounded containers: structure is hairline rules
-  and space. Motion (tracks drifting, the halo of a flagged hotspot, value cross-fades, sections
-  fading up, and the Anime.js motion below) is off under `prefers-reduced-motion`.
+- Three colours only: Midnight Black `--night #02070A` is the ground; Electric Blue `--blue
+  #0297DE` is the main colour, used boldly (the light at the foot of the landing section and of "How
+  it works", the Step 2 block and its step card, the primary button, pressed pills, the current
+  step, links, focus, the selected night, tracks, a loss in the change view); Cantaloupe Orange
+  `--accent #FC734D` only where something needs attention (Watch and Report marks and words, the
+  emphasised line of the attention headline, the attention light on the landing section). Text
+  `--ink #EAF2F7` and `--quiet #8FA3B1`; cards `--panel #0B1013`; hairlines `--line`, `--line-2`
+  (ink at 12% and 24%). On blue, text is `--on-blue` (night, 6.25:1) or `--on-blue-quiet` (night at
+  80%, 4.97:1), never ink or white. No other colour appears in the stylesheet (apart from the
+  `--map-*` scales); every text colour meets WCAG AA on each surface it is used on.
+- Bordered cards (14 to 18 px corners), pill buttons and pill toggles, no shadows, no icon sets.
+  The only gradients: the lights at the foot of the landing section and of "How it works", and the
+  faint line grid behind the landing section.
+- Type: the system sans stack for everything and the system mono stack for small capital labels.
+  No web fonts are loaded (the Garamond files stay in `fonts/`, unused); no italics.
 
 Motion (`js/motion.js`, Anime.js; `js/app.js` calls only this API and never `anime`):
 
-- One job: lead the eye through the three steps on landing and confirm what a click did. Every
+- One job: lead the eye from what this is to the three steps on landing, and confirm what a click did. Every
   call returns false and does nothing when `anime` is missing, under `prefers-reduced-motion`, or
   while "Play the mission" runs (`setPlaying(true)` also ends everything at once). When an
   animation ends or is cut short, the inline styles and drawing attributes it set are removed.
@@ -391,18 +407,15 @@ Motion (`js/motion.js`, Anime.js; `js/app.js` calls only this API and never `ani
   the rest of the page's life and every touched element is put back (no inline opacity or
   transform, no drawing attributes, no `data-wait`, rings at their own radius, the figure in full),
   without throwing to the page (`test/motion-failure.test.js`).
-- `intro(parts)`, once per page load, at most 1.6 s: the headline, the three guide rows in order,
-  the stipple from head to feet (`charts.stipple` option `progress`, 0 to 1; at 1 the drawing is
-  the same as without it), the plate frame and leaders drawing in, the rings settling with a
-  spring, the four notes fading in (opacity only, so the leaders are measured from still notes),
-  the ruler marker dropping to its night, and one underline sweep under "Check in" when the
-  check-in is not done. Parts not yet shown are listed in `<html data-wait>` (read by the
+- `intro({ hero, steps })`, once per page load, at most 1.2 s: the five parts of the landing
+  section (label, title, lead, buttons, live line) rise in one after another, then the three step
+  cards. (The figure's draw-in is no longer part of it; `charts.stipple` keeps its `progress`
+  option.) Parts not yet shown are listed in `<html data-wait>` (read by the
   stylesheet). Any key, pointer press, wheel or touch jumps it to the end state at once
   (`finishIntro()`), before the press reaches its target.
 - `rowOpened(row, blocks, path)`: the opened row's blocks fade up a few px one after another and a
   check row's trend line draws in. Closing is instant (`rowClosed()`); opening another row cuts the
-  first opening short. Called where a row opens (the state update for check rows, the title click
-  and the guide for the others).
+  first opening short. Called where a check row opens (the state update).
 - `valueTo(node, from, to, format)`: on a step to another night (ruler or arrow keys) a note's
   number counts from the old value to the new one in about 200 ms, written with the note's own
   formatting, ending on the exact text; a change to or from "no value" swaps the text at once

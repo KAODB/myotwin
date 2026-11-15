@@ -24,6 +24,11 @@ test('index.html loads every data/*.js before js/sim.js', () => {
   }
 });
 
+test('the scripts load in the same order as before', () => {
+  assert.deepStrictEqual(scripts, ['js/evidence.js', 'data/osdr-pwb.js', 'js/model.js', 'data/msl-rad.js', 'data/lro-crater.js', 'data/donki-sep-2017.js',
+    'data/omni-protons.js', 'js/sim.js', 'js/rules.js', 'js/engine.js', 'js/phantom.js', 'js/imaging.js', 'js/charts.js', 'vendor/anime.umd.min.js', 'js/motion.js', 'js/app.js']);
+});
+
 test('index.html loads data/osdr-pwb.js before js/model.js, which writes the gravity check into its note', () => {
   const i = scripts.indexOf('data/osdr-pwb.js');
   assert.ok(i >= 0 && i < scripts.indexOf('js/model.js'));
@@ -85,45 +90,110 @@ test('no evidence, reference or limitation sections and no evidence ids on the p
   for (const str of strings(app)) assert.doesNotMatch(str, /\bV\d{1,3}\b/, 'js/app.js: ' + str);
 });
 
-test('the first screen has the three-step guide', () => {
-  const guide = html.match(/<ol id="guide" class="guide"[^>]*>([\s\S]*?)<\/ol>/);
-  assert.ok(guide, 'ol#guide');
-  assert.strictEqual((guide[1].match(/<li\b/g) || []).length, 3);
-  assert.match(guide[1], /<button type="button" id="guide-checkin" class="guide-row"><span class="guide-name">Check in<\/span>/);
-  assert.match(guide[1], /<button type="button" id="guide-check" class="guide-row"><span class="guide-name">Open a check<\/span>/);
-  assert.match(guide[1], /id="guide-do" class="guide-row"><span class="guide-name">Do today<\/span>/);
-  assert.ok(html.indexOf('id="headline"') < html.indexOf('id="guide"'));
-  for (const id of ['scenario-summary', 'checkin-line', 'image-caption', 'brief-note', 'ci-open', 'ci-method']) {
-    assert.doesNotMatch(html, new RegExp('id="' + id + '"'), id);
+test('one h1, the landing title; the navigation has its five links in order', () => {
+  const h1 = [...bodyHtml.matchAll(/<h1\b[^>]*>([\s\S]*?)<\/h1>/g)];
+  assert.strictEqual(h1.length, 1);
+  assert.match(h1[0][0], /id="hero-title"/);
+  assert.match(h1[0][1], /The health check that happens <span class="hl">while you sleep\.<\/span>/);
+  const nav = bodyHtml.match(/<nav class="nav-links" aria-label="Steps">([\s\S]*?)<\/nav>/);
+  assert.ok(nav, 'nav[aria-label=Steps]');
+  const links = [...nav[1].matchAll(/<a href="#([\w-]+)"[^>]*>([\s\S]*?)<\/a>/g)];
+  assert.deepStrictEqual(links.map((m) => m[1]), ['top', 'overnight', 'checkin-zone', 'today', 'how-zone']);
+  assert.deepStrictEqual(links.map((m) => m[2].replace(/<[^>]+>/g, '')), ['Start', '1Overnight', '2Check-in', '3Today', 'How it works']);
+  assert.match(bodyHtml, /<header class="nav">[\s\S]*<select id="scenario"/);
+});
+
+test('the landing section has its two buttons, the live line and three step cards', () => {
+  const hero = bodyHtml.match(/<section class="hero zone" id="top"[^>]*>([\s\S]*?)<\/section>/);
+  assert.ok(hero, 'section.hero#top');
+  assert.match(hero[1], /<a class="btn btn-primary" href="#overnight">Start this morning's brief/);
+  assert.match(hero[1], /<a class="btn btn-ghost" href="#how-zone">How it works<\/a>/);
+  assert.match(hero[1], /id="hero-place"/);
+  const steps = [...hero[1].matchAll(/<li><a class="step( step-self)?" href="#([\w-]+)">\s*<span class="step-label">([^<]+)<\/span>\s*<span class="step-name">([^<]+)<\/span>/g)];
+  assert.deepStrictEqual(steps.map((m) => m[2]), ['overnight', 'checkin-zone', 'today']);
+  assert.deepStrictEqual(steps.map((m) => m[4]), ['Overnight', 'Check-in', 'Today']);
+  assert.deepStrictEqual(steps.map((m) => m[3]), ['Step 1 · Measured for you', 'Step 2 · You fill this in', 'Step 3 · What to do']);
+  assert.strictEqual(steps[1][1], ' step-self');
+  assert.strictEqual((hero[1].match(/class="step-now"/g) || []).length, 3);
+});
+
+test('four zones in order, each with a focusable heading; the ruler sits after the three steps', () => {
+  const zones = [...bodyHtml.matchAll(/<section class="sec zone[^"]*" id="([\w-]+)" aria-labelledby="([\w-]+)"/g)];
+  assert.deepStrictEqual(zones.map((m) => m[1]), ['overnight', 'checkin-zone', 'today', 'how-zone']);
+  const heads = { overnight: 'Morning brief', 'checkin-zone': 'Morning check-in.', today: 'Today.', 'how-zone': 'A sensor panel in the bunk. Nothing is worn.' };
+  for (const [zone, label] of zones.map((m) => [m[1], m[2]])) {
+    const h = bodyHtml.match(new RegExp('<h2 id="' + label + '"[^>]*tabindex="-1">([^<]*)|<h2 class="[^"]*" id="' + label + '" tabindex="-1">([^<]*)'));
+    assert.ok(h, zone + ' heading');
+    assert.strictEqual((h[1] || h[2]).trim(), heads[zone], zone);
   }
-  assert.doesNotMatch(html, /class="nav-link"|data-goto/);
+  assert.match(bodyHtml, /class="zone-blue"|class="sec zone zone-blue" id="checkin-zone"/);
+  const i = (s) => bodyHtml.indexOf(s);
+  assert.ok(i('id="today"') < i('id="timeline"') && i('id="timeline"') < i('id="how-zone"'));
+  assert.match(bodyHtml, /<div class="step-zones">/);
 });
 
-test('below the first screen: seven rows in order, all closed in the markup', () => {
-  const rows = [...html.matchAll(/<details class="row( check-row)?" id="([\w-]+)"([^>]*)>\s*<summary><h2 class="row-title">([^<]+)<\/h2>/g)];
-  assert.deepStrictEqual(rows.map((m) => m[2]), ['checkin', 'row-muscle', 'row-sleep', 'row-cardio', 'row-radiation', 'how', 'whatif']);
-  assert.deepStrictEqual(rows.map((m) => m[4]), ['Morning check-in', 'Muscle', 'Sleep', 'Heart and breathing', 'Radiation',
-    'How the bunk measures', 'What if I miss exercise sessions?']);
-  for (const m of rows) assert.doesNotMatch(m[3], /\bopen\b/, m[2]);
-  for (const m of rows.slice(1, 5)) assert.match(m[3], /data-card="\w+" name="check"/, m[2]);
+test('the body image card: label, three layer toggles, the explanation, two view toggles', () => {
+  const card = bodyHtml.match(/<div class="pcard" id="brief">([\s\S]*?)<div class="plate-one">/);
+  assert.ok(card, '#brief card');
+  assert.match(card[1], /<h3 class="mini-label">Body image<\/h3>/);
+  assert.deepStrictEqual([...card[1].matchAll(/data-layer="(\w+)"/g)].map((m) => m[1]), ['density', 'pressure', 'impedance']);
+  assert.deepStrictEqual([...card[1].matchAll(/data-view="(\w+)"/g)].map((m) => m[1]), ['raw', 'diff']);
+  assert.match(card[1], /<p class="explain" id="image-explain" aria-live="polite"><\/p>/);
+  assert.doesNotMatch(card[1], /<\/button>, <button/);
+});
+
+test('the four check rows sit in their card, closed in the markup', () => {
+  const rows = [...html.matchAll(/<details class="row check-row" id="([\w-]+)" data-card="\w+" name="check">\s*<summary><h3 class="row-title">([^<]+)<\/h3>/g)];
+  assert.deepStrictEqual(rows.map((m) => m[1]), ['row-muscle', 'row-sleep', 'row-cardio', 'row-radiation']);
+  assert.deepStrictEqual(rows.map((m) => m[2]), ['Muscle', 'Sleep', 'Heart and breathing', 'Radiation']);
   assert.doesNotMatch(html, /<details[^>]*\bopen\b/);
-  assert.ok(html.indexOf('id="timeline"') < html.indexOf('id="checkin"'));
 });
 
-// The morning check-in row: the controls the page script drives.
-test('the morning check-in row and its controls exist', () => {
+test('no three-row guide, no fonts loaded, no italics; the sensors and the check-in are not inside a <details>', () => {
+  assert.doesNotMatch(html, /id="guide|class="guide/);
+  assert.doesNotMatch(html, /rel="preload"|\.woff2/);
+  const css = fs.readFileSync(path.join(root, 'css/style.css'), 'utf8');
+  assert.doesNotMatch(css, /@font-face|font-style:\s*italic|Garamond/);
+  assert.doesNotMatch(bodyHtml, /<i\b|<em\b/);
+  const opens = [...bodyHtml.matchAll(/<details\b|<\/details>/g)];
+  const inside = (id) => {
+    const at = bodyHtml.indexOf('id="' + id + '"');
+    let depth = 0;
+    for (const m of opens) { if (m.index > at) break; depth += m[0] === '<details' ? 1 : -1; }
+    return depth > 0;
+  };
+  for (const id of ['checkin', 'ci-temp', 'whatif', 'adherence']) assert.ok(!inside(id), id + ' is not inside a <details>');
+  for (const t of ['Impedance strip under the calves', 'Radar above the bunk', 'Particle trackers above and below', 'What if I miss exercise sessions?']) {
+    const at = bodyHtml.indexOf(t);
+    assert.ok(at > 0, t);
+    let depth = 0;
+    for (const m of opens) { if (m.index > at) break; depth += m[0] === '<details' ? 1 : -1; }
+    assert.strictEqual(depth, 0, t + ' is visible, not inside a <details>');
+  }
+  assert.ok(html.indexOf('id="how-zone"') < html.indexOf('Impedance strip under the calves'));
+});
+
+// The morning check-in card: the controls the page script drives.
+test('the morning check-in card and its controls exist', () => {
   const rules = require('../js/rules.js');
-  const sec = html.match(/<details class="row" id="checkin">([\s\S]*?)\n    <\/details>/);
-  assert.ok(sec, 'details#checkin');
+  const sec = html.match(/<div class="pcard checkin" id="checkin">([\s\S]*?)<p class="next-step">/);
+  assert.ok(sec, 'div#checkin');
   for (const id of ['checkin-meta', 'ci-temp', 'ci-temp-hint', 'ci-baseline', 'ci-clear', 'ci-meaning', 'ci-actions', 'ci-decides', 'ci-rows', 'ci-compare']) {
     assert.match(sec[1], new RegExp('id="' + id + '"'), id);
   }
   assert.match(sec[1], /<input type="number" id="ci-temp" min="34" max="42" step="0.1" inputmode="decimal" autocomplete="off"/);
   rules.CHECKIN.moods.forEach((w, i) => assert.match(sec[1], new RegExp('data-mood="' + (i + 1) + '" aria-pressed="false">' + w + '<'), w));
   rules.CHECKIN.symptoms.forEach((x) => assert.match(sec[1], new RegExp('data-sym="' + x.letter + '" aria-pressed="false">' + x.label + '<'), x.label));
+  assert.doesNotMatch(sec[1], /<\/button>, <button|<\/button>\.<\/p>/);
   assert.strictEqual(rules.CHECKIN.tempMinC, 34);
   assert.strictEqual(rules.CHECKIN.tempMaxC, 42);
   assert.match(sec[1], /class="ci-result" aria-live="polite"/);
+  assert.match(html, /<div class="today-grid" id="today-list"><\/div>/);
+});
+
+test('the markup has no inline style or script and no innerHTML in the page script', () => {
+  assert.doesNotMatch(bodyHtml, /\sstyle="|<script>(?!<)/);
+  assert.doesNotMatch(fs.readFileSync(path.join(root, 'js/app.js'), 'utf8'), /innerHTML|outerHTML|insertAdjacentHTML/);
 });
 
 // Anime.js is vendored unchanged and loaded before the page script, through js/motion.js only.
