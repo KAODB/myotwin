@@ -167,13 +167,11 @@ examples; it is generated from the code by `node tools/calculations-md.js`.
     gravity (V98). Next: learn each person's baseline from their first two
     weeks of check-ins, and try the questions in an analogue mission.
 
-## Use of SI and earlier work
+## Use of SI
 
 Code, tests, data files and text were produced with one SI tool, Claude (by
 Anthropic) through Claude Code. The idea, the choice of what to measure and
-every clinical judgement are the team member's. The form of the muscle model
-comes from a private simulator written on 11-13 November 2026, before the
-hackathon; everything else was written during it. Details:
+every clinical judgement are the team member's. Details:
 [docs/SI_USE.md](docs/SI_USE.md).
 
 ## Licence
