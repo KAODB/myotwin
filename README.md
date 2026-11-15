@@ -25,6 +25,11 @@ bunk on the Moon or Mars.
 
 Ids such as (V85) are entries in [docs/EVIDENCE.md](docs/EVIDENCE.md).
 
+The page is written for the crew member using it: three steps on the first
+screen (check in, open a check, do today) and rows that open on click. The
+sources, the limits and the method are in this file, in `docs/` and in the
+slides, not on the page.
+
 Live page: https://kaodb.github.io/myotwin/
 
 Demo, seven slides: [PDF](https://kaodb.github.io/myotwin/demo/slides/MyoTwin-demo.pdf), or the editable [PowerPoint file](demo/slides/MyoTwin-demo.pptx).
@@ -56,7 +61,7 @@ node --test "test/*.test.js"
   Moon nights replay LRO's CRaTER, including the solar particle events of
   September 2017 (V61). NASA's DONKI records mark the nights with an event
   (V62), and a chart shows NASA's OMNI proton flux (V63). The muscle model's
-  partial-gravity assumption is checked, in its own panel, against rats at 40%
+  partial-gravity assumption is checked, in the code and its tests, against rats at 40%
   weight bearing from NASA's Open Science Data Repository (V90, V91). The files are in
   `data/`, each with its source, units, processing and terms, and the scripts
   in `tools/data/` rebuild them from the downloads. See
