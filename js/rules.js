@@ -40,8 +40,8 @@
     // Radiation
     radiationHistoryNights: assumption(30, 'nights', 'Earlier mission nights used for the usual dose.'),
     radiationMinHistory: assumption(7, 'nights', 'Fewest earlier mission nights with dose data before the card is judged.'),
-    radiationAmberRatio: assumption(2, 'x usual', 'Tonight above twice the usual dose.'),
-    radiationRedRatio: assumption(10, 'x usual', 'Tonight above ten times the usual dose.'),
+    radiationAmberRatio: assumption(2, 'x usual', 'Last night above twice the usual dose.'),
+    radiationRedRatio: assumption(10, 'x usual', 'Last night above ten times the usual dose.'),
     // Projection
     projectionWeeks: assumption(4, 'weeks', 'Most weekly medians used for the trend line.'),
     projectionMinWeeks: assumption(3, 'weeks', 'Fewest weekly medians needed for a trend line.'),
@@ -220,10 +220,10 @@
     },
     decides: 'You and the {medic}',
     verdicts: {
-      'agree-clear': 'Agree.',
+      'agree-clear': 'You and the bunk agree: nothing has changed.',
       'bunk-only': 'The bunk sees a change you do not feel. Follow this check.',
       'self-only': 'You notice it and the bunk does not show it. Your answer still counts.',
-      'agree-flag': 'Both agree. Do this check\'s actions today.',
+      'agree-flag': 'You and the bunk both notice a change. Do this check\'s actions today.',
       'no-bunk': 'No bunk reading to compare with.',
       'cannot-feel': 'Radiation cannot be felt. Only the bunk can tell you.'
     },

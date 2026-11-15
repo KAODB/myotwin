@@ -616,7 +616,7 @@ html[data-wait~="s3"] #steps > li:nth-child(3) { opacity: 0; }
   .origin-table.ci-table td:nth-child(n) { width: auto; }
   .origin-table.ci-table td:nth-child(2)::before { content: "You said: "; color: var(--quiet); }
   .origin-table.ci-table td:nth-child(3)::before { content: "The bunk measured: "; color: var(--quiet); }
-  .origin-table.ci-table td:nth-child(4)::before { content: "Together: "; }
+  .origin-table.ci-table td:nth-child(4)::before { content: "Taken together: "; }
 }
 @media (max-width: 599px) {
   .notes { grid-template-columns: minmax(0, 1fr); }

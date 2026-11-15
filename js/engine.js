@@ -198,11 +198,11 @@
     var usual = earlier.length ? median(earlier) : null;
     var extra = { ratio: null, usualUGy: usual, cumulativeUGy: cumulative };
     if (!tonight) {
-      return makeCard('radiation', 'grey', words, { unit: 'uGy', threshold: 'radiationMinHistory', extra: extra, reason: 'No dose data tonight.' });
+      return makeCard('radiation', 'grey', words, { unit: 'uGy', threshold: 'radiationMinHistory', extra: extra, reason: 'No dose data for last night.' });
     }
     var dose = tonight.dose_uGy;
     var ratio = extra.ratio = usual ? dose / usual : null;
-    var line = 'Tonight ' + f(dose, 1) + ' \u00b5Gy' + (ratio === null ? '.' : ', ' + Math.round(ratio * 10) / 10 + 'x the usual level (median of ' + earlier.length + ' earlier nights, ' + f(usual, 1) + ' \u00b5Gy).');
+    var line = 'Last night ' + f(dose, 1) + ' \u00b5Gy' + (ratio === null ? '.' : ', ' + Math.round(ratio * 10) / 10 + 'x the usual level (median of ' + earlier.length + ' earlier nights, ' + f(usual, 1) + ' \u00b5Gy).');
     var total = ' Total sleep-period dose this mission: ' + f(cumulative, 0) + ' \u00b5Gy.';
     var o = { value: dose, unit: 'uGy', deltaPct: ratio === null ? null : (ratio - 1) * 100, extra: extra };
     // A night with a solar particle event on record is red even without dose history (conservative).
