@@ -1101,14 +1101,19 @@
     if (!r.done) {
       line.appendChild(document.createTextNode('Morning check-in: '));
     } else {
+      // What was said stays on one line (cut with an ellipsis, whole in the tooltip and to a screen
+      // reader), so the left column is as tall as before the check-in and Plate I still fits.
+      var said = el('span', 'ci-said');
+      said.title = 'You said: ' + r.summary + '.';
       if (r.status === 'amber') {
         var mk = el('span', 'status st-amber');
         mk.appendChild(charts.statusIconEl('amber', 14));
         mk.appendChild(el('span', 'visually-hidden', charts.STATUS.amber.word + ': '));
-        line.appendChild(mk);
-        line.appendChild(document.createTextNode(' '));
+        said.appendChild(mk);
+        said.appendChild(document.createTextNode(' '));
       }
-      line.appendChild(document.createTextNode('You said: ' + r.summary + '. '));
+      said.appendChild(document.createTextNode(said.title));
+      line.appendChild(said);
     }
     line.appendChild(open);
     line.appendChild(document.createTextNode('.'));
