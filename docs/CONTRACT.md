@@ -371,6 +371,25 @@ shared and captured:
 - Layout: at 1440 x 900 and 1280 x 720 the first screen shows the navigation, the title, the lead,
   the buttons and at least the top half of the three step cards, with no ruler; at 390 x 844 the
   navigation, the title, the lead and the buttons. No horizontal scroll from 360 to 1920 px.
+- Each trend chart says which marks are the person's and which are expected. Above it, one plain
+  title line (`#trend-title`, built by the page script; the chart's `aria-label` says the same with
+  the count of nights): muscle "Your calf muscle signal each night, against what the mission plan
+  expects."; sleep "Your hours asleep each night, against the 7-hour line." (the Watch line);
+  heart and breathing "Your night-time heart rate, against your own normal range."; radiation "The
+  dose over each sleep period, against a usual night." Inside the plot, labels in the band-label
+  style: "You" beside the latest drawn point of the person's line, "Expected: mission plan" on the
+  plan band, "Your baseline" (muscle) or "Your normal range" (heart and breathing) on the baseline
+  band, and "Usual night" on a quiet dashed line at the usual dose (`reference`). Their places come
+  from `charts.placeLabels(items, obstacles, bounds, gap)` (tested): in order of importance (You,
+  then the plan, then the baseline or usual night), the first candidate place inside the plot that
+  clears the threshold and event labels, the threshold lines, the selected-night line, the readings,
+  the judged points and the line between them, and the labels already placed; a label with no room
+  is left out, and the legend stays complete. The legend says "your" for the person's data and
+  "expected" for the plan ("Your nightly reading", "Your 7-night median", "Your baseline range
+  (before departure)", "Expected by the mission plan (Watch below this band)", "Your 7-night mean",
+  "Your 3-night median", "Your normal range (before departure)", "Your dose, as the check judges
+  it", "A usual night"). Axis titles: "Calf muscle signal (phase, deg)", "Hours asleep (h)",
+  "Night-time heart rate (bpm)", "Dose per sleep period".
 - Trend charts (`charts.line` with `upTo`) draw the readings, the judged line, its points and the
   exercise ticks only up to the selected night; the axes span the whole scenario and the plan band
   and thresholds stay. Event markers are drawn for events that started by the selected night; a

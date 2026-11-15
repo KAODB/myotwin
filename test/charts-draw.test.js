@@ -128,3 +128,66 @@ test('ruler: events get a bracket and a label above the ticks; colliding labels 
   assert.strictEqual(all(narrow, (n) => cls(n) === 'ruler-event').length, 2);
   assert.deepStrictEqual(all(narrow, (n) => cls(n) === 'ruler-event-label').map((t) => t.textContent), ['Solar events']);
 });
+
+// Labels inside the trend chart: placeLabels and the labels the chart draws with it.
+test('placeLabels: first option that fits and clears; earlier labels win; no room means left out', () => {
+  const bounds = { x0: 0, y0: 0, x1: 200, y1: 100 };
+  const box = (x, y, w, h) => ({ x0: x, y0: y - h + 3, x1: x + w, y1: y + 3 });
+  // The first option meets an obstacle, the second is outside the bounds, the third is taken.
+  let out = charts.placeLabels([{ id: 'a', w: 40, h: 12, options: [{ x: 10, y: 20 }, { x: 180, y: 20 }, { x: 10, y: 60 }] }],
+    [{ x0: 0, y0: 0, x1: 60, y1: 30 }], bounds);
+  assert.deepStrictEqual(out.map((p) => [p.id, p.x, p.y]), [['a', 10, 60]]);
+  assert.deepStrictEqual(out[0].box, box(10, 60, 40, 12));
+  // Two labels after the same spot: the first (more important) takes it, the second its next option.
+  out = charts.placeLabels([
+    { id: 'you', w: 30, h: 12, options: [{ x: 50, y: 50 }] },
+    { id: 'band', w: 60, h: 12, options: [{ x: 40, y: 52 }, { x: 40, y: 80 }] }], [], bounds);
+  assert.deepStrictEqual(out.map((p) => [p.id, p.y]), [['you', 50], ['band', 80]]);
+  // No option clears: the label is left out, never overlapped.
+  out = charts.placeLabels([{ id: 'x', w: 30, h: 12, options: [{ x: 50, y: 50 }] }], [{ x0: 40, y0: 30, x1: 120, y1: 70 }], bounds);
+  assert.deepStrictEqual(out, []);
+  // Boxes that only touch within the gap count as meeting.
+  out = charts.placeLabels([{ id: 'x', w: 30, h: 12, options: [{ x: 50, y: 50 }] }], [{ x0: 81, y0: 30, x1: 120, y1: 70 }], bounds, 2);
+  assert.deepStrictEqual(out, []);
+});
+
+function boxOfText(n) {
+  const w = n.textContent.length * 6.5, x = Number(n.attrs.x), y = Number(n.attrs.y), a = n.attrs['text-anchor'];
+  const x0 = a === 'end' ? x - w : a === 'middle' ? x - w / 2 : x;
+  return { x0, x1: x0 + w, y0: y - 9, y1: y + 3 };
+}
+const meet = (a, b) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+
+test('the trend chart labels the person\'s line and the bands, clear of each other, the threshold and event labels and the data', () => {
+  for (const W of [340, 520, 800, 1100]) {
+    for (const upTo of [-3, 10, 42, 89]) {
+      const svg = svgOf(W, 300), o = spec(upTo);
+      Object.assign(o, { youLabel: 'You', expectedLabel: 'Expected: mission plan', baselineLabel: 'Your baseline',
+        baseline: { median: 9.1, low: 8.9, high: 9.3 }, title: 'Your calf muscle signal each night, against what the mission plan expects.' });
+      const geo = charts.line(svg, o);
+      const mine = all(svg, (n) => /chart-label/.test(cls(n)));
+      const others = all(svg, (n) => /threshold-label|event-label/.test(cls(n)));
+      const where = W + ' px, night ' + upTo;
+      const boxes = mine.map(boxOfText);
+      boxes.forEach((b, i) => {
+        assert.ok(b.x0 >= geo.left && b.x1 <= geo.right && b.y0 >= geo.top - 1 && b.y1 <= geo.bottom + 1, where + ': ' + mine[i].textContent + ' inside the plot');
+        others.forEach((n) => assert.ok(!meet(b, boxOfText(n)), where + ': ' + mine[i].textContent + ' clears ' + n.textContent));
+        boxes.forEach((c, j) => { if (j !== i) assert.ok(!meet(b, c), where + ': labels apart'); });
+        all(svg, (n) => n.tag === 'circle' && /raw-dot|mk/.test(cls(n))).forEach((n) => {
+          const cx = Number(n.attrs.cx), cy = Number(n.attrs.cy);
+          assert.ok(!(cx > b.x0 && cx < b.x1 && cy > b.y0 && cy < b.y1), where + ': ' + mine[i].textContent + ' clears the data');
+        });
+        const sel = geo.x(upTo);
+        assert.ok(!(sel > b.x0 && sel < b.x1), where + ': clears the selected night');
+      });
+      // On the wide chart the three labels all find room; "You" sits by the latest drawn point.
+      if (W >= 800) {
+        assert.deepStrictEqual(mine.map((n) => n.textContent).sort(), ['Expected: mission plan', 'You', 'Your baseline'], where);
+        const you = boxOfText(mine.find((n) => n.textContent === 'You'));
+        const px = geo.x(upTo), py = geo.y(9 - upTo * 0.01);
+        assert.ok(Math.hypot((you.x0 + you.x1) / 2 - px, (you.y0 + you.y1) / 2 - py) < 45, where + ': You near its point');
+      }
+      assert.match(svg.attrs['aria-label'], /^Your calf muscle signal each night, against what the mission plan expects\. \d+ nights with data\.$/);
+    }
+  }
+});

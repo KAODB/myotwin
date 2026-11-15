@@ -807,7 +807,8 @@
       series: judgedSeries(cardId), xTitle: 'Mission day',
       axisBreak: data.gen.scenario.transitDays > 0 ? 0 : null
     };
-    var legend = [['dot', 'Nightly reading']];
+    var legend = [['dot', 'Your nightly reading']];
+    o.youLabel = 'You';
     if (cardId === 'muscle') {
       var me = muscleExtra(), med = b.eim.median, plan = data.gen.plan.expectedChangePct;
       var ok = med != null && me && me.amberLimitPct != null;
@@ -819,8 +820,10 @@
       }).filter(function (p) { return p.missionDay >= 0; });
       o.thresholds = !ok ? [] : [{ value: med * (1 - me.redLimitPct / 100), label: 'Report line: ' + me.redLimitPct.toFixed(1) + '% below baseline', shortLabel: 'Report: −' + me.redLimitPct.toFixed(1) + '%', status: 'red' }];
       o.exercise = recs.filter(function (r) { return r.missionDay >= 0; }).map(function (r) { return { missionDay: r.missionDay, done: !!r.log.exercise_done }; });
-      o.unit = 'deg'; o.yLabel = 'Calf phase';
-      legend.push(['line', WINDOW + '-night median'], ['band', 'Own baseline range'], ['plan', 'Plan (Watch below this band)'],
+      o.unit = 'deg'; o.yLabel = 'Calf phase'; o.yTitle = 'Calf muscle signal (phase, deg)';
+      o.title = 'Your calf muscle signal each night, against what the mission plan expects.';
+      o.baselineLabel = 'Your baseline'; o.expectedLabel = 'Expected: mission plan';
+      legend.push(['line', 'Your ' + WINDOW + '-night median'], ['band', 'Your baseline range (before departure)'], ['plan', 'Expected by the mission plan (Watch below this band)'],
         ['report', 'Report line'], ['event', 'Event'], ['exercise', 'Exercise done (tall) or missed (short)'], ['selected', 'Selected night']);
     } else if (cardId === 'sleep') {
       o.raw = engine.series(recs, 'sleep');
@@ -828,15 +831,18 @@
         { value: x.amberHours, label: 'Watch line: ' + x.amberHours + ' h', status: 'amber' },
         { value: x.redHours, label: 'Report line: ' + x.redHours + ' h', status: 'red' }
       ];
-      o.unit = 'h'; o.yLabel = 'Sleep';
-      legend.push(['line', WINDOW + '-night mean'], ['watch', 'Watch line'], ['report', 'Report line'], ['event', 'Event'], ['selected', 'Selected night']);
+      o.unit = 'h'; o.yLabel = 'Sleep'; o.yTitle = 'Hours asleep (h)';
+      o.title = 'Your hours asleep each night, against the ' + x.amberHours + '-hour line.';
+      legend.push(['line', 'Your ' + WINDOW + '-night mean'], ['watch', 'Watch line'], ['report', 'Report line'], ['event', 'Event'], ['selected', 'Selected night']);
     } else if (cardId === 'cardio') {
       o.raw = engine.series(recs, 'hr');
       o.baseline = band(b.hr);
       var hrLim = x.hrLimit != null ? x.hrLimit : (b.hr.median != null ? b.hr.median + T.cardioSdMultiple.value * b.hr.sd : null);
       if (hrLim != null) o.thresholds = [{ value: hrLim, label: 'Watch line: baseline + ' + T.cardioSdMultiple.value + ' SD', shortLabel: 'Watch: +' + T.cardioSdMultiple.value + ' SD', status: 'amber' }];
-      o.unit = 'bpm'; o.yLabel = 'Night heart rate';
-      legend.push(['line', T.cardioNights.value + '-night median'], ['band', 'Own baseline range'], ['watch', 'Watch line'], ['event', 'Event'], ['selected', 'Selected night']);
+      o.unit = 'bpm'; o.yLabel = 'Night heart rate'; o.yTitle = 'Night-time heart rate (bpm)';
+      o.title = 'Your night-time heart rate, against your own normal range.';
+      o.baselineLabel = 'Your normal range';
+      legend.push(['line', 'Your ' + T.cardioNights.value + '-night median'], ['band', 'Your normal range (before departure)'], ['watch', 'Watch line'], ['event', 'Event'], ['selected', 'Selected night']);
     } else {
       o.raw = engine.series(recs, 'dose');
       if (x.usualUGy != null) {
@@ -845,16 +851,18 @@
           { value: x.usualUGy * T.radiationRedRatio.value, label: 'Report line: ' + T.radiationRedRatio.value + 'x usual', status: 'red' }
         ];
       }
-      o.unit = 'µGy'; o.yLabel = 'Dose per night';
+      o.unit = 'µGy'; o.yLabel = 'Dose per night'; o.yTitle = 'Dose per sleep period (µGy)';
+      o.title = 'The dose over each sleep period, against a usual night.';
+      if (x.usualUGy != null) o.reference = { value: x.usualUGy, label: 'Usual night' };
       // Doses spanning more than 50x (a solar event) go on a log axis; ticks then carry the card's units.
       var logY = charts.useLogScale(o.series.concat(o.raw).map(function (p) { return p.value; }));
       if (logY) {
-        o.logY = true; o.yFormat = charts.doseTick; o.unit = '';
+        o.logY = true; o.yFormat = charts.doseTick; o.unit = ''; o.yTitle = 'Dose per sleep period';
         // On a narrow plot the full labels would run into the event nights; short ones stay over the quiet nights.
         o.thresholds.forEach(function (t, k) { t.shortLabel = (k ? 'Report: ' + T.radiationRedRatio.value : 'Watch: ' + T.radiationAmberRatio.value) + 'x'; });
       }
-      legend.push(['line', 'Dose the card judges']);
-      if (x.usualUGy != null) legend.push(['watch', 'Watch line'], ['report', 'Report line']);
+      legend.push(['line', 'Your dose, as the check judges it']);
+      if (x.usualUGy != null) legend.push(['usual', 'A usual night'], ['watch', 'Watch line'], ['report', 'Report line']);
       legend.push(['event', 'Event'], ['selected', 'Selected night']);
     }
     if (o.axisBreak != null) legend.push(['break', 'Break: the transit is not monitored']);
@@ -880,6 +888,7 @@
     var cardId = state.card;
     if (!cardId) return;
     var t = trendSpec(cardId);
+    $('trend-title').textContent = t.opts.title;
     trendGeo = charts.line($('trend-chart'), t.opts);
     trendGeo.unit = t.opts.unit;
     if (readoutX != null) showReadout(readoutX);
@@ -1490,6 +1499,11 @@
       var svg = svgEl('svg', { 'class': 'spark', width: SPARK_W, height: SPARK_H, 'aria-hidden': 'true', focusable: 'false' });
       sum.insertBefore(svg, sum.querySelector('.row-meta'));
     });
+    // The chart's plain title (the chart's accessible name says the same) above the readout line.
+    var title = el('p', 'trend-title');
+    title.id = 'trend-title';
+    title.setAttribute('aria-hidden', 'true');
+    $('trend').insertBefore(title, $('trend-chart'));
     var p = el('p', 'trend-readout');
     p.id = 'trend-readout';
     p.setAttribute('aria-hidden', 'true');
