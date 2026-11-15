@@ -31,7 +31,11 @@ Demo, seven slides: [PDF](https://kaodb.github.io/myotwin/demo/slides/MyoTwin-de
 
 Screenshots:
 
-![Morning brief on Mars, night 45. The headline reports muscle. The sleeper is drawn as a stipple of dots inside a square and a circle, with the four checks as notes in the margin and the nights as a ruler along the bottom](demo/screenshots/brief-mars-day45.png)
+![Morning brief on Mars, night 45. On the left the headline, which reports muscle, and a three-step guide: check in, open a check, do today. In the middle the sleeper drawn as a stipple of dots inside a square and a circle. On the right the four checks as notes, and along the bottom the nights as a ruler](demo/screenshots/brief-mars-day45.png)
+
+![Below the first screen, seven rows that show only a title until opened: Morning check-in, Muscle, Sleep, Heart and breathing, Radiation, How the bunk measures, What if I miss exercise sessions. Each check row carries a small trend line, its status and its value](demo/screenshots/rows-closed.png)
+
+![The muscle check, opened on Mars night 42: what it means, three numbered actions, who decides, and the trend against the crew member's own baseline and the mission plan](demo/screenshots/row-muscle-open.png)
 
 ![The morning check-in on Mars, night 62. On the left the three questions: mood, temperature and what the crew member notices. On the right what it means and what to do, and below a table that sets each answer beside the bunk's reading](demo/screenshots/checkin-mars-day62.png)
 
