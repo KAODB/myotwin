@@ -17,7 +17,7 @@ MyoTwin
 
 On the Moon or Mars a crew member has to notice changes in their own body. From Mars a message can take up to 20 minutes one way, and NASA rates the risk of operating with little real-time help from Earth 5x5 for a Mars mission, the top of its scale. NASA requires crews to keep muscle strength at or above 80% of baseline. The strength tests used on the ISS need specialized equipment in a fixed place, and in 2023 NASA's evidence report said "Currently, no standard in-flight measurement of strength exists."
 
-MyoTwin takes the tools clinics use to find muscle loss in older adults and rebuilds them for a crew member asleep on the Moon or Mars. It is a morning health brief built from the hours a crew member already spends lying still. A sensor panel in the bunk, which I assume and have not built, measures the calf muscle, sleep, heart and breathing rate, and radiation overnight. Nothing is worn and it takes no crew time. In the morning one screen shows a body figure you can click, four checks in plain words, what NASA says about each risk, and what to do today.
+MyoTwin takes the tools clinics use to find muscle loss in older adults and rebuilds them for a crew member asleep on the Moon or Mars. It is a morning health brief built from the hours a crew member already spends lying still. A sensor panel in the bunk, which I assume and have not built, measures the calf muscle, sleep, heart and breathing rate, and radiation overnight. Nothing is worn and the measuring takes no crew time. In the morning the crew member answers three questions in about 30 seconds: how they feel, their temperature, and anything they notice. One screen then shows a body figure you can click, four checks in plain words, what the crew member said beside what the bunk measured, what NASA says about each risk, and what to do today.
 
 The radiation numbers are real measurements replayed night by night: Curiosity's RAD on Mars and LRO's CRaTER at the Moon, including the solar storms of September 2017. The crew member's own readings are simulated, and the radiation card says where its number was measured.
 
@@ -42,6 +42,7 @@ Each morning MyoTwin answers three questions for the person who slept in the bun
 - **Sleep.** A radar above the bunk estimates hours asleep. The card uses the 7-hour line from NASA's sleep brief.
 - **Heart and breathing.** The same radar gives night-time heart rate and breathing rate, judged against the person's own range. Both raised for three nights is treated as a possible early sign of illness.
 - **Radiation.** The dose over the sleep period, how it compares with a usual night, and the running total.
+- **Morning check-in.** Three questions, about 30 seconds: how the crew member feels on a five-step scale, their temperature, and whether their legs feel weaker, they did not feel rested, or they feel ill. Each answer is set beside the bunk's reading for the same part of the body.
 
 The body figure is the way in. Select the head, the chest or the calves to open that check, or the whole body for radiation. Each check shows its status in words (In range, Watch, Report, No data), what it means, what to do now and who decides. Below that comes the NASA context: the Human Research Program risk it relates to, NASA's rating of that risk for the mission selected, two sentences from NASA's own page on the risk, the NASA standard that applies, and one open NASA research gap.
 
@@ -57,6 +58,7 @@ One record per night goes into an assessment engine. Its rules are written as da
 - Sleep turns to Watch under 7 hours and to Report under 6, which is about what astronauts average in space. The 6-hour line is my assumption.
 - Heart and breathing only reach Watch.
 - Radiation turns to Watch above twice the usual night and to Report above ten times, or when a solar particle event is on record. It describes the night that has passed. Real-time warnings come from space-weather alerts and the flight rules.
+- The check-in turns to Watch when the temperature is more than 1.1 °C above the person's own baseline, when it is as far below (my assumption; the brief then asks for a repeat measurement), when mood is rated 1 or 2 out of 5, or when something is noticed. It has no Report level. For each body system four outcomes are possible: the person and the bunk agree that nothing has changed, both show a change, only the person notices something, or only the bunk does. The last one is the case a nightly reading exists for.
 
 The first nights after arrival show No data, because I do not mix nights from before departure with nights on the surface.
 
@@ -91,6 +93,8 @@ In four ways, and the page keeps them apart.
 
 On Earth, clinics look for muscle loss in older adults in three steps. They find it with a tape around the calf or a five-question form, assess strength with a grip test or five rises from a chair, and confirm low muscle mass by DXA or bioimpedance (V94, V95). Phase angle from bioimpedance is lower in people with muscle loss (V96). The Canadian Space Agency describes the effects seen in astronauts as "similar to accelerated aging and health problems caused by a sedentary lifestyle". MyoTwin takes those steps to the Moon and Mars. The calf is read by impedance every night instead of once in a clinic visit, a strength test is asked for when the nightly reading falls behind the mission plan, and the flight surgeon confirms. The clinic tools read the whole body or the hand. Reading one calf by impedance in a bunk is my adaptation of them.
 
+The check-in follows the same route. In long-term care, older adults often stay under the usual fever cut-offs, so the infectious disease guideline also counts a rise of more than 1.1 °C over the person's own baseline as fever (V97). Astronauts shift the other way: on the ISS, core temperature at rest rose by about 1 °C over the first 2.5 months (V98). In both groups a fixed cut-off misleads, so MyoTwin judges the reading against the person's own baseline. The crew of a 520-day Mars simulation rated themselves between two words, such as happy and unhappy (V99). The five-word mood question is a simpler form of that.
+
 ### Tools and languages
 
 Plain HTML, CSS and JavaScript with no build step and no server; two open-licence typefaces (Cormorant Garamond and EB Garamond) served from the repository; Node.js tests; Python scripts (standard library only) that rebuild the data files from the NASA downloads; GitHub Pages; pptxgenjs for the slides; Claude through Claude Code.
@@ -118,7 +122,7 @@ Resources listed on the challenge page:
 
 Pages those resources link to:
 
-- Risk pages quoted on the checks: reduced cardiorespiratory and musculoskeletal fitness (V48), inadequate sleep and irregular schedules (V49), cardiovascular adaptations (V50), radiation-induced cancers (V51). The page on behavioural conditions (V52) is quoted in the hazard panel, under isolation and confinement. https://www.nasa.gov/reference/risk-of-reduced-cardiorespiratory-and-musculoskeletal-fitness/
+- Risk pages quoted on the checks: reduced cardiorespiratory and musculoskeletal fitness (V48), inadequate sleep and irregular schedules (V49), cardiovascular adaptations (V50), radiation-induced cancers (V51). The page on behavioural conditions (V52) is quoted in the hazard panel, under isolation and confinement, and in the note under the morning check-in. https://www.nasa.gov/reference/risk-of-reduced-cardiorespiratory-and-musculoskeletal-fitness/
 - Hazard pages used in the hazard panel: gravity fields (V53), distance from Earth (V54), isolation and confinement (V55), space radiation (V56). https://www.nasa.gov/hrp/hazard-distance-from-earth/
 - Research pages: ARCHeR (V57), Tempus Pro (V58), Artemis II Standard Measures (V59). https://www.nasa.gov/reference/archer/
 
@@ -165,6 +169,9 @@ Other references. "Computes" means the code uses the number; "cites" means the t
 - Cruz-Jentoft AJ et al., Age Ageing 2019 (V94). The revised European consensus on sarcopenia: find, assess, confirm, severity; cites. https://doi.org/10.1093/ageing/afy169
 - Chen LK et al., J Am Med Dir Assoc 2020 (V95). The Asian Working Group for Sarcopenia 2019 consensus: calf circumference, a five-question form, grip strength and the chair stand; cites. https://doi.org/10.1016/j.jamda.2019.12.012
 - Di Vincenzo O et al., Clin Nutr 2021 (V96). Systematic review: bioimpedance phase angle is lower in sarcopenia; cites. https://doi.org/10.1016/j.clnu.2020.10.048
+- High KP et al., Clin Infect Dis 2009 (V97). Guideline of the Infectious Diseases Society of America on fever in older adults in long-term care, including a rise of more than 1.1 °C over the person's own baseline; computes (the temperature rule of the check-in). https://doi.org/10.1086/595683
+- Stahn AC et al., Sci Rep 2017 (V98). Core body temperature at rest rose by about 1 °C in 11 astronauts on the ISS; cites. https://doi.org/10.1038/s41598-017-15560-w
+- Basner M et al., PLoS ONE 2014 (V99). Self-rating scales and the differences between crew members in a 520-day Mars simulation; cites. https://doi.org/10.1371/journal.pone.0093298
 
 Earlier work of my own:
 

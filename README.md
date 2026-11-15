@@ -13,9 +13,11 @@ used on the ISS need specialized equipment in a fixed place (V82), and in 2023
 NASA's evidence report said "Currently, no standard in-flight measurement of
 strength exists" (V85). MyoTwin measures during the hours a crew member already
 spends lying still. An assumed sensor panel in the bunk reads the calf muscle, sleep, heart
-and breathing rate, and radiation overnight. In the morning one screen shows a
-body figure you can click, four checks in plain words, what NASA says about
-each risk, and what to do today. A flight surgeon decides; the software only
+and breathing rate, and radiation overnight. In the morning the crew member
+answers three questions in about 30 seconds (how they feel, their temperature,
+anything they notice). One screen then shows a body figure you can click, four
+checks in plain words, what the crew member said beside what the bunk measured,
+what NASA says about each risk, and what to do today. A flight surgeon decides; the software only
 flags. The method comes from the way clinics find muscle loss in
 older adults: a tape around the calf or a short form, a strength test, then
 muscle mass by DXA or bioimpedance (V94, V95). MyoTwin takes those steps to a
@@ -70,6 +72,12 @@ node --test "test/*.test.js"
   layers. The simulator (`js/sim.js`) is seeded, and each scenario has its own
   simulated person, so the same scenario always gives the same nights. No real
   person's data are in this repository.
+- **Entered by the person at the screen:** the morning check-in (mood,
+  temperature, what they notice). The answers are kept in the page address;
+  nothing is stored or sent. The temperature is judged against the person's own
+  baseline, using the rise of more than 1.1 °C that counts as fever in older
+  adults in long-term care (V97), because core temperature at rest shifts in
+  space (V98).
 - **Assumed, not built:** the sensor panel (impedance strip under the calves,
   60 GHz radar above the bunk, pressure mat, particle trackers above and below
   the sleeper). See [docs/SENSOR_ASSUMPTIONS.md](docs/SENSOR_ASSUMPTIONS.md).
