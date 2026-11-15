@@ -16,7 +16,7 @@ test('motion loads without anime or a DOM; every call returns false without thro
   const calls = ['intro', 'finishIntro', 'introRunning', 'rowOpened', 'rowClosed', 'valueTo', 'stopValue', 'pulse', 'settle', 'fadeRows', 'setPlaying'];
   assert.deepStrictEqual(Object.keys(motion).sort(), calls.concat('countable').sort());
   const fakeNode = { textContent: '7.5', getAttribute: () => '9', setAttribute() {}, style: { removeProperty() {} } };
-  assert.strictEqual(motion.intro({ headline: fakeNode, guide: [], drawFigure() { throw new Error('must not draw'); }, ink: null, notes: [], ruler: null, sweep: null }), false);
+  assert.strictEqual(motion.intro({ hero: [fakeNode], steps: [fakeNode] }), false);
   assert.strictEqual(motion.rowOpened(fakeNode, [fakeNode], fakeNode), false);
   assert.strictEqual(motion.valueTo(fakeNode, 1, 2, String), false);
   assert.strictEqual(fakeNode.textContent, '7.5');

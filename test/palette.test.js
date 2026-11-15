@@ -1,7 +1,6 @@
-// Checks the colour scheme in css/style.css: every colour pair the page uses meets WCAG AA
-// (the :root palette), the accent colour stays
-// reserved for Watch, Report and the attention headline, the old status colours are gone,
-// and js/charts.js builds its canvas colour scales from the same palette.
+// Checks the three-colour rule in css/style.css: every text colour meets WCAG AA on every surface
+// it is used on, no colour outside the rule appears, the accent stays reserved for attention, the old
+// colours are gone, and js/charts.js builds its canvas colour scales from the same palette.
 // Written with an SI tool (Claude) and reviewed by the team.
 'use strict';
 const test = require('node:test');
@@ -49,61 +48,99 @@ function lum(c) {
 function ratio(a, b) { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
 
 const TEXT = 4.5, MARK = 3;
-// The page has one ground (no panels); --tone is the quiet band behind chart plots.
-const SURFACES = ['night', 'tone'];
+// Surfaces: the night ground, the card panel, the chart tone (judged on the panel it sits on), and
+// the Electric Blue block, button and pressed pill.
+const DARK_SURFACES = ['night', 'panel'];
 // [foreground, backgrounds, minimum, what uses it]
 const PAIRS = [
-  ['ink', SURFACES, TEXT, 'body text, headline, values'],
-  ['quiet', SURFACES, TEXT, 'secondary text, labels, In range and No data words, tick labels'],
-  ['blue', SURFACES, TEXT, 'links, the brief label, the notice'],
-  ['accent', SURFACES, TEXT, 'Watch and Report words, threshold labels, the attention headline'],
-  ['rule-strong', ['night'], 1.5, 'hairlines: frame, axes, ruler ticks (decorative structure)'],
-  ['blue', ['night'], MARK, 'working colour: focus rings, selected night, selection, tracks'],
-  ['accent', ['night'], MARK, 'Watch and Report marks, leaders and threshold lines']
+  ['ink', DARK_SURFACES, TEXT, 'body text, headings, values'],
+  ['quiet', DARK_SURFACES, TEXT, 'secondary text, labels, In range and No data words, tick labels'],
+  ['blue', DARK_SURFACES, TEXT, 'links, step labels, the eyebrows, the notice, "See the readings"'],
+  ['accent', DARK_SURFACES, TEXT, 'Watch and Report words, threshold labels, the attention headline'],
+  ['on-blue', ['blue'], TEXT, 'text on the Step 2 block and card, the primary button, a pressed pill, the current step number'],
+  ['on-blue-quiet', ['blue'], TEXT, 'secondary text on the Step 2 block and card'],
+  ['line-2', DARK_SURFACES, 1.5, 'hairlines: frame, axes, ruler ticks, pill borders (decorative structure)'],
+  ['blue', DARK_SURFACES, MARK, 'focus rings, the selected night, tracks, the current step circle'],
+  ['accent', DARK_SURFACES, MARK, 'Watch and Report marks, leaders and threshold lines']
 ];
 
-for (const [mode, P] of [['space (dark)', DARK]]) {
-  test('contrast pairs meet WCAG AA: ' + mode, () => {
-    const rows = [];
-    for (const [fg, bgs, min, use] of PAIRS) {
-      for (const bg of bgs) {
-        // Translucent backgrounds (the chart tone) are judged where they sit: on the night ground.
-        const base = over(P, bg, 'night');
-        const r = ratio(over(P, fg, 'night'), base);
-        rows.push(fg + ' on ' + bg + ': ' + r.toFixed(2) + ' (min ' + min + ')');
-        assert.ok(r >= min, mode + ': --' + fg + ' on --' + bg + ' is ' + r.toFixed(2) + ':1, needs ' + min + ':1 (' + use + ')');
-      }
+test('every text colour meets WCAG AA on every surface it is used on', () => {
+  const rows = [];
+  for (const [fg, bgs, min, use] of PAIRS) {
+    for (const bg of bgs) {
+      const base = over(DARK, bg, 'night');
+      const r = ratio(over(DARK, fg, bg), base);
+      rows.push(fg + ' on ' + bg + ': ' + r.toFixed(2) + ' (min ' + min + ')');
+      assert.ok(r >= min, '--' + fg + ' on --' + bg + ' is ' + r.toFixed(2) + ':1, needs ' + min + ':1 (' + use + ')');
     }
-    console.log('# ' + mode + '\n# ' + rows.join('\n# '));
-  });
-}
-
-test('the scheme uses the exact values of the set', () => {
-  assert.deepStrictEqual(['night', 'ink', 'quiet', 'rule', 'rule-strong', 'blue', 'accent'].map((k) => DARK[k].toUpperCase()),
-    ['#02070A', '#EAF2F7', '#8FA3B1', '#1B2C37', '#2E4859', '#0297DE', '#FC734D']);
+  }
+  // Text on the chart tone, judged where the tone sits (on the panel).
+  const tone = over({ ...DARK, base: DARK.panel }, 'tone', 'base');
+  for (const fg of ['ink', 'quiet', 'accent']) {
+    const r = ratio(over(DARK, fg, 'panel'), tone);
+    rows.push(fg + ' on tone: ' + r.toFixed(2));
+    assert.ok(r >= TEXT, fg + ' on the chart tone');
+  }
+  // Measured values the brief names, and why ink and white never go on blue.
+  assert.ok(Math.abs(ratio(over(DARK, 'on-blue', 'blue'), over(DARK, 'blue', 'night')) - 6.25) < 0.02);
+  assert.ok(Math.abs(ratio(over(DARK, 'on-blue-quiet', 'blue'), over(DARK, 'blue', 'night')) - 4.97) < 0.02);
+  assert.ok(ratio(rgba(DARK.ink), rgba(DARK.blue)) < TEXT && ratio([255, 255, 255, 1], rgba(DARK.blue)) < TEXT);
+  console.log('# ' + rows.join('\n# '));
 });
 
-test('the accent is reserved for Watch, Report and the attention headline', () => {
+const RULES = css.replace(/\/\*[\s\S]*?\*\//g, '').split('}').map((r) => r.split('{')).filter((r) => r[1]);
+
+test('a block, button or pill of Electric Blue always sets night text on it', () => {
+  for (const [sel, body] of RULES) {
+    if (!/(^|[\s;])background:\s*var\(--blue\)/.test(body)) continue;
+    if (/dot|brand-mark|thumb/.test(sel)) continue;              // marks with no text
+    assert.match(body, /(^|[\s;])color:\s*var\(--on-blue\)/, sel.trim() + ' puts text on blue without --on-blue');
+  }
+});
+
+test('the scheme uses the exact values of the three colours and the tokens of the rule', () => {
+  assert.deepStrictEqual(['night', 'ink', 'quiet', 'blue', 'accent', 'panel', 'on-blue'].map((k) => DARK[k].toUpperCase()),
+    ['#02070A', '#EAF2F7', '#8FA3B1', '#0297DE', '#FC734D', '#0B1013', '#02070A']);
+  assert.strictEqual(DARK['on-blue-quiet'], 'rgba(2, 7, 10, 0.8)');
+  assert.strictEqual(DARK.maxw, '1200px');
+  assert.match(DARK['font-sans'], /^system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif$/);
+  assert.match(DARK['font-mono'], /^ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace$/);
+});
+
+test('no colour outside the rule: every colour in the stylesheet is one of the three, ink, quiet or panel, or black, white or ink at an opacity', () => {
+  const allowedHex = ['#02070A', '#EAF2F7', '#8FA3B1', '#0297DE', '#FC734D', '#0B1013', '#000', '#FFF'];
+  const allowedRgb = ['2,7,10', '234,242,247', '0,0,0', '255,255,255', '2,151,222', '252,115,77'];
+  const noMaps = css.replace(/\/\*[\s\S]*?\*\//g, '').replace(/--map-[\w-]+:[^;]+;/g, '');
+  for (const m of noMaps.matchAll(/#[0-9a-f]{3,8}\b/gi)) assert.ok(allowedHex.includes(m[0].toUpperCase()), 'colour outside the rule: ' + m[0]);
+  for (const m of noMaps.matchAll(/rgba?\(([^)]+)\)/g)) {
+    const parts = m[1].split(',').map((x) => x.trim());
+    assert.ok(allowedRgb.includes(parts.slice(0, 3).join(',')), 'colour outside the rule: ' + m[0]);
+  }
+  assert.doesNotMatch(noMaps, /\b(hsl|oklch|lab|lch|color-mix)\(/);
+  assert.doesNotMatch(noMaps, /--(zone-self|panel-self|zone-ref|panel-2|line-self|rule|rule-strong)\b/);
+});
+
+test('the accent is reserved for Watch, Report, the attention headline and the attention light', () => {
   const allowed = /st-amber|st-red|key-watch|key-report|headline-attn/;
-  // Rules (outside the palette blocks) that use an accent variable.
-  const rules = css.replace(/\/\*[\s\S]*?\*\//g, '').split('}').map((r) => r.split('{'));
-  for (const [sel, body] of rules) {
-    if (!body || !/var\(--accent\)/.test(body)) continue;
+  for (const [sel, body] of RULES) {
+    if (!/var\(--accent\)/.test(body)) continue;
     assert.match(sel.trim(), allowed, 'accent used outside a Watch/Report rule: ' + sel.trim());
   }
-  // The accent value itself appears only in the palette, never as a literal elsewhere.
-  const outside = css.replace(/:root \{[^}]*\}|\/\*[\s\S]*?\*\//g, '');
-  assert.doesNotMatch(outside, /#FC734D|252,\s*115,\s*77/i);
+  // The accent's value appears only in the palette and in the small light shown on attention nights.
+  for (const [sel, body] of RULES) {
+    if (sel.trim() === ':root' || !/#FC734D|252,\s*115,\s*77/i.test(body)) continue;
+    assert.strictEqual(sel.trim(), '.hero.hero-attn::after', 'accent value used in ' + sel.trim());
+  }
 });
 
 test('the old status and badge colours are gone', () => {
   assert.doesNotMatch(css, /--(green|amber|red|attention|surface|muted)\b/);
-  assert.doesNotMatch(css, /#5ec8e5|#5bd38f|#f3c14f|#ff7d6e|#0a1120|#126b33|#8a5800|#b42318/i);
+  assert.doesNotMatch(css, /#5ec8e5|#5bd38f|#f3c14f|#ff7d6e|#0a1120|#126b33|#8a5800|#b42318|#1B2C37|#2E4859|#08141B|#06283C/i);
 });
 
 test('every palette variable is used', () => {
   for (const name of Object.keys(DARK)) {
-    if (/^(font|gutter|top-h|bar-h|hero-h|plate-w|map-)/.test(name)) continue;
+    if (/^(gutter|nav-h|bar-h|plate-w|plate-h|map-)/.test(name)) continue;
     assert.ok(css.includes('var(--' + name + ')'), '--' + name + ' is used');
   }
 });
@@ -126,30 +163,17 @@ test('canvas colour scales come from the palette', () => {
   assert.deepStrictEqual(charts.colormap('diverging', 1), charts.parseStops(DARK['map-diverging'])[4]);
 });
 
-// The atlas language: no shadows, no rounded containers, no gradients, no sans-serif, and the
-// stipple tones the canvas uses are the palette's own.
-test('no shadows, gradients or sans-serif type; corners are round only on dots and hit areas', () => {
+// The product look: no shadows; gradients only for the lights and the grid behind the landing
+// section and at the foot of "How it works"; system type, no web fonts, no italics.
+test('no shadows; gradients only for the lights and the landing grid; system type without web fonts or italics', () => {
   const rules = css.replace(/\/\*[\s\S]*?\*\//g, '');
-  assert.doesNotMatch(rules, /box-shadow|text-shadow|linear-gradient|radial-gradient/);
-  assert.doesNotMatch(rules, /sans-serif|system-ui|Inter\b|Geist|Space Grotesk/);
-  for (const m of rules.matchAll(/([^{}]+)\{[^}]*border-radius:\s*([^;]+);/g)) {
-    if (m[2].trim() === '0') continue;
-    assert.match(m[1].trim(), /\.hs\b|key-dot|key-circle/, 'rounded corners on ' + m[1].trim());
-  }
+  assert.doesNotMatch(rules, /box-shadow|text-shadow|drop-shadow/);
+  const withGradient = RULES.filter(([, body]) => /gradient\(/.test(body)).map(([sel]) => sel.trim());
+  assert.deepStrictEqual(withGradient, ['.hero::before', '.hero.hero-attn::after', '.hero-grid', '.zone-how::before']);
+  assert.doesNotMatch(rules, /@font-face|Garamond|font-style:\s*italic/);
+  assert.match(rules, /body \{[^}]*font-family: var\(--font-sans\)/);
   assert.deepStrictEqual(charts.hexRgb(DARK.ink), [234, 242, 247]);
   assert.deepStrictEqual(charts.hexRgb(DARK.blue), [2, 151, 222]);
-});
-
-test('the two font families are declared from fonts/ with their licences beside them', () => {
-  const faces = [...css.matchAll(/@font-face \{[^}]*\}/g)].map((m) => m[0]);
-  assert.strictEqual(faces.length, 8);
-  for (const f of faces) {
-    const file = f.match(/url\(\.\.\/fonts\/([\w.-]+\.woff2)\)/)[1];
-    assert.ok(fs.existsSync(path.join(__dirname, '..', 'fonts', file)), file);
-  }
-  for (const l of ['OFL-cormorant-garamond.txt', 'OFL-eb-garamond.txt']) {
-    assert.match(fs.readFileSync(path.join(__dirname, '..', 'fonts', l), 'utf8'), /SIL Open Font License, Version 1\.1/);
-  }
   const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-  assert.match(html, /font-src 'self'/);
+  assert.doesNotMatch(html, /rel="preload"|fonts\//);
 });

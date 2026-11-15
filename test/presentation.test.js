@@ -1,4 +1,5 @@
-// The atlas presentation: the headline split for Plate I (js/app.js, the block between "BEGIN
+// The presentation helpers: the headline split for Step 1, the body image's explanation, the step
+// cards' state lines and Today's list (js/app.js, the block between "BEGIN
 // presentation helpers" and "END presentation helpers", run in Node), the stipple dot sizing and
 // plate layout, and the night ruler's mapping between pixels and nights (js/charts.js).
 //
@@ -15,7 +16,7 @@ const engine = require('../js/engine.js');
 
 const app = fs.readFileSync(path.join(__dirname, '..', 'js', 'app.js'), 'utf8');
 const block = app.match(/\/\/ BEGIN presentation helpers\n([\s\S]*?)\n\s*\/\/ END presentation helpers/)[1];
-const P = new Function(block + '\nreturn { splitHeadline, firstSentence, todayStep, isTap };')();
+const P = new Function(block + '\nreturn { splitHeadline, firstSentence, isTap, imageExplain, stepStates, todayPlan };')();
 const rules = require('../js/rules.js');
 
 test('a headline with a colon splits into a lead line and an emphasised, capitalised line', () => {
@@ -68,59 +69,105 @@ test('firstSentence stops at the first full stop followed by a space', () => {
   assert.strictEqual(P.firstSentence('Sols 13-108 (2012). Rest.'), 'Sols 13-108 (2012).');
 });
 
-// The guide's rows 2 and 3 (todayStep), on every night of the three scenarios, without and with a
-// check-in on Watch.
+// The three helpers of the landing section, the body image and Today, on every night of the three
+// scenarios, without and with a check-in on Watch.
 function checkinFor(cards, flagged) {
   const sym = flagged ? { legs: false, tired: false, ill: true } : { legs: false, tired: false, ill: false };
   return engine.checkin({ mood: flagged ? 1 : 4, tempC: flagged ? 38.4 : 36.6, symptoms: sym }, cards);
 }
-test('todayStep: every night of S1, S2 and S3 gives a step with text; Report beats Watch; "+N more" counts the rest', () => {
-  let seen = { red: 0, amber: 0, checkin: 0, none: 0 };
+const notDone = () => engine.checkin({}, []);
+function everyNight(fn) {
   for (const s of Object.keys(sim.SCENARIOS)) {
     const g = sim.generate(s);
     g.records.forEach((r, i) => {
       const cards = engine.assess(g.records, i, { expectedChangePct: g.plan.expectedChangePct }).cards;
-      for (const flagged of [false, true]) {
-        const ci = checkinFor(cards, flagged), t = P.todayStep(cards, ci);
-        const where = s + ' night ' + r.missionDay + (flagged ? ' with check-in' : '');
-        assert.ok(typeof t.text === 'string' && t.text.length > 0, where);
-        const red = cards.filter((c) => c.status === 'red'), amber = cards.filter((c) => c.status === 'amber');
-        const src = red[0] || amber[0];
-        if (src) {
-          assert.strictEqual(t.card, src.id, where);
-          assert.strictEqual(t.target, src.id, where);
-          assert.strictEqual(t.text, src.actions[0], where);
-          assert.strictEqual(t.more, src.actions.length - 1, where);
-          seen[red.length ? 'red' : 'amber']++;
-        } else if (ci.status === 'amber') {
-          assert.strictEqual(t.card, 'muscle', where);
-          assert.strictEqual(t.target, 'checkin', where);
-          assert.strictEqual(t.text, ci.actions[0], where);
-          assert.strictEqual(t.more, ci.actions.length - 1, where);
-          seen.checkin++;
-        } else {
-          assert.deepStrictEqual(t, { card: 'muscle', target: null, text: 'Nothing new. Keep the plan.', more: 0 }, where);
-          seen.none++;
-        }
+      for (const ci of [notDone(), checkinFor(cards, false), checkinFor(cards, true)]) {
+        fn(cards, ci, s + ' night ' + r.missionDay + ' check-in ' + ci.status);
       }
     });
   }
-  for (const k of Object.keys(seen)) assert.ok(seen[k] > 0, 'case reached: ' + k);
+}
+
+test('imageExplain: one text for each of the six layer and view combinations, naming every mark its view draws', () => {
+  const names = { density: 'Density', pressure: 'Pressure', impedance: 'Impedance' };
+  // What each view draws (js/app.js renderImage, charts.stipple): raw dots scale with the value;
+  // the change view draws a loss blue and a gain ink (white); density's change view greys out regions
+  // below the noise; impedance outlines the parts it does not measure with hollow dots.
+  const marks = {
+    'density raw': [/bigger, brighter dots/i, /denser tissue/],
+    'pressure raw': [/bigger dots/i, /more pressure/],
+    'impedance raw': [/bigger dots/i, /hollow dots outline/],
+    'density diff': [/first week/, /blue dots mean less/i, /white dots more/, /small grey dots/, /noise/],
+    'pressure diff': [/first week/, /blue dots mean less/i, /white dots more/],
+    'impedance diff': [/first week/, /blue dots mean less/i, /white dots more/, /hollow dots outline/]
+  };
+  const texts = new Set();
+  for (const layer of ['density', 'pressure', 'impedance']) for (const view of ['raw', 'diff']) {
+    const e = P.imageExplain(layer, view);
+    assert.strictEqual(e.name, names[layer]);
+    assert.match(e.text, /^is /, 'reads on from the name');
+    for (const re of marks[layer + ' ' + view]) assert.match(e.text, re, layer + ' ' + view);
+    if (view === 'raw') assert.doesNotMatch(e.text, /blue dots|grey dots/, layer + ' raw has no change colours');
+    if (layer !== 'impedance') assert.doesNotMatch(e.text, /hollow/, layer + ' ' + view + ' draws no hollow dots');
+    if (!(layer === 'density' && view === 'diff')) assert.doesNotMatch(e.text, /grey/, layer + ' ' + view + ' draws no grey dots');
+    assert.ok((e.text.match(/[.;] /g) || []).length <= 2, 'short: ' + e.text);
+    assert.doesNotMatch(e.text, /—|!/);
+    texts.add(e.text);
+  }
+  assert.strictEqual(texts.size, 6);
+  const app = fs.readFileSync(path.join(__dirname, '..', 'js', 'app.js'), 'utf8');
+  assert.match(app, /'Select a ring on the body, or one of the four readings, to open that check\.'/);
 });
 
-test('todayStep: Report beats Watch whatever the order, and the check-in is used only when no card is flagged', () => {
-  const c = (id, status, n) => ({ id, status, actions: Array.from({ length: n }, (_, k) => id + ' action ' + (k + 1)) });
-  const ciAmber = { status: 'amber', actions: ['Tell the medic today.', 'Take your temperature again this evening.'] };
-  let t = P.todayStep([c('muscle', 'amber', 3), c('sleep', 'green', 1), c('cardio', 'green', 1), c('radiation', 'red', 2)], ciAmber);
-  assert.deepStrictEqual(t, { card: 'radiation', target: 'radiation', text: 'radiation action 1', more: 1 });
-  t = P.todayStep([c('muscle', 'green', 1), c('sleep', 'amber', 2), c('cardio', 'amber', 1), c('radiation', 'grey', 1)], ciAmber);
-  assert.deepStrictEqual(t, { card: 'sleep', target: 'sleep', text: 'sleep action 1', more: 1 });
-  t = P.todayStep([c('muscle', 'green', 1), c('sleep', 'green', 1), c('cardio', 'grey', 1), c('radiation', 'green', 1)], ciAmber);
-  assert.deepStrictEqual(t, { card: 'muscle', target: 'checkin', text: 'Tell the medic today.', more: 1 });
-  t = P.todayStep([c('muscle', 'green', 1), c('sleep', 'green', 1), c('cardio', 'green', 1), c('radiation', 'green', 1)], { status: 'green', actions: ['No change needed.'] });
-  assert.strictEqual(t.target, null);
-  assert.strictEqual(P.todayStep([c('muscle', 'amber', 1)], null).more, 0);
-  assert.ok(rules.CHECKIN.actions.fever.length >= 1);
+test('todayPlan: Report, then Watch, then a check-in on Watch; every action of each source, on every night', () => {
+  const seen = { red: 0, amber: 0, checkin: 0, empty: 0 };
+  everyNight((cards, ci, where) => {
+    const plan = P.todayPlan(cards, ci);
+    const red = cards.filter((c) => c.status === 'red'), amber = cards.filter((c) => c.status === 'amber');
+    const want = red.concat(amber).map((c) => ({ kind: 'card', card: c.id, status: c.status, from: 'from the bunk', actions: c.actions, decides: c.decides }));
+    if (ci.done && ci.status === 'amber') want.push({ kind: 'checkin', card: null, status: 'amber', from: 'from you', actions: ci.actions, decides: ci.decides });
+    assert.deepStrictEqual(plan.map(({ name, ...x }) => x), want, where);
+    plan.forEach((x) => assert.ok(x.name && x.actions.length > 0, where));
+    if (red.length) seen.red++;
+    if (amber.length) seen.amber++;
+    if (ci.status === 'amber') seen.checkin++;
+    if (!plan.length) seen.empty++;
+  });
+  for (const k of Object.keys(seen)) assert.ok(seen[k] > 0, 'case reached: ' + k);
+  const c = (id, status, n) => ({ id, status, decides: 'flight surgeon', actions: Array.from({ length: n }, (_, k) => id + ' action ' + (k + 1)) });
+  const plan = P.todayPlan([c('muscle', 'amber', 3), c('sleep', 'green', 1), c('cardio', 'amber', 1), c('radiation', 'red', 2)],
+    { done: true, status: 'amber', actions: ['Tell the medic today.'], decides: 'You and the medic' });
+  assert.deepStrictEqual(plan.map((x) => x.card || x.kind), ['radiation', 'muscle', 'cardio', 'checkin']);
+  assert.deepStrictEqual(plan.map((x) => x.name), ['Radiation', 'Muscle', 'Heart and breathing', 'Your check-in']);
+  assert.deepStrictEqual(P.todayPlan([c('muscle', 'green', 1)], { done: true, status: 'green', actions: ['No change needed.'] }), []);
+});
+
+test('stepStates: the three state lines match the cards and the check-in on every night', () => {
+  const seen = new Set();
+  everyNight((cards, ci, where) => {
+    const [s1, s2, s3] = P.stepStates(cards, ci);
+    const flagged = cards.filter((c) => c.status === 'red' || c.status === 'amber');
+    if (flagged.length) {
+      assert.strictEqual(s1.text, flagged.length === 1 ? '1 check needs attention' : flagged.length + ' checks need attention', where);
+      assert.strictEqual(s1.status, flagged.some((c) => c.status === 'red') ? 'red' : 'amber', where);
+    } else if (cards.some((c) => c.status === 'grey')) {
+      assert.deepStrictEqual([s1.status, s1.text], ['grey', 'Not enough data yet'], where);
+    } else {
+      assert.deepStrictEqual([s1.status, s1.text], ['green', 'All four checks in range'], where);
+    }
+    assert.strictEqual(s1.go, 'See the readings →');
+    if (!ci.done) assert.deepStrictEqual(s2, { status: 'grey', text: 'Not done yet · 30 seconds', go: 'Answer now →' }, where);
+    else {
+      const n = ci.flags.length;
+      assert.strictEqual(s2.text, n ? 'Done · ' + n + (n === 1 ? ' thing' : ' things') + ' flagged' : 'Done · nothing flagged', where);
+      assert.strictEqual(s2.go, 'See your answers →');
+    }
+    const plan = P.todayPlan(cards, ci), n3 = plan.reduce((a, x) => a + x.actions.length, 0);
+    assert.strictEqual(s3.text, n3 === 0 ? 'Nothing new today' : n3 === 1 ? '1 thing to do' : n3 + ' things to do', where);
+    assert.strictEqual(s3.go, 'See the list →');
+    seen.add(s1.status).add('s3:' + (n3 ? 'some' : 'none'));
+  });
+  for (const k of ['green', 'amber', 'red', 'grey', 's3:some', 's3:none']) assert.ok(seen.has(k), 'case reached: ' + k);
 });
 
 test('stipple dots: area follows the value; a loss is blue, a gain ink; overlays are quiet or hollow', () => {

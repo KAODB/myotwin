@@ -2,8 +2,8 @@
  * MyoTwin motion: every animation on the page, through Anime.js (vendor/anime.umd.min.js, global
  * `anime`). js/app.js calls this small API at the right moments and never calls `anime` itself.
  *
- * Motion has one job: lead the eye through the three steps on landing and confirm what a click
- * did. Every call is a no-op (and returns false) when `anime` is missing, when the reader asks for
+ * Motion has one job: lead the eye from what this is to the three steps on landing, and confirm
+ * what a click did. Every call is a no-op (and returns false) when `anime` is missing, when the reader asks for
  * reduced motion, or while the mission plays; the page then works exactly as without this file.
  * When an animation ends or is cut short, the inline styles and attributes it set are removed, so
  * the stylesheet is in charge again. Any key or pointer press during the landing sequence jumps
@@ -35,7 +35,7 @@
     list(els).forEach(function (el) { if (!touched.has(el) || restore) touched.set(el, restore || null); });
   }
   function untouch(els) { list(els).forEach(function (el) { touched.delete(el); }); }
-  var STYLE_PROPS = ['opacity', 'transform', 'translate', 'scale', '--sweep', '--sweep-o', 'stroke-linecap'];
+  var STYLE_PROPS = ['opacity', 'transform', 'translate', 'scale', 'stroke-linecap'];
   var DRAW_ATTRS = ['pathLength', 'stroke-dasharray', 'stroke-dashoffset', 'draw'];
 
   function list(x) {
@@ -101,9 +101,8 @@
   function spring(duration, bounce) { return lib().spring({ duration: duration, bounce: bounce }); }
 
   // ---- A. the landing sequence ---------------------------------------------------------
-  // Parts not yet shown are hidden by tokens in <html data-wait>, read by css/style.css, so a
-  // part the page draws again during the sequence (the ink layer, the ruler) stays hidden too.
-  var WAIT = ['headline', 'g1', 'g2', 'g3', 'frame', 'marks', 'n1', 'n2', 'n3', 'n4', 'mark'];
+  // Parts not yet shown are hidden by tokens in <html data-wait>, read by css/style.css.
+  var WAIT = ['h1', 'h2', 'h3', 'h4', 'h5', 's1', 's2', 's3'];
   var intro = null;                                     // { timer, steps, p } while it runs
 
   function setWait(tokens) {
@@ -125,11 +124,10 @@
   }
 
   /**
-   * The landing sequence, once per page load, about 1.6 s with the steps overlapping slightly:
-   * the headline; the three guide rows in order; the figure drawn from head to feet; the plate
-   * frame and the leaders drawing in, the rings settling; the four notes one after another; the
-   * ruler marker dropping to its night; one underline sweep on guide row 1 (when `sweep` is given).
-   * p: { headline, guide: [li x3], drawFigure(progress), ink: svg, notes: [x4], ruler: svg, sweep: el|null }
+   * The landing sequence, once per page load, at most 1.2 s: the five parts of the landing section
+   * (label, title, lead, buttons, the live line) rise in one after another, then the three step
+   * cards one after another.
+   * p: { hero: [x5], steps: [li x3] }
    * Returns true when the sequence runs.
    */
   function startIntro(p) {
@@ -137,63 +135,25 @@
     var doc = root.document;
     intro = { p: p, fired: 0 };                          // set first, so a failure below still ends it
     setWait(WAIT);
-    p.drawFigure(0);
-    var fig = { v: 0 };
-    var q = function (sel) { return p.ink.querySelectorAll(sel); };
-    var steps = [
-      [0, function () { fadeIn(p.headline, { y: [10, 0], duration: 280, ease: 'outQuad' }, 'headline', 'intro'); }],
-      [110, function () { fadeIn(p.guide[0], { y: [8, 0], duration: 240, ease: 'outQuad' }, 'g1', 'intro'); }],
-      [210, function () { fadeIn(p.guide[1], { y: [8, 0], duration: 240, ease: 'outQuad' }, 'g2', 'intro'); }],
-      [310, function () { fadeIn(p.guide[2], { y: [8, 0], duration: 240, ease: 'outQuad' }, 'g3', 'intro'); }],
-      [180, function () {
-        run(fig, { v: 1, duration: 720, ease: 'inOutSine', onUpdate: function () { p.drawFigure(fig.v); } },
-          { obj: true, tag: 'intro', after: function () { p.drawFigure(1); } });
-      }],
-      [300, function () {
-        var frame = q('.frame');
-        touch(frame, undrawEl);
-        if (frame.length) lib().svg.createDrawable(frame);   // starts them at "0 0" (hidden) before the token lifts
-        unwait('frame');
-        draw(frame, { duration: 620, ease: 'inOutQuad' }, 'intro');
-        fadeIn(q('.frame-axis, .track'), { duration: 400, ease: 'linear' }, null, 'intro');
-      }],
-      [820, function () {
-        var leaders = q('.leaders polyline');
-        touch(leaders, undrawEl);
-        if (leaders.length) lib().svg.createDrawable(leaders);
-        // Each ring grows from nothing with a spring; it holds r = 0 until its turn, and its own r comes back at the end.
-        Array.prototype.forEach.call(q('.rings circle'), function (c, k) {
-          var r = +c.getAttribute('r');
-          attr(c, 'r', { values: [0, r], delay: 80 + 50 * k, ease: spring(280, 0.35) }, 'intro');
-          c.setAttribute('r', '0');
-        });
-        unwait('marks');
-        draw(leaders, { duration: 300, ease: 'outQuad', delay: lib().stagger(60) }, 'intro');
-      }],
-      [900, function () { fadeIn(p.notes[0], { duration: 240, ease: 'outQuad' }, 'n1', 'intro'); }],
-      [1000, function () { fadeIn(p.notes[1], { duration: 240, ease: 'outQuad' }, 'n2', 'intro'); }],
-      [1100, function () { fadeIn(p.notes[2], { duration: 240, ease: 'outQuad' }, 'n3', 'intro'); }],
-      [1200, function () { fadeIn(p.notes[3], { duration: 240, ease: 'outQuad' }, 'n4', 'intro'); }],
-      [1100, function () {
-        fadeIn(p.ruler.querySelectorAll('.ruler-mark, .ruler-mark-dot'), { y: [-12, 0], duration: 280, ease: 'outQuad' }, 'mark', 'intro');
-      }],
-      [1300, function () {
-        if (!p.sweep) return;
-        run(p.sweep, { '--sweep': [0, 1, 1], '--sweep-o': [1, 1, 0], duration: 300, ease: 'linear' }, { tag: 'intro' });
-      }]
-    ].sort(function (a, b) { return a[0] - b[0]; });
+    var hero = list(p.hero), cards = list(p.steps), steps = [];
+    hero.forEach(function (el, k) {
+      steps.push([k * 90, function () { fadeIn(el, { y: [12, 0], duration: 320, ease: 'outQuad' }, 'h' + (k + 1), 'intro'); }]);
+    });
+    cards.forEach(function (el, k) {
+      steps.push([480 + k * 140, function () { fadeIn(el, { y: [14, 0], duration: 340, ease: 'outQuad' }, 's' + (k + 1), 'intro'); }]);
+    });
     intro.steps = steps;
     var t0 = root.performance.now();
     // One timer drives the steps; each step finds its elements when it starts.
     intro.timer = lib().createTimer({
-      duration: 1600,
+      duration: 1200,
       onUpdate: function () {
         var t = root.performance.now() - t0;
         try {
           while (intro && intro.fired < steps.length && steps[intro.fired][0] <= t) steps[intro.fired++][1]();
         } catch (err) { fail(); }
       },
-      // At 1.6 s whatever is still moving jumps to its end, so the sequence never runs longer.
+      // At 1.2 s whatever is still moving jumps to its end, so the sequence never runs longer.
       onComplete: endIntro
     });
     ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(function (type) {
@@ -205,16 +165,13 @@
   /** Jump the landing sequence to its end state at once (any key or pointer press does this). */
   function finishIntro() {
     if (!intro) return;
-    var p = intro.p, timer = intro.timer;
+    var timer = intro.timer;
     intro = null;
     ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(function (type) {
       root.document.removeEventListener(type, endIntro, { capture: true, passive: true });
     });
     try { if (timer) timer.cancel(); } catch (err) { /* already done */ }
-    try { stop(function (e) { return e.tag === 'intro'; }); } finally {
-      setWait([]);
-      p.drawFigure(1);
-    }
+    try { stop(function (e) { return e.tag === 'intro'; }); } finally { setWait([]); }
   }
   // The input listener: ending the sequence must never throw into the page's own handlers.
   function endIntro() { try { finishIntro(); } catch (err) { fail(); } }
@@ -294,13 +251,12 @@
   function introRunning() { return !!intro; }
 
   // Any error inside the library: motion stays off for the rest of the page's life, and the page
-  // is put back exactly as it is without motion (every touched element cleaned, nothing waiting,
-  // the figure drawn in full). Each undo step runs on its own, so one failure cannot stop the rest.
+  // is put back exactly as it is without motion (every touched element cleaned, nothing waiting). Each undo step runs on its own, so one failure cannot stop the rest.
   function fail() {
     dead = true;
     var safe = function (f) { try { f(); } catch (err) { /* keep undoing */ } };
     safe(finishIntro);
-    if (intro) { var p = intro.p; intro = null; safe(function () { p.drawFigure(1); }); }
+    intro = null;
     entries.slice().forEach(function (e) { safe(function () { finalize(e); }); });
     entries = [];
     touched.forEach(function (restore, el) { safe(function () { if (restore) restore(el); cleanEl(el); }); });

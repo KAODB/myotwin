@@ -176,11 +176,6 @@
     return i >= 0 ? t.slice(0, i + 1) : t;
   }
 
-  // The guide's rows 2 and 3, from the night's cards (in the assessment's order) and the check-in
-  // result. `card` is the check that "Open a check" opens: the first on Report, else the first on
-  // Watch, else muscle. "Do today" takes its action from the most urgent source: cards on Report,
-  // then cards on Watch, then the check-in when it is on Watch. `target` is that source (a card id
-  // or 'checkin', null when there is none), `text` its first action and `more` how many follow.
   // A press and release on the trend chart goes to a night only when the pointer stayed within
   // TAP_PX of where it went down; a drag or a text selection does not.
   var TAP_PX = 5;
@@ -188,18 +183,72 @@
     return !!down && !!up && Math.abs(up.x - down.x) <= TAP_PX && Math.abs(up.y - down.y) <= TAP_PX;
   }
 
-  function todayStep(cards, checkin) {
-    var first = function (st) { return cards.filter(function (c) { return c.status === st; })[0]; };
-    var flagged = first('red') || first('amber');
-    var src = flagged ? { id: flagged.id, actions: flagged.actions } :
-      checkin && checkin.status === 'amber' ? { id: 'checkin', actions: checkin.actions } : null;
-    if (!src || !src.actions.length) return { card: 'muscle', target: null, text: 'Nothing new. Keep the plan.', more: 0 };
-    return { card: flagged ? flagged.id : 'muscle', target: src.id, text: src.actions[0], more: src.actions.length - 1 };
+  var CARD_NAMES = { muscle: 'Muscle', sleep: 'Sleep', cardio: 'Heart and breathing', radiation: 'Radiation' };
+
+  // The sentence above the body image, one per layer and view, each true to what that view draws
+  // (js/imaging.js and charts.stipple): a dot's size and brightness follow the value; in the change
+  // view a loss is blue and a gain ink (white); density's change view greys out regions below the
+  // noise as the smallest dots; impedance measures only the calves, so the rest is hollow outline dots.
+  var IMAGE_EXPLAIN = {
+    density: { name: 'Density',
+      raw: 'is how much tissue last night\'s cosmic rays passed through. Bigger, brighter dots mean denser tissue.',
+      diff: 'is how much tissue the cosmic rays passed through, this week against your first week here. Blue dots mean less than then, white dots more, and the small grey dots a change too small to tell from noise.' },
+    pressure: { name: 'Pressure',
+      raw: 'is where your body pressed on the mattress. Bigger dots mean more pressure.',
+      diff: 'is where your body pressed on the mattress, this week against your first week here. Blue dots mean less than then, white dots more.' },
+    impedance: { name: 'Impedance',
+      raw: 'is the electrical reading of your calf muscle, from the strip under your legs. Bigger dots mean a stronger reading; hollow dots outline the parts it does not measure.',
+      diff: 'is the electrical reading of your calf muscle, this week against your first week here. Blue dots mean less than then, white dots more; hollow dots outline the parts it does not measure.' }
+  };
+  function imageExplain(layer, view) {
+    var e = IMAGE_EXPLAIN[layer] || IMAGE_EXPLAIN.density;
+    return { name: e.name, text: view === 'diff' ? e.diff : e.raw };
+  }
+
+  function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+
+  // Today's list: one entry per source that asks for something, most urgent first: checks on
+  // Report, then checks on Watch (each in the assessment's order), then the check-in when it is on
+  // Watch. Each entry carries all of that source's actions and who decides.
+  function todayPlan(cards, checkin) {
+    var out = [];
+    ['red', 'amber'].forEach(function (st) {
+      cards.forEach(function (c) {
+        if (c.status === st) out.push({ kind: 'card', card: c.id, status: st, name: CARD_NAMES[c.id], from: 'from the bunk', actions: c.actions.slice(), decides: c.decides });
+      });
+    });
+    if (checkin && checkin.done && checkin.status === 'amber') {
+      out.push({ kind: 'checkin', card: null, status: 'amber', name: 'Your check-in', from: 'from you', actions: checkin.actions.slice(), decides: checkin.decides });
+    }
+    return out;
+  }
+
+  // The state lines of the three step cards on the landing section, from the night's cards and the
+  // check-in result: [{ status, text, go }] for Overnight, Check-in and Today.
+  function stepStates(cards, checkin) {
+    var flagged = cards.filter(function (c) { return c.status === 'red' || c.status === 'amber'; });
+    var red = flagged.some(function (c) { return c.status === 'red'; });
+    var grey = cards.some(function (c) { return c.status === 'grey'; });
+    var s1 = flagged.length ? { status: red ? 'red' : 'amber', text: plural(flagged.length, 'check needs', 'checks need') + ' attention' } :
+      grey ? { status: 'grey', text: 'Not enough data yet' } : { status: 'green', text: 'All four checks in range' };
+    s1.go = 'See the readings \u2192';
+    var done = !!(checkin && checkin.done), nf = done ? checkin.flags.length : 0;
+    var s2 = {
+      status: done ? checkin.status : 'grey',
+      text: !done ? 'Not done yet \u00b7 30 seconds' : nf ? 'Done \u00b7 ' + plural(nf, 'thing', 'things') + ' flagged' : 'Done \u00b7 nothing flagged',
+      go: done ? 'See your answers \u2192' : 'Answer now \u2192'
+    };
+    var plan = todayPlan(cards, checkin), n = plan.reduce(function (a, x) { return a + x.actions.length; }, 0);
+    var s3 = {
+      status: plan.length ? plan[0].status : 'green',
+      text: n ? plural(n, 'thing', 'things') + ' to do' : 'Nothing new today',
+      go: 'See the list \u2192'
+    };
+    return [s1, s2, s3];
   }
   // END presentation helpers
 
   // ---- constants -----------------------------------------------------------------
-  var CARD_NAMES = { muscle: 'Muscle', sleep: 'Sleep', cardio: 'Heart and breathing', radiation: 'Radiation' };
   var ENV_NAMES = { moon: 'Moon', mars: 'Mars' };
   var PLATE_FILL = 0.78;                           // share of the plate height the body takes
   // Cosmic-ray tracks across the plate: [x at the top, x at the bottom], as fractions of its width.
@@ -357,7 +406,7 @@
     clear(h);
     h.className = 'headline ' + (p.whole ? 'headline-one' + (p.whole.length > 48 ? ' headline-long' : '') : 'headline-split em-' + p.size);
     if (p.whole) { h.textContent = p.whole; return; }
-    h.appendChild(el('span', 'lead', p.lead));
+    h.appendChild(el('span', 'lead-line', p.lead));
     h.appendChild(el('em', null, p.em));
     if (p.more) h.appendChild(el('span', 'more', p.more));
   }
@@ -516,12 +565,6 @@
   }
 
   var LAYER_WORDS = { density: 'density', pressure: 'pressure', impedance: 'impedance' };
-  // The last stipple drawn, so the landing sequence can draw it again from head to feet (`figP`, 0 to 1).
-  var lastStipple = null, figP = 1;
-  function drawFigure(p) {
-    figP = p;
-    if (lastStipple) { lastStipple[4].progress = p; charts.stipple.apply(null, lastStipple); }
-  }
   var HOTSPOT_CM = null;                           // hotspotCm(), set on the first drawing
 
   // The plate's drawing box in CSS px (the canvas and the ink layer fill it).
@@ -545,7 +588,6 @@
     var noImage = r.missionDay < 0;
     $('plate-art').classList.toggle('no-image', noImage);
     if (noImage) {
-      lastStipple = null;
       canvas.hidden = true;
       empty.hidden = true;
       charts.dotLegend(bar, null);
@@ -616,8 +658,7 @@
 
     canvas.hidden = false;
     empty.hidden = true;
-    lastStipple = [canvas, shown, ph, lay, { mode: state.view === 'diff' ? 'diff' : 'raw', overlay: overlay, dpr: Math.min(2, root.devicePixelRatio || 1), progress: figP }];
-    charts.stipple.apply(null, lastStipple);
+    charts.stipple(canvas, shown, ph, lay, { mode: state.view === 'diff' ? 'diff' : 'raw', overlay: overlay, dpr: Math.min(2, root.devicePixelRatio || 1) });
     canvas.setAttribute('aria-label', scrub(label) + ', ' + dayLabel(r));
     charts.dotLegend(bar, legend);
     $('cap-label').textContent = cap;
@@ -978,12 +1019,9 @@
     svg.setAttribute('class', 'spark st-' + status);
     charts.spark(svg, vals, SPARK_W, SPARK_H);
   }
-  // The blocks of a row that fade up when it opens, and the line that draws in.
-  function rowBlocks(row) {
-    return row.classList.contains('check-row') ? [$('guidance'), $('trend'), $('nasa-row')] : row.querySelector('.row-body').children;
-  }
+  // The blocks of a check row that fade up when it opens, and the line that draws in.
   function openRowMotion(row) {
-    motion.rowOpened(row, rowBlocks(row), row.classList.contains('check-row') ? $('trend-chart').querySelector('path.series') : null);
+    motion.rowOpened(row, [$('guidance'), $('trend'), $('nasa-row')], $('trend-chart').querySelector('path.series'));
   }
   function renderRows() {
     Array.prototype.forEach.call(document.querySelectorAll('.check-row'), function (row) {
@@ -1015,32 +1053,79 @@
     if (id !== state.card) update({ card: id });
   }
 
-  // The three-step guide on the first screen.
-  function renderGuide(ci) {
-    var d1 = $('guide-checkin-detail');
-    clear(d1);
-    var t1 = el('span', 'guide-text', ci.done ? ci.summary : 'three questions, about 30 seconds');
-    t1.title = t1.textContent;
-    if (ci.done && ci.status === 'amber') {
-      var mk = el('span', 'status st-amber');
-      mk.appendChild(charts.statusIconEl('amber', 14));
-      mk.appendChild(el('span', 'visually-hidden', charts.STATUS.amber.word + ': '));
-      d1.appendChild(mk);
-    }
-    d1.appendChild(t1);
+  // ---- render: the landing section --------------------------------------------------
+  // The live line under the buttons, the orange light on attention nights, and the state lines of
+  // the three step cards (stepStates).
+  function renderLanding(ci) {
+    var a = assessment(), r = rec();
+    $('hero-place').textContent = r.missionDay < 0 ? dayLabel(r) : ENV_NAMES[data.gen.scenario.env] + ', night ' + r.missionDay;
+    $('top').classList.toggle('hero-attn', a.cards.some(function (c) { return isFlag(c.status); }));
+    var states = stepStates(a.cards, ci);
+    Array.prototype.forEach.call(document.querySelectorAll('#steps .step'), function (step, k) {
+      var st = states[k], now = step.querySelector('.step-now');
+      clear(now);
+      // Only step 1 carries a status mark; the other two lines are plain words (step 2 sits on blue).
+      if (k === 0) now.appendChild(statusEl(st.status, st.text)); else now.textContent = st.text;
+      step.querySelector('.step-go').textContent = st.go;
+    });
+  }
 
-    // One button throughout, so a focused row 3 keeps its focus; with nothing to open it reads as plain text.
-    var step = todayStep(assessment().cards, ci), row = $('guide-do');
-    row.dataset.target = step.target || '';
-    row.classList.toggle('is-plain', !step.target);
-    if (step.target) row.removeAttribute('aria-disabled'); else row.setAttribute('aria-disabled', 'true');
-    var d3 = $('guide-do-detail');
-    clear(d3);
-    // Up to two lines, with "+N more" at the end of the text.
-    var t3 = el('span', 'guide-text guide-text-2', scrub(step.text));
-    t3.title = t3.textContent;
-    if (step.more) t3.appendChild(el('span', 'guide-more', ' +' + step.more + ' more'));
-    d3.appendChild(t3);
+  // ---- render: Step 3, today -----------------------------------------------------------
+  function todayCard(cls) { return el('div', 'pcard today-item' + (cls ? ' ' + cls : '')); }
+  function renderToday(ci) {
+    var list = $('today-list'), plan = todayPlan(assessment().cards, ci);
+    clear(list);
+    plan.forEach(function (x) {
+      var box = todayCard(), src = el('p', 'today-src');
+      src.appendChild(statusEl(x.status, charts.STATUS[x.status].word));
+      var name;
+      if (x.kind === 'card') {
+        name = el('button', 'today-name', x.name);
+        name.type = 'button';
+        name.dataset.card = x.card;
+        name.setAttribute('aria-label', x.name + ': open this check in step 1');
+      } else name = el('span', 'today-name', x.name);
+      src.appendChild(name);
+      src.appendChild(el('span', 'today-from', x.from));
+      box.appendChild(src);
+      var ol = el('ol', 'actions');
+      x.actions.forEach(function (t) { ol.appendChild(el('li', null, scrub(t))); });
+      box.appendChild(ol);
+      var who = el('p', 'today-who');
+      who.appendChild(el('span', 'mini-label', 'Who decides'));
+      who.appendChild(el('span', null, capital(x.decides)));
+      box.appendChild(who);
+      list.appendChild(box);
+    });
+    if (!plan.length) {
+      var none = todayCard('today-none');
+      none.appendChild(el('p', 'today-name', 'Nothing new today. Keep the plan.'));
+      list.appendChild(none);
+    }
+    if (!ci.done) {
+      var c = todayCard('today-checkin'), h = el('p', 'today-src');
+      h.appendChild(el('span', 'today-name', 'Your check-in'));
+      h.appendChild(el('span', 'today-from', 'from you'));
+      c.appendChild(h);
+      c.appendChild(el('p', 'quiet', 'Not done yet. Step 2 takes about 30 seconds.'));
+      var go = el('a', 'btn btn-ghost btn-small', 'Answer now \u2192');
+      go.href = '#checkin-zone';
+      var pp = el('p');
+      pp.appendChild(go);
+      c.appendChild(pp);
+      list.appendChild(c);
+    }
+  }
+
+  // ---- render: the sentence above the body image ---------------------------------------
+  function renderExplain() {
+    var e = imageExplain(state.layer, state.view), p = $('image-explain');
+    if (p.dataset.key === state.layer + state.view) return;
+    p.dataset.key = state.layer + state.view;
+    clear(p);
+    p.appendChild(el('b', null, e.name));
+    p.appendChild(document.createTextNode(' ' + e.text + ' '));
+    p.appendChild(el('span', 'hint', 'Select a ring on the body, or one of the four readings, to open that check.'));
   }
 
   // ---- render: morning check-in ------------------------------------------------------
@@ -1113,16 +1198,9 @@
     });
     // A changed status settles its marks; the table's rows fade in one after another as it appears.
     var token = r.done ? r.status : '';
-    if (ciShown != null && token !== ciShown && token) motion.settle(document.querySelectorAll('#checkin-meta .st-icon, #guide-checkin-detail .st-icon'));
+    if (ciShown != null && token !== ciShown && token) motion.settle(document.querySelectorAll('#checkin-meta .st-icon'));
     if (ciShown != null && tableWasHidden && r.done) motion.fadeRows(tb.children);
     ciShown = token;
-  }
-
-  function openCheckin() {
-    var row = $('checkin');
-    if (!row.open) { row.open = true; openRowMotion(row); }
-    scrollTo(row);
-    document.querySelector('[data-mood="1"]').focus({ preventScroll: true });
   }
 
   // ---- render: what-if -------------------------------------------------------------
@@ -1148,7 +1226,9 @@
     renderHotspots();
     renderTimeline();
     renderRows();
-    renderGuide(ci);
+    renderExplain();
+    renderLanding(ci);
+    renderToday(ci);
     renderTrend();
     renderGuidance();
     renderCheckin(ci);
@@ -1236,6 +1316,8 @@
         openCard(b.dataset.card);
         // The comparison table is rebuilt on render: keep the focus on the same check's new button.
         if (b.classList.contains('ci-card')) document.querySelector('#ci-rows [data-card="' + b.dataset.card + '"]').focus({ preventScroll: true });
+        // A check named in Today is rebuilt too: the focus goes with the scroll, to the opened row's title.
+        if (b.classList.contains('today-name')) $('row-' + b.dataset.card).querySelector('summary').focus({ preventScroll: true });
       }
       else if (b.dataset.mood) update({ mo: state.mo === +b.dataset.mood ? null : +b.dataset.mood });
       else if (b.dataset.sym) {
@@ -1246,11 +1328,6 @@
         clearTempField();
         update({ mo: null, tc: null, sy: '' });
         document.querySelector('[data-mood="1"]').focus();       // the button is now disabled
-      }
-      else if (b.id === 'guide-checkin') openCheckin();
-      else if (b.id === 'guide-check') openCard(todayStep(assessment().cards, checkinResult()).card);
-      else if (b.id === 'guide-do') {
-        if (b.dataset.target === 'checkin') openCheckin(); else if (b.dataset.target) openCard(b.dataset.target);
       }
       else if (b.id === 'play') setPlaying(!playTimer);
       else if (b.id === 'whatif-reset') update({ ex: WHATIF.ex.def, gs: WHATIF.gs.def, sh: WHATIF.sh.def, nz: WHATIF.nz.def });
@@ -1263,14 +1340,6 @@
         update({ card: row.open ? null : row.dataset.card });
       });
       row.addEventListener('toggle', syncOpenRow);
-    });
-    // The other rows open and close here too, so an opening row starts its motion before it is drawn.
-    Array.prototype.forEach.call(document.querySelectorAll('.row:not(.check-row)'), function (row) {
-      row.querySelector('summary').addEventListener('click', function (e) {
-        e.preventDefault();
-        row.open = !row.open;
-        if (row.open) openRowMotion(row); else motion.rowClosed(row);
-      });
     });
     $('flux-row').addEventListener('toggle', function () { renderFlux(state.card); });
     // The trend chart: the pointer reads a night, a click goes to it.
@@ -1368,6 +1437,39 @@
     });
   }
 
+  // ---- navigation ------------------------------------------------------------------
+  // In-page links (the navigation, the landing buttons and step cards, the "Next" buttons) scroll
+  // their zone to just below the bar and move the focus to its heading, without replacing the view
+  // in the address. The link of the zone in view is marked as current.
+  var ZONES = ['top', 'overnight', 'checkin-zone', 'today', 'how-zone'];
+  function zoneHeading(zone) { return zone.querySelector('h1[tabindex="-1"], h2[tabindex="-1"]'); }
+  function goToZone(id) {
+    var zone = $(id);
+    scrollTo(zone);
+    zoneHeading(zone).focus({ preventScroll: true });
+  }
+  function markCurrent(id) {
+    Array.prototype.forEach.call(document.querySelectorAll('.nav-links a'), function (a) {
+      if (a.getAttribute('href') === '#' + id) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current');
+    });
+  }
+  function wireNav() {
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a[href^="#"]');
+      if (!a || a.classList.contains('skip') || e.button || e.metaKey || e.ctrlKey || e.shiftKey) return;
+      var id = a.getAttribute('href').slice(1);
+      if (ZONES.indexOf(id) < 0) return;
+      e.preventDefault();
+      goToZone(id);
+    });
+    if (!root.IntersectionObserver) return;
+    // A zone is current while it crosses a thin band a little above the middle of the viewport.
+    var io = new root.IntersectionObserver(function (entries) {
+      entries.forEach(function (en) { if (en.isIntersecting) markCurrent(en.target.id); });
+    }, { rootMargin: '-38% 0px -58% 0px' });
+    ZONES.forEach(function (id) { io.observe($(id)); });
+  }
+
   // Figures whose drawing depends on their size or on the web fonts.
   function redrawFigures() { renderImage(); renderHotspots(); renderTimeline(); renderTrend(); }
 
@@ -1398,15 +1500,12 @@
   buildExtras();
   revealOnScroll();
   wire();
+  wireNav();
   var initialHash = location.hash;
   renderFromLink(initialHash.indexOf('=') >= 0 ? initialHash : '');
   if (initialHash.indexOf('=') < 0 && isBrokenAnchor(initialHash)) showNotice();
-  // The landing sequence leads the eye through the three steps, ending on "Check in" when it is still to do.
-  motion.intro({
-    headline: $('headline'), guide: document.querySelectorAll('#guide > li'), drawFigure: drawFigure,
-    ink: $('plate-ink'), notes: document.querySelectorAll('#cards .card'), ruler: $('ruler'),
-    sweep: checkinResult().done ? null : document.querySelector('#guide-checkin .guide-name')
-  });
+  // The landing sequence: what this is, then the three steps one after another.
+  motion.intro({ hero: document.querySelectorAll('#top .hero-part'), steps: document.querySelectorAll('#steps > li') });
   // Text measured in the figures changes once the web fonts are in: draw them again.
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(redrawFigures);
 })(typeof globalThis !== 'undefined' ? globalThis : this);

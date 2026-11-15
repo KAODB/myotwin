@@ -1,10 +1,10 @@
 <!doctype html>
 <!--
-  MyoTwin page shell, set as an anatomical atlas of one night, for the person using it.
-  First screen: the morning brief with a three-step guide, the sleeper drawn as a stipple, four
-  checks as margin notes, and the night ruler.
-  Below it, seven rows that open on click: the check-in, the four checks, how the bunk measures,
-  and the exercise what-if.
+  MyoTwin page shell, a product page for the person using it.
+  A floating navigation bar with the three steps; a landing section that says what this is, with one
+  start button and three step cards; then Step 1 (measured while you slept: the body image and the
+  four checks), Step 2 (the morning check-in, on a block of the main colour), Step 3 (today's list)
+  and "How it works". The night ruler floats at the bottom while the three steps are on screen.
   Structure only; js/app.js fills it from the simulated data modules.
   Crew readings are simulated; the radiation numbers are measured NASA data.
 
@@ -20,8 +20,6 @@
 <meta name="description" content="MyoTwin: a morning health brief built from passive sleep-station sensing on the Moon and Mars. Concept software with simulated data.">
 <link rel="icon" href="data:,">
 <title>MyoTwin: the health check that happens while you sleep</title>
-<link rel="preload" href="fonts/cormorant-garamond-latin-500-italic.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="fonts/eb-garamond-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -37,78 +35,249 @@
 
 <a class="skip" href="#brief">Skip to the morning brief</a>
 
-<header class="topbar">
-  <p class="mark"><span class="brand-name">MyoTwin</span> <i class="tagline">the health check that happens while you sleep</i></p>
-  <label class="scenario-pick">
-    <span class="visually-hidden">Scenario</span>
-    <select id="scenario" disabled>
-      <option value="">Loading scenarios</option>
-    </select>
-  </label>
+<header class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true"></span>MyoTwin</a>
+    <nav class="nav-links" aria-label="Steps">
+      <a href="#top" aria-current="true">Start</a>
+      <a href="#overnight"><b aria-hidden="true">1</b>Overnight</a>
+      <a href="#checkin-zone"><b aria-hidden="true">2</b>Check-in</a>
+      <a href="#today"><b aria-hidden="true">3</b>Today</a>
+      <a href="#how-zone">How it works</a>
+    </nav>
+    <label class="scenario-pick">
+      <span class="visually-hidden">Scenario</span>
+      <select id="scenario" disabled>
+        <option value="">Loading scenarios</option>
+      </select>
+    </label>
+  </div>
 </header>
 
 <main id="main">
 
-  <!-- The first screen: the morning brief -->
-  <section id="brief" class="plate-one" aria-labelledby="brief-title">
-    <div class="say">
-      <h1 id="brief-title" class="label label-blue" tabindex="-1">Morning brief<span id="brief-date"></span></h1>
-      <p id="headline" class="headline" aria-live="polite">The brief appears here once the simulated mission loads.</p>
-      <p id="notice" class="notice" role="status" hidden>This link could not be opened; showing the default view.</p>
-      <noscript><p class="notice">MyoTwin needs JavaScript to build the brief. Nothing is sent anywhere; it runs entirely in this page.</p></noscript>
-      <ol id="guide" class="guide" aria-label="Start here">
-        <li><button type="button" id="guide-checkin" class="guide-row"><span class="guide-name">Check in</span><span class="guide-detail" id="guide-checkin-detail"><span class="guide-text">three questions, about 30 seconds</span></span></button></li>
-        <li><button type="button" id="guide-check" class="guide-row"><span class="guide-name">Open a check</span><span class="guide-detail"><span class="guide-text" title="select a body part, or one of the four notes">select a body part, or one of the four notes</span></span></button></li>
-        <li id="guide-do-item"><button type="button" id="guide-do" class="guide-row"><span class="guide-name">Do today</span><span class="guide-detail" id="guide-do-detail"><span class="guide-text">Shown once a night is assessed.</span></span></button></li>
-      </ol>
-    </div>
-
-    <figure class="plate body-image" id="plate" aria-labelledby="cap-label">
-      <p class="plate-controls">
-        <span class="switch-row" role="group" aria-label="Image layer"><button type="button" class="seg" data-layer="density" aria-pressed="true">Density</button>, <button type="button" class="seg" data-layer="pressure" aria-pressed="false">Pressure</button>, <button type="button" class="seg" data-layer="impedance" aria-pressed="false">Impedance</button></span>
-        <span class="controls-dot" aria-hidden="true">·</span>
-        <span class="switch-row" role="group" aria-label="Image view"><button type="button" class="seg" data-view="raw" aria-pressed="true">Tonight</button>, <button type="button" class="seg" data-view="diff" aria-pressed="false" id="view-diff">Change since arrival</button></span>
+  <!-- Landing: what this is, and where to start -->
+  <section class="hero zone" id="top" aria-labelledby="hero-title">
+    <div class="hero-grid" aria-hidden="true"></div>
+    <div class="wrap">
+      <p class="eyebrow hero-part">Morning health brief · Moon and Mars</p>
+      <h1 id="hero-title" class="hero-title hero-part" tabindex="-1">The health check that happens <span class="hl">while you sleep.</span></h1>
+      <p class="lead hero-part">A sensor panel in your bunk reads muscle, sleep, heart and breathing, and radiation overnight. In the morning you answer three questions and get one short list for the day.</p>
+      <p class="hero-cta hero-part">
+        <a class="btn btn-primary" href="#overnight">Start this morning's brief <span aria-hidden="true">→</span></a>
+        <a class="btn btn-ghost" href="#how-zone">How it works</a>
       </p>
-      <div class="plate-art" id="plate-art">
-        <canvas id="body-canvas" width="600" height="600" role="img" aria-label="Whole-body image, not yet drawn"></canvas>
-        <svg id="plate-ink" class="plate-ink" aria-hidden="true" focusable="false"></svg>
-        <!-- One hotspot per check, placed on the phantom's body parts by js/app.js; each opens its check like its note. -->
-        <button type="button" class="hs hs-sleep st-grey" data-card="sleep" aria-pressed="false" aria-label="Head: sleep check, No data"></button>
-        <button type="button" class="hs hs-cardio st-grey" data-card="cardio" aria-pressed="false" aria-label="Chest: heart and breathing check, No data"></button>
-        <button type="button" class="hs hs-radiation st-grey" data-card="radiation" aria-pressed="false" aria-label="Whole body: radiation check, No data"></button>
-        <button type="button" class="hs hs-muscle st-grey" data-card="muscle" aria-pressed="false" aria-label="Calves: muscle check, No data"></button>
-        <p class="canvas-empty" id="canvas-empty">Image not drawn yet</p>
-        <div class="colorbar" id="colorbar" role="img" aria-label="Dot size scale"></div>
-        <p class="plate-note" id="plate-note" hidden></p>
-      </div>
-      <p id="cap-label" class="visually-hidden">The sleeper, seen from above.</p>
-    </figure>
+      <p class="hero-ticker hero-part"><span class="dot" aria-hidden="true"></span><span id="hero-place">Loading the mission</span><span aria-hidden="true">·</span><span>Nothing to wear</span><span aria-hidden="true">·</span><span>About two minutes</span></p>
 
-    <div class="cards notes" id="cards">
-      <button type="button" class="card st-grey" data-card="sleep" aria-pressed="false">
-        <span class="card-name label">Sleep</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span>
-        <span class="card-value"><span class="num">&#8212;</span><span class="unit">h asleep</span></span>
-        <span class="card-sub" hidden></span>
-      </button>
-      <button type="button" class="card st-grey" data-card="cardio" aria-pressed="false">
-        <span class="card-name label">Heart and breathing</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span>
-        <span class="card-value"><span class="num">&#8212;</span><span class="unit">bpm</span></span>
-        <span class="card-sub" hidden></span>
-      </button>
-      <button type="button" class="card st-grey" data-card="radiation" aria-pressed="false">
-        <span class="card-name label">Radiation</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span>
-        <span class="card-value"><span class="num">&#8212;</span><span class="unit">µGy</span></span>
-        <span class="card-sub" hidden></span>
-      </button>
-      <button type="button" class="card st-grey" data-card="muscle" aria-pressed="false">
-        <span class="card-name label">Muscle</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span>
-        <span class="card-value"><span class="num">&#8212;</span><span class="unit">vs your own baseline</span></span>
-        <span class="card-sub" hidden></span>
-      </button>
+      <ol class="steps" id="steps" aria-label="Three steps each morning">
+        <li><a class="step" href="#overnight">
+          <span class="step-label">Step 1 · Measured for you</span>
+          <span class="step-name">Overnight</span>
+          <span class="step-text">The bunk read four checks while you slept. Nothing to do.</span>
+          <span class="step-state"><span class="step-now"></span><span class="step-go"></span></span>
+        </a></li>
+        <li><a class="step step-self" href="#checkin-zone">
+          <span class="step-label">Step 2 · You fill this in</span>
+          <span class="step-name">Check-in</span>
+          <span class="step-text">Three questions: how you feel, your temperature, anything you notice.</span>
+          <span class="step-state"><span class="step-now"></span><span class="step-go"></span></span>
+        </a></li>
+        <li><a class="step" href="#today">
+          <span class="step-label">Step 3 · What to do</span>
+          <span class="step-name">Today</span>
+          <span class="step-text">One short list, from the bunk's readings and from your answers.</span>
+          <span class="step-state"><span class="step-now"></span><span class="step-go"></span></span>
+        </a></li>
+      </ol>
     </div>
   </section>
 
-  <!-- The night ruler: fixed to the bottom of the viewport so the time controls are always in view; stays here in the tab order. -->
+  <!-- The three steps; the night ruler floats at the bottom of this wrapper while it is on screen. -->
+  <div class="step-zones">
+
+  <!-- Step 1: measured while you slept -->
+  <section class="sec zone" id="overnight" aria-labelledby="brief-title">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Step 1 · Measured while you slept</p>
+        <p id="headline" class="headline" aria-live="polite">The brief appears here once the simulated mission loads.</p>
+        <h2 id="brief-title" class="sec-sub" tabindex="-1">Morning brief<span id="brief-date"></span></h2>
+        <p id="notice" class="notice" role="status" hidden>This link could not be opened; showing the default view.</p>
+        <noscript><p class="notice">MyoTwin needs JavaScript to build the brief. Nothing is sent anywhere; it runs entirely in this page.</p></noscript>
+      </div>
+
+      <div class="pcard" id="brief">
+        <div class="image-bar">
+          <div class="image-title"><h3 class="mini-label">Body image</h3><p class="image-lede">Three ways to look at last night's scan.</p></div>
+          <p class="pills" role="group" aria-label="Image layer"><button type="button" class="seg" data-layer="density" aria-pressed="true">Density</button><button type="button" class="seg" data-layer="pressure" aria-pressed="false">Pressure</button><button type="button" class="seg" data-layer="impedance" aria-pressed="false">Impedance</button></p>
+          <p class="pills pills-view" role="group" aria-label="Image view"><button type="button" class="seg" data-view="raw" aria-pressed="true">Tonight</button><button type="button" class="seg" data-view="diff" aria-pressed="false" id="view-diff">Change since arrival</button></p>
+        </div>
+        <p class="explain" id="image-explain" aria-live="polite"></p>
+        <div class="plate-one">
+        <figure class="plate body-image" id="plate" aria-labelledby="cap-label">
+          <div class="plate-art" id="plate-art">
+            <canvas id="body-canvas" width="600" height="600" role="img" aria-label="Whole-body image, not yet drawn"></canvas>
+            <svg id="plate-ink" class="plate-ink" aria-hidden="true" focusable="false"></svg>
+            <!-- One hotspot per check, placed on the phantom's body parts by js/app.js; each opens its check like its note. -->
+            <button type="button" class="hs hs-sleep st-grey" data-card="sleep" aria-pressed="false" aria-label="Head: sleep check, No data"></button>
+            <button type="button" class="hs hs-cardio st-grey" data-card="cardio" aria-pressed="false" aria-label="Chest: heart and breathing check, No data"></button>
+            <button type="button" class="hs hs-radiation st-grey" data-card="radiation" aria-pressed="false" aria-label="Whole body: radiation check, No data"></button>
+            <button type="button" class="hs hs-muscle st-grey" data-card="muscle" aria-pressed="false" aria-label="Calves: muscle check, No data"></button>
+            <p class="canvas-empty" id="canvas-empty">Image not drawn yet</p>
+            <div class="colorbar" id="colorbar" role="img" aria-label="Dot size scale"></div>
+            <p class="plate-note" id="plate-note" hidden></p>
+          </div>
+          <p id="cap-label" class="visually-hidden">The sleeper, seen from above.</p>
+        </figure>
+        <div class="cards notes" id="cards">
+          <button type="button" class="card st-grey" data-card="sleep" aria-pressed="false">
+            <span class="card-name label">Sleep</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span>
+            <span class="card-value"><span class="num">&#8212;</span><span class="unit">h asleep</span></span>
+            <span class="card-sub" hidden></span>
+          </button>
+          <button type="button" class="card st-grey" data-card="cardio" aria-pressed="false">
+            <span class="card-name label">Heart and breathing</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span>
+            <span class="card-value"><span class="num">&#8212;</span><span class="unit">bpm</span></span>
+            <span class="card-sub" hidden></span>
+          </button>
+          <button type="button" class="card st-grey" data-card="radiation" aria-pressed="false">
+            <span class="card-name label">Radiation</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span>
+            <span class="card-value"><span class="num">&#8212;</span><span class="unit">µGy</span></span>
+            <span class="card-sub" hidden></span>
+          </button>
+          <button type="button" class="card st-grey" data-card="muscle" aria-pressed="false">
+            <span class="card-name label">Muscle</span><span class="status"><svg class="st-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#st-grey"/></svg><span class="status-word">No data</span></span>
+            <span class="card-value"><span class="num">&#8212;</span><span class="unit">vs your own baseline</span></span>
+            <span class="card-sub" hidden></span>
+          </button>
+        </div>
+        </div>
+      </div>
+
+      <div class="pcard pcard-list reveal">
+        <div class="pcard-head"><h3 class="pcard-title">The four checks</h3><p class="pcard-sub">Open one for its trend and what to do.</p></div>
+        <div class="rows" id="rows">
+        <details class="row check-row" id="row-muscle" data-card="muscle" name="check">
+          <summary><h3 class="row-title">Muscle</h3><span class="row-meta"></span><span class="row-sign" aria-hidden="true"></span></summary>
+          <div class="row-body">
+            <div id="check-detail" class="check-detail">
+              <div class="check-cols">
+                <div id="guidance" class="guidance">
+                  <p id="g-meaning" class="statement">Shown once a night is assessed.</p>
+                  <h4 class="label">What to do now</h4>
+                  <ol id="g-actions" class="actions"><li>Shown once a night is assessed.</li></ol>
+                  <h4 class="label">Who decides</h4>
+                  <p id="g-decides">Shown once a night is assessed.</p>
+                  <p id="projection" class="projection" hidden></p>
+                </div>
+                <div id="trend" class="trend">
+                  <svg id="trend-chart" class="chart" role="img" aria-label="Trend chart, not yet drawn"></svg>
+                  <p id="trend-note" class="trend-note"></p>
+                  <ul class="legend" id="trend-legend" aria-label="Chart legend"></ul>
+                  <p class="rad-source" id="rad-source" hidden></p>
+                  <details class="sub-row" id="flux-row" hidden>
+                    <summary><h4 class="sub-title">The solar storm, hour by hour</h4><span class="row-sign" aria-hidden="true"></span></summary>
+                    <figure class="fig">
+                      <svg id="flux-chart" class="chart chart-flux" role="img" aria-label="Proton flux chart, not yet drawn"></svg>
+                      <figcaption class="fig-note">Protons above 10 MeV near Earth, 4 to 16 September 2017, from NASA's OMNI data. The shaded band is this night's sleep.</figcaption>
+                    </figure>
+                  </details>
+                  <details class="sub-row" id="rose-row" hidden>
+                    <summary><h4 class="sub-title">Where the particles came from</h4><span class="row-sign" aria-hidden="true"></span></summary>
+                    <figure class="fig rose-fig">
+                      <svg id="rose" class="rose" role="img" aria-label="Direction rose, not yet drawn"></svg>
+                      <figcaption class="fig-note"><span id="rose-reading"></span></figcaption>
+                    </figure>
+                  </details>
+                </div>
+              </div>
+              <details class="sub-row" id="nasa-row">
+                <summary><h4 class="sub-title">NASA on this risk</h4><span class="row-sign" aria-hidden="true"></span></summary>
+                <div id="g-context" class="nasa"></div>
+              </details>
+            </div>
+          </div>
+        </details>
+        <details class="row check-row" id="row-sleep" data-card="sleep" name="check">
+          <summary><h3 class="row-title">Sleep</h3><span class="row-meta"></span><span class="row-sign" aria-hidden="true"></span></summary>
+          <div class="row-body"></div>
+        </details>
+        <details class="row check-row" id="row-cardio" data-card="cardio" name="check">
+          <summary><h3 class="row-title">Heart and breathing</h3><span class="row-meta"></span><span class="row-sign" aria-hidden="true"></span></summary>
+          <div class="row-body"></div>
+        </details>
+        <details class="row check-row" id="row-radiation" data-card="radiation" name="check">
+          <summary><h3 class="row-title">Radiation</h3><span class="row-meta"></span><span class="row-sign" aria-hidden="true"></span></summary>
+          <div class="row-body"></div>
+        </details>
+        </div>
+      </div>
+      <p class="next-step"><a class="btn btn-ghost" href="#checkin-zone">Next: step 2, your check-in <span aria-hidden="true">→</span></a></p>
+    </div>
+  </section>
+
+  <!-- Step 2: you fill this in -->
+  <section class="sec zone zone-blue" id="checkin-zone" aria-labelledby="checkin-title">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Step 2 · You fill this in</p>
+        <h2 class="sec-title" id="checkin-title" tabindex="-1">Morning check-in.</h2>
+        <p class="sec-sub">Three questions, about 30 seconds. Your answers are set beside what the bunk measured.</p>
+      </div>
+      <div class="pcard checkin" id="checkin">
+        <div class="checkin-cols">
+          <div class="ci-ask">
+            <div class="ci-q">
+              <p class="label">How do you feel this morning?</p>
+              <p class="ci-row" role="group" aria-label="How do you feel this morning?"><button type="button" class="seg" data-mood="1" aria-pressed="false">Very low</button><button type="button" class="seg" data-mood="2" aria-pressed="false">Low</button><button type="button" class="seg" data-mood="3" aria-pressed="false">Even</button><button type="button" class="seg" data-mood="4" aria-pressed="false">Good</button><button type="button" class="seg" data-mood="5" aria-pressed="false">Very good</button></p>
+            </div>
+            <div class="ci-q">
+              <label class="label" for="ci-temp">Your temperature</label>
+              <p class="ci-temp-row"><input type="number" id="ci-temp" min="34" max="42" step="0.1" inputmode="decimal" autocomplete="off" placeholder="00.0" aria-describedby="ci-baseline ci-temp-hint"> <span>°C</span></p>
+              <p id="ci-baseline" class="ci-hint quiet">Your own baseline is 36.6 °C.</p>
+              <p id="ci-temp-hint" class="ci-hint ci-error" hidden>Enter a temperature from 34.0 to 42.0 °C, with one decimal at most.</p>
+            </div>
+            <div class="ci-q">
+              <p class="label">Anything you notice?</p>
+              <p class="ci-row" role="group" aria-label="Anything you notice?"><button type="button" class="seg" data-sym="l" aria-pressed="false">Legs weaker or sore</button><button type="button" class="seg" data-sym="r" aria-pressed="false">Not rested</button><button type="button" class="seg" data-sym="i" aria-pressed="false">Feeling ill</button></p>
+            </div>
+            <button type="button" id="ci-clear" class="text-btn" disabled>Clear the check-in</button>
+          </div>
+          <div class="ci-result" aria-live="polite">
+            <p id="checkin-meta" class="ci-meta">Not done yet · about 30 seconds</p>
+            <p id="ci-meaning" class="statement">Three questions before breakfast: how you feel, your temperature, and anything you notice.</p>
+            <div id="ci-next" hidden>
+              <h4 class="label">What to do now</h4>
+              <ol id="ci-actions" class="actions"></ol>
+              <h4 class="label">Who decides</h4>
+              <p id="ci-decides"></p>
+            </div>
+          </div>
+        </div>
+        <div id="ci-compare" class="ci-compare" hidden>
+          <h4 class="label">Beside the bunk's readings</h4>
+          <table class="origin-table ci-table">
+            <thead><tr><th scope="col">Check</th><th scope="col">You said</th><th scope="col">The bunk measured</th><th scope="col">Together</th></tr></thead>
+            <tbody id="ci-rows"></tbody>
+          </table>
+        </div>
+      </div>
+      <p class="next-step"><a class="btn btn-ghost" href="#today">Next: step 3, today <span aria-hidden="true">→</span></a></p>
+    </div>
+  </section>
+
+  <!-- Step 3: what to do today; js/app.js builds one card per source that asks for something (todayPlan). -->
+  <section class="sec zone" id="today" aria-labelledby="today-title">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Step 3 · What to do</p>
+        <h2 class="sec-title" id="today-title" tabindex="-1">Today.</h2>
+        <p class="sec-sub">One list, from the bunk's readings and from your check-in.</p>
+      </div>
+      <div class="today-grid" id="today-list"></div>
+    </div>
+  </section>
+
   <section id="timeline" class="timeline" aria-labelledby="timeline-title">
     <h2 id="timeline-title" class="visually-hidden">Mission timeline</h2>
     <button type="button" id="play" class="play" aria-pressed="false" disabled><span class="btn-text">Play the mission</span></button>
@@ -122,112 +291,17 @@
     <p class="day-readout"><output id="day-out" for="day">Night &#8212;</output> <span id="date-out" class="label">no date</span></p>
   </section>
 
-  <!-- Below the first screen: seven rows that open on click. -->
-  <div class="rows reveal" id="rows">
+  </div>
 
-    <!-- 1. Morning check-in: three questions answered by the crew member, set beside the bunk's readings. -->
-    <details class="row" id="checkin">
-      <summary><h2 class="row-title">Morning check-in</h2><span class="row-meta" id="checkin-meta">Not done yet · about 30 seconds</span><span class="row-sign" aria-hidden="true"></span></summary>
-      <div class="row-body">
-        <div class="checkin-cols">
-          <div class="ci-ask">
-            <div class="ci-q">
-              <p class="label">How do you feel this morning?</p>
-              <p class="ci-row" role="group" aria-label="How do you feel this morning?"><button type="button" class="seg" data-mood="1" aria-pressed="false">Very low</button>, <button type="button" class="seg" data-mood="2" aria-pressed="false">Low</button>, <button type="button" class="seg" data-mood="3" aria-pressed="false">Even</button>, <button type="button" class="seg" data-mood="4" aria-pressed="false">Good</button>, <button type="button" class="seg" data-mood="5" aria-pressed="false">Very good</button>.</p>
-            </div>
-            <div class="ci-q">
-              <label class="label" for="ci-temp">Your temperature</label>
-              <p class="ci-temp-row"><input type="number" id="ci-temp" min="34" max="42" step="0.1" inputmode="decimal" autocomplete="off" placeholder="00.0" aria-describedby="ci-baseline ci-temp-hint"> <span>°C</span></p>
-              <p id="ci-baseline" class="ci-hint quiet">Your own baseline is 36.6 °C.</p>
-              <p id="ci-temp-hint" class="ci-hint ci-error" hidden>Enter a temperature from 34.0 to 42.0 °C, with one decimal at most.</p>
-            </div>
-            <div class="ci-q">
-              <p class="label">Anything you notice?</p>
-              <p class="ci-row" role="group" aria-label="Anything you notice?"><button type="button" class="seg" data-sym="l" aria-pressed="false">Legs weaker or sore</button>, <button type="button" class="seg" data-sym="r" aria-pressed="false">Not rested</button>, <button type="button" class="seg" data-sym="i" aria-pressed="false">Feeling ill</button>.</p>
-            </div>
-            <button type="button" id="ci-clear" class="text-btn" disabled>Clear the check-in</button>
-          </div>
-          <div class="ci-result" aria-live="polite">
-            <p id="ci-meaning" class="statement">Three questions before breakfast: how you feel, your temperature, and anything you notice.</p>
-            <div id="ci-next" hidden>
-              <h3 class="label">What to do now</h3>
-              <ol id="ci-actions" class="actions"></ol>
-              <h3 class="label">Who decides</h3>
-              <p id="ci-decides"></p>
-            </div>
-          </div>
-        </div>
-        <div id="ci-compare" class="ci-compare" hidden>
-          <h3 class="label">Beside the bunk's readings</h3>
-          <table class="origin-table ci-table">
-            <thead><tr><th scope="col">Check</th><th scope="col">You said</th><th scope="col">The bunk measured</th><th scope="col">Together</th></tr></thead>
-            <tbody id="ci-rows"></tbody>
-          </table>
-        </div>
+  <!-- How it works -->
+  <section class="sec zone zone-how" id="how-zone" aria-labelledby="how-title">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">How it works</p>
+        <h2 class="sec-title" id="how-title" tabindex="-1">A sensor panel in the bunk. Nothing is worn.</h2>
+        <p class="sec-sub">Sleep with bare calves on the strip. The rest happens without you.</p>
       </div>
-    </details>
-
-    <!-- 2 to 5. The four checks; only one is open at a time. One shared detail block moves into the open row. -->
-    <details class="row check-row" id="row-muscle" data-card="muscle" name="check">
-      <summary><h2 class="row-title">Muscle</h2><span class="row-meta"></span><span class="row-sign" aria-hidden="true"></span></summary>
-      <div class="row-body">
-        <div id="check-detail" class="check-detail">
-          <div class="check-cols">
-            <div id="guidance" class="guidance">
-              <p id="g-meaning" class="statement">Shown once a night is assessed.</p>
-              <h3 class="label">What to do now</h3>
-              <ol id="g-actions" class="actions"><li>Shown once a night is assessed.</li></ol>
-              <h3 class="label">Who decides</h3>
-              <p id="g-decides">Shown once a night is assessed.</p>
-              <p id="projection" class="projection" hidden></p>
-            </div>
-            <div id="trend" class="trend">
-              <svg id="trend-chart" class="chart" role="img" aria-label="Trend chart, not yet drawn"></svg>
-              <p id="trend-note" class="trend-note"></p>
-              <ul class="legend" id="trend-legend" aria-label="Chart legend"></ul>
-              <p class="rad-source" id="rad-source" hidden></p>
-              <details class="sub-row" id="flux-row" hidden>
-                <summary><h3 class="sub-title">The solar storm, hour by hour</h3><span class="row-sign" aria-hidden="true"></span></summary>
-                <figure class="fig">
-                  <svg id="flux-chart" class="chart chart-flux" role="img" aria-label="Proton flux chart, not yet drawn"></svg>
-                  <figcaption class="fig-note">Protons above 10 MeV near Earth, 4 to 16 September 2017, from NASA's OMNI data. The shaded band is this night's sleep.</figcaption>
-                </figure>
-              </details>
-              <details class="sub-row" id="rose-row" hidden>
-                <summary><h3 class="sub-title">Where the particles came from</h3><span class="row-sign" aria-hidden="true"></span></summary>
-                <figure class="fig rose-fig">
-                  <svg id="rose" class="rose" role="img" aria-label="Direction rose, not yet drawn"></svg>
-                  <figcaption class="fig-note"><span id="rose-reading"></span></figcaption>
-                </figure>
-              </details>
-            </div>
-          </div>
-          <details class="sub-row" id="nasa-row">
-            <summary><h3 class="sub-title">NASA on this risk</h3><span class="row-sign" aria-hidden="true"></span></summary>
-            <div id="g-context" class="nasa"></div>
-          </details>
-        </div>
-      </div>
-    </details>
-    <details class="row check-row" id="row-sleep" data-card="sleep" name="check">
-      <summary><h2 class="row-title">Sleep</h2><span class="row-meta"></span><span class="row-sign" aria-hidden="true"></span></summary>
-      <div class="row-body"></div>
-    </details>
-    <details class="row check-row" id="row-cardio" data-card="cardio" name="check">
-      <summary><h2 class="row-title">Heart and breathing</h2><span class="row-meta"></span><span class="row-sign" aria-hidden="true"></span></summary>
-      <div class="row-body"></div>
-    </details>
-    <details class="row check-row" id="row-radiation" data-card="radiation" name="check">
-      <summary><h2 class="row-title">Radiation</h2><span class="row-meta"></span><span class="row-sign" aria-hidden="true"></span></summary>
-      <div class="row-body"></div>
-    </details>
-
-    <!-- 6. How the bunk measures -->
-    <details class="row" id="how">
-      <summary><h2 class="row-title">How the bunk measures</h2><span class="row-sign" aria-hidden="true"></span></summary>
-      <div class="row-body">
-        <p class="row-lede">A sensor panel in the bunk. Nothing is worn. Sleep with bare calves on the strip.</p>
-        <div class="how-grid">
+        <div class="how-grid reveal">
           <article class="sensor">
             <svg class="sensor-art" viewBox="0 0 160 80" aria-hidden="true" focusable="false">
               <path class="art-body" d="M12 38c20-10 60-12 96-6 14 2 26 2 36-2v12c-12 6-24 6-38 4-34-6-74-2-94 6z"/>
@@ -256,13 +330,8 @@
             <p>Record each cosmic-ray particle that crosses the bunk: the night's dose, and where it came from.</p>
           </article>
         </div>
-      </div>
-    </details>
-
-    <!-- 7. What if -->
-    <details class="row" id="whatif">
-      <summary><h2 class="row-title">What if I miss exercise sessions?</h2><span class="row-sign" aria-hidden="true"></span></summary>
-      <div class="row-body">
+      <div class="pcard whatif reveal" id="whatif">
+        <h3 class="pcard-title">What if I miss exercise sessions?</h3>
         <div class="whatif-grid">
           <label class="knob" id="knob-adherence">
             <span class="knob-label">Sessions done</span>
@@ -273,9 +342,8 @@
         </div>
         <button type="button" id="whatif-reset" class="text-btn" disabled>Back to the plan</button>
       </div>
-    </details>
-
-  </div>
+    </div>
+  </section>
 
 </main>
 
