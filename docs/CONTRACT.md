@@ -201,12 +201,13 @@ On a grey card `extra` holds whatever is known and null for the rest.
 - `rules.TEXT[cardId][status]` : `{ meaning, actions: [...] }`.
 - `rules.CONTEXT[cardId]` : `{ risk, note, sourceIds }`. `risk` is the NASA Human Research
   Program risk the check relates to, read from evidence V44; `note` is one sentence backed by `sourceIds`.
-  The page draws `note` as the last row ("More context") of the check's NASA block.
+  The page shows `note` as the last paragraph of the check's "NASA on this risk" sub-row, as plain text.
 - `rules.HAZARDS` : five `{ name, coverage: 'covered' | 'partly' | 'not covered', text }` rows,
   in the order and with the names of evidence V43 (NASA's five hazards of human spaceflight).
   The first four rows also carry `fact: { text, sourceIds }`, one statement from NASA's hazard page;
   "Distance from Earth" adds `worldFact: { moon, mars }` (NASA's ratings for that mission type, V74 and V75).
-  "Isolation and Confinement" adds `quote: { text, sourceIds }`, V52's verbatim `says` sentence, shown as a quotation.
+  "Isolation and Confinement" adds `quote: { text, sourceIds }`, V52's verbatim `says` sentence.
+  Kept for the docs and tests; the page no longer shows the hazards.
 - `rules.MISSIONS` : `{ moon, mars }`, each `{ prefix, label }`: the Human Research Roadmap mission type used
   for that world (`lunarSurfaceLong`, a long lunar-surface mission; `marsPlanetary`, a Mars planetary mission).
 - `rules.NASA[cardId]` : NASA's material for each check, built from evidence values:
@@ -268,29 +269,35 @@ shared and captured:
 `#s=S2&d=45&layer=density&view=raw&card=muscle`
 
 - `s` scenario id, `d` mission day, `layer` image layer (`density|pressure|impedance`),
-  `view` (`raw|diff`), `card` selected trend card (set by a card or by its hotspot on the body figure;
-  both give the same state and address).
-- What-if values in the address: `ex` 0 to 1 (step 0.05), `gs` 0.25 to 4 (step 0.25, default 1;
+  `view` (`raw|diff`), `card` the open check row (`muscle|sleep|cardio|radiation`), written only
+  while a check row is open; absent on a plain landing. Opening a row (its title, its margin note,
+  its hotspot on the body figure, or the guide) sets it; closing the row removes it. A link with a
+  valid `card` opens that row on load; an invalid one shows the notice.
+- What-if values in the address: `ex` 0 to 1 (step 0.05; the one what-if slider on the page, "Sessions done"), `gs` 0.25 to 4 (step 0.25, default 1;
   older links with 1 to 4 in steps of 0.5 still load), `sh` 0.6 to 1 (step 0.1; the share of
   cosmic-ray tracks behind habitat shielding, the dose is unchanged; an older link below 0.6 is out
-  of range and shows the notice), `nz` 0.01 to 0.08.
+  of range and shows the notice), `nz` 0.01 to 0.08. `gs`, `sh` and `nz` have no slider on the page
+  any more; they keep working for older links, and "Back to the plan" resets all four.
 - The density image (raw and change views) uses only nights with `_truth.tracksUsable !== false`.
   A left-out night shows the body outline only, with a sentence saying why; the change view
   accumulates only the usable nights of its window and of the first week, and its label says
-  how many nights were left out.
+  how many nights were left out. These sentences, and the one for baseline nights (no image), are the
+  only text under the plate (`#plate-note`); in every other state the figure has no visible caption
+  (its accessible name is the visually hidden `#cap-label`).
 - `mode` is no longer written. A `mode` of `astronaut` or `eldercare` in an older link is accepted
   and ignored, without the notice (for example `#s=S3&d=20&mode=eldercare&card=radiation`); any
-  other `mode` value shows the notice.
+  other `mode` value shows the notice. `ev` (an evidence id such as `V85`, from older links that
+  opened the evidence list) is accepted and ignored the same way and is no longer written; a value
+  that is not an evidence id shows the notice.
 - An unknown scenario (for example `s=S4`, the removed home scenario) shows the notice and opens
-  the default view (`#s=S2&d=42&layer=density&view=raw&card=muscle`), ignoring the rest of the address.
+  the default view (`#s=S2&d=42&layer=density&view=raw`), ignoring the rest of the address.
 - Any value in the address that is unknown, repeated (for example `d=10&d=20`), rejected or changed
   to fit (for example a day outside the scenario) falls back as before and shows the notice "This
-  link could not be opened; showing the default view." An unknown evidence id (`ev`) shows "That
-  source is not in the evidence list." The parser, `hashFor` and the per-scenario memory sit between
+  link could not be opened; showing the default view." The parser, `hashFor` and the per-scenario memory sit between
   the markers `BEGIN view-state helpers` and `END view-state helpers` in `js/app.js` and are tested
   in Node by `test/address.test.js`.
 - Morning check-in in the address, all optional and absent by default, written after the what-if
-  values and before `ev`: `mo` mood 1 to 5; `tc` temperature 34.0 to 42.0 °C with at most one decimal
+  values: `mo` mood 1 to 5; `tc` temperature 34.0 to 42.0 °C with at most one decimal
   (`/^\d{2}(\.\d)?$/`; the temperature field uses the same rule, and its state mirrors the field); `sy` the letters of what the person notices in the fixed order `l` (legs),
   `r` (not rested), `i` (ill), without repeats (`l, r, i, lr, li, ri, lri`). For example
   `#s=S2&d=62&layer=density&view=raw&card=cardio&mo=2&tc=37.9&sy=li`. An invalid, repeated or altered
@@ -300,26 +307,59 @@ shared and captured:
 - Within a page session each scenario remembers its own night, layer and view (memory only):
   switching to another scenario and back returns to them. The address stays the source of truth on
   load and for sharing.
-- First screen (Plate I): the sleeper drawn as a stipple (`charts.stipple`, one dot per phantom
-  cell, radius and brightness from the value; in the change view a loss is blue, a gain ink, cells
-  below the noise the smallest quiet dots; a left-out density night is hollow dots along the
-  outline) inside a hairline square and circle with dotted cosmic-ray tracks (`charts.plateFrame`).
-  Four hotspot rings sit on the body parts (`hotspotCm` in the presentation helpers block of
-  `js/app.js`, tested by `test/figure.test.js`) and are tied by hairline leaders to the four checks,
-  set as margin notes (`#cards .card`). The headline is split by `splitHeadline` (tested by
-  `test/presentation.test.js`). The night ruler (`charts.ruler`) is fixed to the bottom and is the
-  slider: a real `<input type="range" id="day">` for keyboard and screen readers, and pressing or
-  dragging anywhere on the ruler moves the night (`charts.rulerIndex`). At 1440 x 900, 1440 x 790 and
-  1366 x 657 the plate, its four hotspots and all four notes sit above the ruler. Under 1100 px the
-  layout stacks; under 600 px the notes are one column.
-- Plate II (`#checks`): text tabs for the four checks, the meaning as a statement, numbered actions,
-  who decides, the trend figure (Fig. 2), for radiation the proton chart and the direction rose
-  (Fig. 3 and 4) with `#rad-source` under them, then "NASA on this risk" in three columns.
+- The page is for the person using it: no evidence ids, links to the evidence table, references,
+  method notes or statements of uncertainty appear on it (they live in the slides and in `docs/`).
+  `test/page.test.js` checks that no element `#origin`, `#gcheck`, `#hazards`, `#limits`,
+  `#measured` or `#evidence` and no `data-ev` link is on the page, and that no evidence id appears in
+  the page or in the strings of `js/app.js`.
+- Top bar: the brand, the tagline and the scenario select; no section links.
+- First screen (Plate I): the brief label, the headline (split by `splitHeadline`, tested by
+  `test/presentation.test.js`) and a three-step guide (`ol#guide`): "Check in" (`#guide-checkin`:
+  opens the check-in row and focuses its first answer; its one-line detail is the check-in `summary`
+  once done, with the Watch mark when it is on Watch), "Open a check" (`#guide-check`: opens the most
+  urgent check row) and "Do today" (`#guide-do`: the first action of the most urgent source and
+  "+N more", on up to two lines; one button throughout, which opens that source's row, or reads
+  "Nothing new. Keep the plan." with `aria-disabled` when there is nothing to open). The
+  choice for rows 2 and 3 is `todayStep(cards, checkin) -> { card, target, text, more }` in the
+  presentation helpers block of `js/app.js`: `card` is the first check on Report, else the first on
+  Watch, else muscle; the action comes from cards on Report, then on Watch, then the check-in when it
+  is on Watch (`target` is that card id or `'checkin'`, null when there is none). The details of rows
+  1 and 2 are one line, cut with an ellipsis, with the whole text in `title`. The brief label stays
+  on one line at every desktop width (baseline nights read "Baseline night N").
+  The plate: the sleeper drawn as a stipple (`charts.stipple`, one dot per phantom cell, radius and
+  brightness from the value; in the change view a loss is blue, a gain ink, cells below the noise the
+  smallest quiet dots; a left-out density night is hollow dots along the outline) inside a hairline
+  square and circle with dotted cosmic-ray tracks (`charts.plateFrame`). One line of figure controls
+  sits at the top of the plate, above the body (layer: Density, Pressure, Impedance; view: Tonight,
+  Change since arrival); under 600 px it stands above the plate. Four hotspot rings sit on the body
+  parts (`hotspotCm`, tested by `test/figure.test.js`) and are tied by hairline leaders to the four
+  checks, set as margin notes (`#cards .card`). The night ruler (`charts.ruler`) is fixed to the
+  bottom and is the slider: a real `<input type="range" id="day">` for keyboard and screen readers,
+  and pressing or dragging anywhere on the ruler moves the night (`charts.rulerIndex`). At 1920 x 937,
+  1536 x 730, 1440 x 900, 1440 x 657, 1366 x 657, 1280 x 680, 1280 x 641, 1280 x 617, 1280 x 600 and
+  1120 x 650 the left column and all four notes sit above the ruler and the controls line clears the
+  body and the hotspots. Under 1100 px the layout stacks; under 600 px the notes are one column.
+- Below the first screen, seven rows as native `<details class="row">`, all closed on a plain
+  landing, each a title, a meta text and a "+" that becomes "−": "Morning check-in" (`#checkin`;
+  meta "Not done yet · about 30 seconds" or the status), the four checks (`details.check-row` with
+  `data-card`, `name="check"` so one is open at a time; meta: status and the margin note's value),
+  "How the bunk measures" (`#how`) and "What if I miss exercise sessions?" (`#whatif`). One shared
+  detail block (`#check-detail`) moves into the open check row: the meaning (the status is in the row
+  title), numbered actions,
+  who decides, the muscle projection; the trend chart with the engine's `reason` under it and the
+  legend; for radiation `#rad-source` (one sentence: who measured tonight's dose and when) and two
+  closed sub-rows, "The solar storm, hour by hour" (solar-event scenario) and "Where the particles came
+  from"; and in every check a closed sub-row "NASA on this risk" (risk, rating sentence for the
+  mission type, NASA's two sentences as quotations, the standard, then the `rules.CONTEXT` note). The open row follows `state.card`
+  (`open` is set only when it differs). A click on a check row's title updates the state at once (so
+  the detail is inside the row in the same task); `toggle` events cover any other opening. The "+"
+  and "−" are `aria-hidden` spans, so a title's accessible name has no sign.
 - Trend charts (`charts.line` with `upTo`) draw the readings, the judged line, its points and the
   exercise ticks only up to the selected night; the axes span the whole scenario and the plan band
   and thresholds stay. Event markers are drawn for events that started by the selected night; a
   marker may carry `shortLabel` and `tinyLabel`, and its label sits beside its own line inside the
-  chart.
+  chart, in the first row of the label strip where it clears the labels already placed. The page
+  passes the ruler's short event labels ("Exercise lapse", "Solar events", ...) and "Arrival".
 
 Colour scheme and type (`css/style.css`, palette at the top; `test/palette.test.js` checks it):
 
@@ -343,25 +383,20 @@ Measured radiation data on the page:
 - `index.html` loads `data/msl-rad.js`, `data/lro-crater.js`, `data/donki-sep-2017.js`,
   `data/omni-protons.js` and `data/osdr-pwb.js` before `js/sim.js`, and `data/osdr-pwb.js` before
   `js/model.js` (checked by `test/page.test.js`).
-- The radiation note says "measured by NASA" in its qualifier (on nights with a measured dose). In Plate II, under the radiation figures, `#rad-source` says where tonight's dose comes from,
-  built from `rad.measured` (V60 for Curiosity RAD, V61 for LRO CRaTER), and, on a night with
-  `rad.events`, one DONKI record: the record named in the evidence table (V62) is preferred when
-  it is among the night's records (linked to V62); otherwise the first record, shown by its id.
-- Trend panel, radiation card, solar-event scenario (S3): `#flux-fig` draws the OMNI2 hourly
-  proton flux above 10 MeV, 4 to 16 September 2017, on a log10 axis (`charts.logSeries`), with the
-  selected night's 22:00 to 06:00 UTC window shaded; caption links V63.
+- The radiation note says "measured by NASA" in its qualifier (on nights with a measured dose). In the
+  open radiation row, `#rad-source` says in one sentence who measured tonight's dose and when, built
+  from `rad.measured` (Curiosity RAD on Mars, or LRO in lunar orbit).
+- Radiation row, solar-event scenario (S3): the sub-row "The solar storm, hour by hour" draws the OMNI2
+  hourly proton flux above 10 MeV, 4 to 16 September 2017, on a log10 axis (`charts.logSeries`), with
+  the selected night's 22:00 to 06:00 UTC window shaded; it is drawn when the sub-row opens.
 - Trend panel, radiation card: when the plotted doses span more than a factor of 50 (largest over
   smallest positive value, `charts.useLogScale`), `charts.line` draws the vertical axis on a log10
   scale (`logY`, decade ticks shared with `charts.logSeries`) with tick labels in the card's units
-  (`charts.doseTick`: µGy below 1,000, mGy from 1,000 up); the note and the chart's accessible
-  label say the scale is logarithmic. Narrower ranges keep the linear axis.
-- `#gcheck`, in "How it works" after "Where the method comes from": the rat
-  partial-weight-bearing check of the gravity term, drawn with `charts.dotScale` from
-  `model.checkGravityTerm(data.osdrPwb, gs)` and worded by `model.describeGravityCheck`; caveats
-  always visible; links V90 and V91. It follows the what-if shape `gs`. Each mark is centred on its
-  own row; the row labels sit in a gutter left of the plot (two lines under 560 px).
-- `#measured`, just above the evidence drawer: one row per data module (`name`, what it drives,
-  `source`, link to `url`, `retrieved`, `terms`) and the line "Everything else on this page is simulated."
+  (`charts.doseTick`: µGy below 1,000, mGy from 1,000 up); the chart's accessible
+  label says the scale is logarithmic. Narrower ranges keep the linear axis.
+- The rat partial-weight-bearing check of the gravity term (`model.checkGravityTerm`,
+  `model.describeGravityCheck`) and the list of measured data modules are no longer drawn on the page;
+  they stay in `docs/` and the tests.
 
 ## Status rules (interim, unvalidated; a flight surgeon decides)
 

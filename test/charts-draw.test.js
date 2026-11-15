@@ -110,3 +110,21 @@ test('the dot chart centres each mark on its own row, labels in a gutter left of
     }
   }
 });
+
+// The night ruler marks each scenario event with a bracket above the ticks and a tiny label at its
+// start, above the ruler (the tick numbers sit below it); a label that would collide is left out.
+test('ruler: events get a bracket and a label above the ticks; colliding labels are left out', () => {
+  const days = []; for (let d = -14; d <= 44; d++) days.push(d);
+  const ev = [{ from: 28, to: 31, label: 'Solar events' }, { from: 34, to: 38, label: 'Solar event' }];
+  const wide = svgOf(1000, 46);
+  charts.ruler(wide, { days, selected: 20, events: ev });
+  assert.strictEqual(all(wide, (n) => cls(n) === 'ruler-event').length, 2);
+  const labels = all(wide, (n) => cls(n) === 'ruler-event-label');
+  assert.deepStrictEqual(labels.map((t) => t.textContent), ['Solar events', 'Solar event']);
+  const ticks = all(wide, (n) => cls(n) === 'ruler-label');
+  for (const t of labels) for (const k of ticks) assert.ok(Number(t.attrs.y) + 4 < Number(k.attrs.y) - 12, 'label above the tick numbers');
+  const narrow = svgOf(300, 46);
+  charts.ruler(narrow, { days, selected: 20, events: ev });
+  assert.strictEqual(all(narrow, (n) => cls(n) === 'ruler-event').length, 2);
+  assert.deepStrictEqual(all(narrow, (n) => cls(n) === 'ruler-event-label').map((t) => t.textContent), ['Solar events']);
+});

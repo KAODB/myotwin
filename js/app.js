@@ -18,7 +18,7 @@
     $('headline').textContent = 'Could not load: ' + missing.join(', ') + '. Open index.html from the full project folder.';
     return;
   }
-  var evidence = M.evidence, model = M.model, sim = M.sim, rules = M.rules, engine = M.engine,
+  var evidence = M.evidence, sim = M.sim, rules = M.rules, engine = M.engine,
     phantom = M.phantom, imaging = M.imaging, charts = M.charts;
   var T = rules.THRESHOLDS;
   var has = function (o, k) { return Object.prototype.hasOwnProperty.call(o, k); };
@@ -49,7 +49,8 @@
 
   // Parse a view from the address. Any value that is unknown, repeated, rejected or changed sets
   // `rejected`, so the page can say that the link could not be opened as written. A valid `mode`
-  // from an older link is accepted and ignored. An unknown scenario opens the default view.
+  // or evidence id `ev` from an older link is accepted and ignored. An unknown scenario opens the
+  // default view. `card` is the open check row, null when none is open.
   var HASH_KEYS = ['s', 'd', 'layer', 'view', 'mode', 'card', 'ex', 'gs', 'sh', 'nz', 'mo', 'tc', 'sy', 'ev'];
   // Morning check-in: mood 1 to 5, temperature 34.0 to 42.0 °C (one decimal at most), and what
   // the person notices as the letters l (legs), r (not rested), i (ill) in that order.
@@ -74,17 +75,17 @@
     var d = /^-?\d+$/.test(q.d || '') ? parseInt(q.d, 10) : defaultDay(s);
     if ('d' in q && String(d) !== q.d) bad = true;
     if ('mode' in q && OLD_MODES.indexOf(q.mode) < 0) bad = true;
+    if ('ev' in q && !/^V\d+$/.test(q.ev)) bad = true;
     var st = {
       s: s, d: d,
       layer: check('layer', pick(q.layer, LAYERS, 'density')),
       view: check('view', pick(q.view, VIEWS, 'raw')),
-      card: check('card', pick(q.card, CARD_IDS, 'muscle')),
+      card: check('card', pick(q.card, CARD_IDS, null)),
       ex: checkNum('ex', snap(q.ex, WHATIF.ex)), gs: checkNum('gs', snap(q.gs, WHATIF.gs)),
       sh: checkNum('sh', snap(q.sh, WHATIF.sh)), nz: checkNum('nz', snap(q.nz, WHATIF.nz)),
       mo: check('mo', /^[1-5]$/.test(q.mo || '') ? q.mo : null),
       tc: 'tc' in q ? parseTemp(q.tc) : null,
-      sy: check('sy', SY_VALUES.indexOf(q.sy) >= 0 ? q.sy : null) || '',
-      ev: check('ev', /^V\d+$/.test(q.ev || '') ? q.ev : null)
+      sy: check('sy', SY_VALUES.indexOf(q.sy) >= 0 ? q.sy : null) || ''
     };
     if (st.mo != null) st.mo = parseInt(st.mo, 10);
     if ('tc' in q && st.tc == null) bad = true;
@@ -93,14 +94,14 @@
   }
 
   function hashFor(st) {
-    var parts = ['s=' + st.s, 'd=' + st.d, 'layer=' + st.layer, 'view=' + st.view, 'card=' + st.card];
+    var parts = ['s=' + st.s, 'd=' + st.d, 'layer=' + st.layer, 'view=' + st.view];
+    if (st.card) parts.push('card=' + st.card);
     Object.keys(WHATIF).forEach(function (k) {
       if (st[k] !== WHATIF[k].def && st[k] != null) parts.push(k + '=' + st[k]);
     });
     if (st.mo != null) parts.push('mo=' + st.mo);
     if (st.tc != null) parts.push('tc=' + st.tc);
     if (st.sy) parts.push('sy=' + st.sy);
-    if (st.ev) parts.push('ev=' + st.ev);
     return '#' + parts.join('&');
   }
 
@@ -171,6 +172,20 @@
     var t = String(s || ''), i = t.search(/\.\s/);
     return i >= 0 ? t.slice(0, i + 1) : t;
   }
+
+  // The guide's rows 2 and 3, from the night's cards (in the assessment's order) and the check-in
+  // result. `card` is the check that "Open a check" opens: the first on Report, else the first on
+  // Watch, else muscle. "Do today" takes its action from the most urgent source: cards on Report,
+  // then cards on Watch, then the check-in when it is on Watch. `target` is that source (a card id
+  // or 'checkin', null when there is none), `text` its first action and `more` how many follow.
+  function todayStep(cards, checkin) {
+    var first = function (st) { return cards.filter(function (c) { return c.status === st; })[0]; };
+    var flagged = first('red') || first('amber');
+    var src = flagged ? { id: flagged.id, actions: flagged.actions } :
+      checkin && checkin.status === 'amber' ? { id: 'checkin', actions: checkin.actions } : null;
+    if (!src || !src.actions.length) return { card: 'muscle', target: null, text: 'Nothing new. Keep the plan.', more: 0 };
+    return { card: flagged ? flagged.id : 'muscle', target: src.id, text: src.actions[0], more: src.actions.length - 1 };
+  }
   // END presentation helpers
 
   // ---- constants -----------------------------------------------------------------
@@ -183,7 +198,9 @@
   var REF_SEED = 7;                                // fixed seed for the arrival-week density image
   var DIFF_MIN_RANGE = 10;                         // change view: colour scale at least +/-10 %
   var NOISE_MULTIPLE = 2;                          // change view: grey out regions below 2 x expected noise
-  var THIGH_RATIO = evidence.value('V4', 'thighControlPct') / evidence.value('V4', 'calfControlPct');
+  // Thigh loss relative to calf loss, from the bed-rest study in the evidence table that reports both.
+  var BED_REST = evidence.items.filter(function (it) { return has(it.values, 'thighControlPct'); })[0].values;
+  var THIGH_RATIO = BED_REST.thighControlPct / BED_REST.calfControlPct;
   var MOMENTUM_SPREAD = imaging.ASSUMPTIONS.filter(function (a) { return a.name === 'momentumSpreadFactor'; })[0].value;
   var reducedMotion = root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -275,13 +292,6 @@
   function dayLabel(r) {
     return r.missionDay < 0 ? 'Baseline night ' + (r.missionDay + data.gen.scenario.baselineNights + 1) : 'Night ' + r.missionDay;
   }
-  // The 7-hour line is the low end of the range in a NASA technical brief (V79).
-  function sleepLineNote() {
-    return 'Hours asleep from radar is an assumption; the ' + T.sleepAmberHours.value + '-hour line is the low end of the ' +
-      evidence.value('V79', 'adultSleepHoursLow') + ' to ' + evidence.value('V79', 'adultSleepHoursHigh') + ' hours ' +
-      'a NASA brief says an average adult needs.';
-  }
-
   // Muscle limits come from the engine (card.extra); any assessed night carries them.
   function muscleExtra() {
     var e = card('muscle').extra;
@@ -307,8 +317,6 @@
       sel.disabled = false;
     }
     sel.value = state.s;
-    // Evidence links written in index.html (data-ev) carry the current view, as every other one.
-    Array.prototype.forEach.call(document.querySelectorAll('a[data-ev]'), function (a) { a.href = evidenceHref(a.dataset.ev); });
   }
 
   function pressed(selector, attr, value) {
@@ -322,13 +330,11 @@
   // ---- render: brief (headline + margin notes) -------------------------------------
   function renderBrief() {
     var a = assessment(), r = rec(), env = data.gen.scenario.env;
-    $('brief-date').textContent = ' · ' + (r.missionDay < 0 ? 'Earth, ' + dayLabel(r).toLowerCase() : ENV_NAMES[env] + ', ' + dayLabel(r).toLowerCase());
+    // One line at every desktop width: baseline nights read "Baseline night 3" (the plate note says they are on Earth).
+    $('brief-date').textContent = ' · ' + (r.missionDay < 0 ? dayLabel(r) : ENV_NAMES[env] + ', ' + dayLabel(r).toLowerCase());
     renderHeadline(scrub(a.headline));
     // The accent colour is reserved for attention: the headline carries it only when a check is on Watch or Report.
     $('headline').classList.toggle('headline-attn', a.cards.some(function (c) { return isFlag(c.status); }));
-    var summary = data.gen.scenario.summary;
-    $('scenario-summary').textContent = firstSentence(summary);
-    $('scenario-more').textContent = summary.slice(firstSentence(summary).length).trim();
     a.cards.forEach(renderCard);
   }
 
@@ -344,12 +350,6 @@
     h.appendChild(el('span', 'lead', p.lead));
     h.appendChild(el('em', null, p.em));
     if (p.more) h.appendChild(el('span', 'more', p.more));
-  }
-
-  function changeVsBaseline(c) {
-    var b = c.id === 'sleep' ? data.base.sleep : c.id === 'cardio' ? data.base.hr : null;
-    if (rec().missionDay < 0) b = c.id === 'sleep' ? chartBaseline().sleep : chartBaseline().hr;
-    return b && b.median && c.value != null ? (c.value - b.median) / b.median * 100 : null;
   }
 
   // The words of one margin note: the value, its unit and qualifier, and for a check on Watch or
@@ -398,11 +398,6 @@
     var sub = btn.querySelector('.card-sub');
     sub.textContent = L.sub;
     sub.hidden = !L.sub;
-    var tab = document.querySelector('.tab[data-card="' + c.id + '"]');
-    tab.className = 'tab st-' + c.status;
-    tab.setAttribute('aria-pressed', String(state.card === c.id));
-    setStatus(tab, c.status);
-    if (c.id === 'radiation') renderRadSource();
   }
 
   // ---- radiation card: where tonight's number comes from (data/*.js, replayed) --------
@@ -411,47 +406,14 @@
     var p = iso.split('-');
     return Number(p[2]) + ' ' + MONTHS[Number(p[1]) - 1] + ' ' + p[0];
   }
-  function measuredDataset() { return data.gen.scenario.rad ? data.gen.scenario.rad.dataset : null; }
-  function doseMedium() { return measuredDataset() === 'msl-rad' ? 'in silicon' : 'water-corrected'; }
-
+  // One sentence under the radiation chart: who measured tonight's number, and when.
   function renderRadSource() {
-    var r = rec(), m = r.rad && r.rad.measured, box = $('rad-source');
-    var show = !!m && state.card === 'radiation';     // under the radiation figures in Plate II
-    box.hidden = !show;
-    if (!show) return;
-    var p = $('rad-measured');
-    clear(p);
-    p.appendChild(el('strong', null, 'Radiation tonight: '));
-    var txt, ev;
-    if (m.dataset === 'msl-rad') {
-      txt = 'Measured by Curiosity\'s RAD on sol ' + m.sol + ' (' + longDate(m.date) + ') and replayed for this night. ' +
-        'It is dose in silicon on the open surface of Mars, not inside a habitat; using a 2012 sol for this night is an assumption.';
-      ev = 'V60';
-    } else {
-      txt = 'Measured in lunar orbit by LRO CRaTER (detector pair ' + m.pair + ') on the night of ' + longDate(m.date) +
-        ', scaled to the surface by the instrument team, and replayed for this night. It is a detector on an orbiter, ' +
-        'not a habitat: behind thick habitat shielding a crew would receive much less from a solar particle event. ' +
-        'Using a 2017 night for this night is an assumption.';
-      ev = 'V61';
-    }
-    p.appendChild(document.createTextNode(txt + ' '));
-    p.appendChild(sourceLink(ev));
-
-    // Name the record of the evidence table (V62, protons above 10 MeV) when it is among tonight's records.
-    var evs = r.rad.events || [], v62 = evidence.value('V62', 'id');
-    var d = $('rad-donki'), first = evs.filter(function (e) { return e.id === v62; })[0] || evs[0];
-    d.hidden = !first;
-    clear(d);
-    if (!first) return;
-    var t = first.start.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})Z$/);
-    d.appendChild(document.createTextNode('NASA\'s DONKI space-weather database lists a solar energetic particle event starting ' +
-      longDate(t[1]) + ', ' + t[2] + ' UTC'));
-    if (first.id === v62) {
-      d.appendChild(document.createTextNode('. '));
-      d.appendChild(sourceLink('V62'));
-    } else {
-      d.appendChild(document.createTextNode(' (record ' + first.id + ').'));
-    }
+    var r = rec(), m = r.rad && r.rad.measured, p = $('rad-source');
+    p.hidden = !m || state.card !== 'radiation';
+    if (p.hidden) return;
+    p.textContent = m.dataset === 'msl-rad' ?
+      'Tonight\'s dose was measured on Mars by NASA\'s Curiosity rover on sol ' + m.sol + ', ' + longDate(m.date) + '.' :
+      'Tonight\'s dose was measured in lunar orbit by NASA\'s Lunar Reconnaissance Orbiter on the night of ' + longDate(m.date) + '.';
   }
 
   // ---- render: whole-body image ----------------------------------------------------
@@ -552,15 +514,15 @@
     $('plate-art').classList.toggle('no-image', noImage);
     if (noImage) {
       canvas.hidden = true;
-      empty.hidden = false;
-      empty.textContent = 'Baseline nights are recorded on Earth before departure; images start at arrival.';
+      empty.hidden = true;
       charts.dotLegend(bar, null);
       $('cap-label').textContent = 'No image on baseline nights.';
-      $('cap-extra').textContent = '';
+      plateNote('Baseline nights are recorded on Earth before departure; images start at arrival.');
       return;
     }
 
-    var shown, ph, label, cap, extra = [], overlay = null, outlineOnly = false, legend;
+    // `note` is set only in the states that need a sentence under the plate.
+    var shown, ph, label, cap, note = '', overlay = null, outlineOnly = false, legend;
     var none = function () { return false; };
     if (state.view === 'diff') {
       var nights = surfaceWindow(i);
@@ -582,10 +544,9 @@
       cap = 'Change in ' + LAYER_WORDS[state.layer] + ' since arrival, the last week against the first. Blue dots are loss, ink dots gain' +
         (state.layer === 'density' && !outlineOnly ? '; the smallest dots are below the noise.' : '.');
       if (outlineOnly) {
-        cap = 'Radiation was raised on every night of the last week, so there is no density image for this week. ' +
-          'Solar protons mostly stop inside the body or cross it with far lower momentum than cosmic rays.';
-      } else if (state.layer === 'density') {
-        extra.push('Regions whose change is smaller than twice their expected noise are drawn as the smallest dots.');
+        cap = note = 'Radiation was raised on every night of the last week, so there is no density image for this week.';
+      } else if (left) {
+        note = left + ' of the last ' + nights.length + ' nights left out: raised radiation.';
       }
       legend = outlineOnly ? null : { mode: 'diff', min: shown.min, max: shown.max, noise: state.layer === 'density' };
     } else {
@@ -599,20 +560,13 @@
         if (r._truth.tracksUsable === false) {
           outlineOnly = true;
           overlay = outlineOverlay(shown, ph, none);
-          cap = 'Radiation was raised tonight. Solar protons mostly stop inside the body or cross it with far lower momentum ' +
-            'than cosmic rays, so tonight\'s tracks are left out of the density image.';
-        } else {
-          extra.push('Incident particles tonight: ' + Math.round(r._truth.tracksPerCm2).toLocaleString('en-US') + ' per cm² (assumed free-space intensity, ' +
-            (state.sh < 1 ? 'after assumed shielding' : 'no habitat shielding') + ').');
-          extra.push('Noise model: counting noise x ' + MOMENTUM_SPREAD + ' for the unknown momentum of each particle (assumption).');
-          extra.push('Dot size: areal density in radiation lengths (x/X0).');
+          cap = note = 'Radiation was raised tonight, so tonight\'s tracks are left out of the density image.';
         }
       } else if (state.layer === 'pressure') {
         shown = imaging.render('pressure', ph, { env: r.env });
         shown.min = 0;
         unit = shown.unit;
         cap = 'The sleeper, seen from above. Pressure under the sleeper on the mattress.';
-        if (shown.massKg) extra.push('Body mass derived from the pressure map: ' + shown.massKg.toFixed(1) + ' kg.');
       } else {
         shown = imaging.render('impedance', ph, { eimPhaseDeg: r.eim ? r.eim.phase50_deg : NaN, baselinePhaseDeg: data.base.eim.median });
         overlay = outlineOverlay(shown, ph, isCalf);
@@ -621,13 +575,11 @@
         shown.max = data.base.eim.median * 1.05;
         unit = shown.unit;
         cap = 'The sleeper, seen from above. Impedance phase of the calves; hollow dots outline the parts that are not measured.';
-        if (!r.eim) extra.push('No usable calf scan tonight.');
       }
       label = state.layer === 'pressure' ? 'Pressure under the sleeper' :
         state.layer === 'density' ? 'Areal density from cosmic-ray scattering' : shown.label;
       legend = outlineOnly ? null : { mode: 'raw', min: shown.min, max: shown.max, unit: unit, outline: state.layer === 'impedance' };
     }
-    if (state.layer === 'impedance') extra.unshift('Only the calves are measured.');
 
     canvas.hidden = false;
     empty.hidden = true;
@@ -635,19 +587,31 @@
     canvas.setAttribute('aria-label', scrub(label) + ', ' + dayLabel(r));
     charts.dotLegend(bar, legend);
     $('cap-label').textContent = cap;
-    $('cap-extra').textContent = 'Fig. 1: ' + scrub(label) + '. ' + extra.join(' ');
+    plateNote(note);
+  }
+
+  // The quiet sentence under the plate; the dot legend moves up above it while it shows.
+  function plateNote(text) {
+    var n = $('plate-note');
+    n.textContent = text;
+    n.hidden = !text;
+    $('plate').classList.toggle('has-note', !!text);
   }
 
   // ---- render: hotspots on the plate and their leaders to the margin notes ---------
   var HOTSPOT_PART = { sleep: 'Head', cardio: 'Chest', muscle: 'Calves', radiation: 'Whole body' };
   var SVG_NS = 'http://www.w3.org/2000/svg';
   function renderHotspots() {
-    var lay = data.lay, noImage = rec().missionDay < 0;
+    var lay = data.lay, noImage = rec().missionDay < 0, active = document.activeElement;
+    // A focused hotspot about to be hidden hands its focus to its margin note.
+    if (noImage && active && active.classList && active.classList.contains('hs')) {
+      document.querySelector('.card[data-card="' + active.dataset.card + '"]').focus({ preventScroll: true });
+    }
     Array.prototype.forEach.call(document.querySelectorAll('.hs'), function (b) {
       var id = b.dataset.card, c = card(id), word = charts.STATUS[c.status].word, at = HOTSPOT_CM[id];
       b.className = 'hs hs-' + id + ' st-' + c.status + (b.classList.contains('is-hot') ? ' is-hot' : '');
       b.hidden = noImage;
-      b.setAttribute('aria-pressed', String(state.card === id));
+      b.setAttribute('aria-pressed', String(!noImage && state.card === id));
       b.setAttribute('aria-label', HOTSPOT_PART[id] + ': ' + CARD_NAMES[id].toLowerCase() + ' check, ' + word);
       b.style.setProperty('--x', lay.px(at[0]).toFixed(1) + 'px');
       b.style.setProperty('--y', lay.py(at[1]).toFixed(1) + 'px');
@@ -701,13 +665,20 @@
     });
   }
 
-  // Selecting a check on the plate also brings its detail into view (the focus stays where it was).
-  function revealGuidance() {
-    var g = $('checks'), top = g.getBoundingClientRect().top;
-    if (top < 0 || top > root.innerHeight * 0.5) g.scrollIntoView({ block: 'start', behavior: reducedMotion ? 'auto' : 'smooth' });
+  function scrollTo(node) { node.scrollIntoView({ block: 'start', behavior: reducedMotion ? 'auto' : 'smooth' }); }
+  // Open a check's row and bring it into view (the focus stays where it was); an open row only scrolls.
+  function openCard(id) {
+    if (state.card !== id) update({ card: id });
+    scrollTo($('row-' + id));
   }
 
   // ---- render: the night ruler -----------------------------------------------------
+  // A scenario event's label on the ruler, three words at most, so a visitor can find the nights.
+  function rulerLabel(label) {
+    var m = label.match(/^Measured: solar particle (events?)/);
+    if (m) return m[1] === 'events' ? 'Solar events' : 'Solar event';
+    return label.replace(/^EIM liner misplaced$/, 'Liner misplaced');
+  }
   function renderTimeline() {
     var recs = data.gen.records, r = rec();
     var slider = $('day');
@@ -715,7 +686,13 @@
     slider.max = String(recs.length - 1);
     slider.value = String(idx());
     slider.setAttribute('aria-valuetext', dayLabel(r) + ', ' + longDate(r.night));
-    charts.ruler($('ruler'), { days: recs.map(function (x) { return x.missionDay; }), selected: idx() });
+    charts.ruler($('ruler'), {
+      days: recs.map(function (x) { return x.missionDay; }), selected: idx(),
+      events: data.gen.scenario.events.filter(function (e) { return data.dayIndex[e.from] !== undefined; }).map(function (e) {
+        var to = data.dayIndex[e.to] !== undefined ? e.to : recs[recs.length - 1].missionDay;
+        return { from: data.dayIndex[e.from], to: data.dayIndex[to], label: rulerLabel(e.label) };
+      })
+    });
     $('day-out').textContent = dayLabel(r);
     $('date-out').textContent = longDate(r.night);
     var play = $('play');
@@ -739,21 +716,11 @@
   function band(b) { return b && b.median != null ? { median: b.median, low: b.median - 2 * b.sd, high: b.median + 2 * b.sd } : null; }
 
   // Shorter wordings of a measured solar-event label, for narrow charts (charts.line picks the longest that fits).
-  function eventMarker(e) {
-    var mk = { missionDay: e.from, label: e.label };
-    var m = e.label.match(/^Measured: solar particle (events?) of (\S+ \w+) (\d{4})/);
-    if (m) {
-      mk.shortLabel = 'Solar particle ' + m[1] + ', ' + m[2] + ' ' + m[3];
-      mk.tinyLabel = (m[1] === 'events' ? 'Solar events, ' : 'Solar event, ') + m[2];
-    }
-    return mk;
-  }
+  function eventMarker(e) { return { missionDay: e.from, label: rulerLabel(e.label) }; }
   // The arrival line and the scenario's events up to the selected night: a later event is not shown before it happens.
   function startMarkers() {
     var sc = data.gen.scenario;
-    var label = sc.transitDays > 0 ? 'Arrival after a ' + sc.transitDays + '-day transit (not monitored)' : 'Arrival';
-    var shortLabel = sc.transitDays > 0 ? 'Arrival (transit not monitored)' : null;
-    return [{ missionDay: 0, label: label, shortLabel: shortLabel }].concat(sc.events.filter(function (e) {
+    return [{ missionDay: 0, label: 'Arrival' }].concat(sc.events.filter(function (e) {
       return e.from <= state.d;
     }).map(eventMarker));
   }
@@ -766,7 +733,6 @@
       axisBreak: data.gen.scenario.transitDays > 0 ? 0 : null
     };
     var legend = [['dot', 'Nightly reading']];
-    var note = '', noteMore = null;
     if (cardId === 'muscle') {
       var me = muscleExtra(), med = b.eim.median, plan = data.gen.plan.expectedChangePct;
       var ok = med != null && me && me.amberLimitPct != null;
@@ -781,8 +747,6 @@
       o.unit = 'deg'; o.yLabel = 'Calf phase';
       legend.push(['line', WINDOW + '-night median'], ['band', 'Own baseline range'], ['plan', 'Plan (Watch below this band)'],
         ['report', 'Report line'], ['event', 'Event'], ['exercise', 'Exercise done (tall) or missed (short)'], ['selected', 'Selected night']);
-      note = 'Dots are the nightly calf impedance readings; the line is the ' + WINDOW + '-night median the card uses. ' +
-        'The report line applies to the ' + WINDOW + '-night median. The report line is the largest test-retest variability reported for this measurement.';
     } else if (cardId === 'sleep') {
       o.raw = engine.series(recs, 'sleep');
       o.thresholds = [
@@ -791,8 +755,6 @@
       ];
       o.unit = 'h'; o.yLabel = 'Sleep';
       legend.push(['line', WINDOW + '-night mean'], ['watch', 'Watch line'], ['report', 'Report line'], ['event', 'Event'], ['selected', 'Selected night']);
-      note = 'Dots are the hours asleep each night; the line is the ' + WINDOW + '-night mean the card uses. ' +
-        sleepLineNote();
     } else if (cardId === 'cardio') {
       o.raw = engine.series(recs, 'hr');
       o.baseline = band(b.hr);
@@ -800,9 +762,6 @@
       if (hrLim != null) o.thresholds = [{ value: hrLim, label: 'Watch line: baseline + ' + T.cardioSdMultiple.value + ' SD', shortLabel: 'Watch: +' + T.cardioSdMultiple.value + ' SD', status: 'amber' }];
       o.unit = 'bpm'; o.yLabel = 'Night heart rate';
       legend.push(['line', T.cardioNights.value + '-night median'], ['band', 'Own baseline range'], ['watch', 'Watch line'], ['event', 'Event'], ['selected', 'Selected night']);
-      note = 'Dots are the nightly heart rates; the line is the ' + T.cardioNights.value + '-night median the card uses. Breathing rate is judged the same way' +
-        (x.rr != null ? ': ' + x.rr.toFixed(1) + ' per minute' : '') + (x.rrLimit != null ? ', watch line ' + x.rrLimit.toFixed(1) + ' per minute.' : '.') +
-        ' This card has no report tier: a raised reading is a reason to check for illness.';
     } else {
       o.raw = engine.series(recs, 'dose');
       if (x.usualUGy != null) {
@@ -822,18 +781,9 @@
       legend.push(['line', 'Dose the card judges']);
       if (x.usualUGy != null) legend.push(['watch', 'Watch line'], ['report', 'Report line']);
       legend.push(['event', 'Event'], ['selected', 'Selected night']);
-      note = (logY ? 'Logarithmic scale: each grid line is 10 times the one below. ' : '') +
-        (x.usualUGy != null ? 'Measured dose over each sleep period (' + doseMedium() + '), replayed night by night. Usual level before tonight: ' + fmtDose(x.usualUGy) +
-        ' (median of up to ' + T.radiationHistoryNights.value + ' earlier nights). The brief is read the morning after: real-time warnings come from space-weather alerts and the flight rules.' :
-        'Not enough earlier nights to set a usual level, so no lines are drawn.');
-      // Solar-event scenario: why a night can be on Report below the line, and what Curiosity saw under Martian air (V92).
-      if (data.gen.scenario.rad && data.gen.scenario.rad.checkSpe) {
-        if (x.usualUGy != null) note += ' A night with a solar particle event on record is on Report even when its dose is below the line.';
-        noteMore = { text: 'Under 23 g/cm² of Martian air, Curiosity\'s RAD saw the dose rate rise only two- to threefold in the same event.', ids: ['V92'] };
-      }
     }
     if (o.axisBreak != null) legend.push(['break', 'Break: the transit is not monitored']);
-    return { opts: o, legend: legend, note: note, noteMore: noteMore };
+    return { opts: o, legend: legend };
   }
 
   function renderLegend(items) {
@@ -849,14 +799,15 @@
     });
   }
 
+  // The open check's chart: under it one quiet line with the engine's numbers for the card, then
+  // the legend; for radiation who measured the dose and the two closed sub-rows.
   function renderTrend() {
-    var cardId = state.card, t = trendSpec(cardId);
-    $('trend-card').textContent = CARD_NAMES[cardId];
+    var cardId = state.card;
+    if (!cardId) return;
+    var t = trendSpec(cardId);
     charts.line($('trend-chart'), t.opts);
+    $('trend-note').textContent = scrub(card(cardId).reason);
     renderLegend(t.legend);
-    var tn = $('trend-note');
-    tn.textContent = scrub(t.note);
-    if (t.noteMore) withLinks(tn, ' ' + t.noteMore.text, t.noteMore.ids);
 
     var p = cardId === 'muscle' ? engine.project(data.gen.records, idx()) : null;
     var proj = $('projection');
@@ -865,31 +816,30 @@
     proj.textContent = p ? 'Weekly trend: ' + fmtPct(p.slopePctPerWeek) + ' per week. At this rate the weekly median reaches the Report line ' +
       (p.daysToRed <= 7 ? 'within about a week' : 'in about ' + p.daysToRed + ' days') + '; the nightly check can change sooner.' : '';
 
+    renderRadSource();
     renderFlux(cardId);
 
-    var r = rec(), roseFig = $('rose-fig');
+    var r = rec(), roseRow = $('rose-row');
     var showRose = cardId === 'radiation' && r.rad && r.rad.dir;
-    roseFig.hidden = !showRose;
+    roseRow.hidden = !showRose;
     if (showRose) {
       // One night holds about a hundred counts, too few to read a direction; sum the mission so far.
-      var sum = [0, 0, 0, 0, 0, 0, 0, 0], nights = 0;
+      var sum = [0, 0, 0, 0, 0, 0, 0, 0];
       data.gen.records.slice(0, idx() + 1).forEach(function (x) {
-        if (!x.rad || !x.rad.dir) return;
-        nights++;
-        x.rad.dir.forEach(function (n, j) { sum[j] += n; });
+        if (x.rad && x.rad.dir) x.rad.dir.forEach(function (n, j) { sum[j] += n; });
       });
       var k = charts.rose($('rose'), sum, { highlightMax: true });
       $('rose-reading').textContent = 'Most particles arrive from the ' + charts.ROSE_DIRECTIONS[k] + ' side.';
-      $('rose-span').textContent = '(' + nights + (nights === 1 ? ' night' : ' nights') + ' with tracker data up to tonight).';
     }
   }
 
-  // Solar-event scenario only: OMNI2 proton flux near Earth, with the selected night's sleep window shaded.
+  // Solar-event scenario only: OMNI2 proton flux near Earth, with the selected night's sleep window
+  // shaded. Drawn while its sub-row is open (a closed row has no width to draw into).
   function renderFlux(cardId) {
-    var fig = $('flux-fig'), sc = data.gen.scenario, omni = M.data && M.data.omniProtons;
+    var row = $('flux-row'), sc = data.gen.scenario, omni = M.data && M.data.omniProtons;
     var show = cardId === 'radiation' && !!(sc.rad && sc.rad.checkSpe) && !!omni;
-    fig.hidden = !show;
-    if (!show) return;
+    row.hidden = !show;
+    if (!show || !row.open) return;
     var pts = omni.rows.map(function (x) { return { t: Date.parse(x[0]), value: x[1] }; });
     var from = pts[0].t, to = pts[pts.length - 1].t + 3600000;
     var m = rec().rad && rec().rad.measured, shade = null;
@@ -899,118 +849,109 @@
       label: 'Hourly proton flux above 10 MeV near Earth, 4 to 16 September 2017, logarithmic scale' +
         (shade && shade.to > from && shade.from < to ? '; the sleep window of the night of ' + longDate(m.date) + ' is shaded' : '')
     });
-    $('flux-ev').href = evidenceHref('V63');
   }
 
   // ---- render: guidance ------------------------------------------------------------
-  function evidenceHref(id) {
-    var st = {}; Object.keys(state).forEach(function (k) { st[k] = state[k]; });
-    st.ev = id;
-    return hashFor(st);
-  }
-
-  function sourceLink(id) {
-    var a = el('a', 'ev-link', id);
-    a.href = evidenceHref(id);
-    return a;
-  }
-
-  function claimOf(id) {
-    try { return evidence.get(id).claim; } catch (e) { return ''; }
-  }
-
-  // Text followed by its evidence links.
-  function withLinks(parent, text, ids) {
-    if (text) parent.appendChild(document.createTextNode(text));
-    ids.forEach(function (id) { parent.appendChild(document.createTextNode(' ')); parent.appendChild(sourceLink(id)); });
-    return parent;
-  }
-
-  // NASA's material for one check (js/rules.js NASA), for the mission type of this world, set like a
-  // museum label in three columns: the risk and its rating | NASA's two sentences | more context,
-  // the standard and the open research gap. `ctx` is the check's line from rules.CONTEXT (V43, V45, V46).
+  // NASA's material for one check (js/rules.js NASA), for the mission type of this world: the risk
+  // and its rating sentence, NASA's two sentences as quotations, the standard, and the check's
+  // context sentence (rules.CONTEXT) last.
   function nasaBlock(nx, world, ctx) {
     var frag = document.createDocumentFragment();
-    var rt = nx.ratings[world];
-
-    var c1 = el('div', 'nasa-col nasa-risk');
-    c1.appendChild(withLinks(el('p', 'nasa-risk-name'), nx.risk, nx.riskSourceIds));
-    c1.appendChild(el('p', 'label', "NASA's rating for this mission"));
-    var code = el('p', 'nasa-rating');
-    code.appendChild(el('span', 'nasa-code', rt.code.replace('x', '×')));
-    code.appendChild(el('span', 'nasa-disposition', rt.disposition));
-    c1.appendChild(code);
-    c1.appendChild(withLinks(el('p', 'nasa-small'), rt.text + ' ' + nx.scale + ' Rating page last published ' + nx.lastPublished + '.', [nx.roadmapId]));
+    var c1 = el('div', 'nasa-col');
+    c1.appendChild(el('p', 'nasa-risk-name', nx.risk));
+    c1.appendChild(el('p', 'nasa-small', nx.ratings[world].text));
     frag.appendChild(c1);
-
-    var c2 = el('div', 'nasa-col nasa-says');
-    c2.appendChild(el('p', 'label', 'What NASA says'));
+    var c2 = el('div', 'nasa-col');
     c2.appendChild(el('q', 'nasa-quote', nx.says));
     c2.appendChild(el('q', 'nasa-quote', nx.canBeDone));
-    c2.appendChild(withLinks(el('p', 'nasa-small'), 'NASA risk page.', [nx.riskPageId]));
     frag.appendChild(c2);
-
     var c3 = el('div', 'nasa-col nasa-more');
-    if (ctx) {
-      c3.appendChild(el('p', 'label', 'More context'));
-      c3.appendChild(withLinks(el('p'), ctx.note, ctx.sourceIds));
-    }
-    c3.appendChild(el('p', 'label', 'NASA standard'));
-    nx.standard.forEach(function (s) { c3.appendChild(withLinks(el('p'), s.text, s.sourceIds)); });
-    c3.appendChild(el('p', 'label', 'Open NASA research gap'));
-    c3.appendChild(withLinks(el('p'), nx.gap.id + ': ' + nx.gap.text, [nx.roadmapId]));
+    nx.standard.forEach(function (x) { c3.appendChild(el('p', null, x.text)); });
+    if (ctx) c3.appendChild(el('p', null, ctx.note));
     frag.appendChild(c3);
     return frag;
   }
 
   function renderGuidance() {
+    if (!state.card) return;
     var c = card(state.card);
-    $('guidance-card').textContent = CARD_NAMES[state.card];
-    var st = $('g-status');
-    clear(st);
-    var wrap = el('span', 'status st-' + c.status);
-    wrap.appendChild(charts.statusIconEl(c.status, 16));
-    wrap.appendChild(el('span', 'status-word', charts.STATUS[c.status].word));
-    st.appendChild(wrap);
-    st.appendChild(el('span', 'g-reason', ' ' + scrub(c.reason)));
     var meaning = scrub(c.meaning);
-    if (state.card === 'sleep') meaning += ' ' + sleepLineNote();
     $('g-meaning').textContent = meaning;
     $('g-meaning').classList.toggle('statement-long', meaning.length > 150);   // a long meaning is set smaller
     var ul = $('g-actions');
     clear(ul);
     c.actions.forEach(function (x) { ul.appendChild(el('li', null, scrub(x))); });
     $('g-decides').textContent = capital(c.decides);
-
-    // NASA risk for this check.
     var ctx = $('g-context');
     clear(ctx);
     ctx.appendChild(nasaBlock(rules.NASA[state.card], data.gen.scenario.env, rules.CONTEXT[state.card]));
+  }
 
-    var src = $('g-sources');
-    clear(src);
-    if (!c.sourceIds.length) src.appendChild(el('li', 'quiet', 'A modelling assumption; see the assumptions list in the evidence drawer.'));
-    c.sourceIds.forEach(function (id) {
-      var li = el('li');
-      li.appendChild(sourceLink(id));
-      var claim = claimOf(id);
-      if (claim) li.appendChild(document.createTextNode(' ' + claim));
-      src.appendChild(li);
+  // ---- render: the rows below the first screen ---------------------------------------
+  // A status mark and word, with the word also read by a screen reader.
+  function statusEl(status, word, size) {
+    var wrap = el('span', 'status st-' + status);
+    wrap.appendChild(charts.statusIconEl(status, size || 14));
+    wrap.appendChild(el('span', 'status-word', word));
+    return wrap;
+  }
+
+  // Each check row's meta (status and the value of its margin note), and which row is open: the
+  // open row follows state.card, and the shared detail block moves into it. `open` is set only
+  // when it differs, so the toggle events this causes find nothing to change (syncOpenRow).
+  var shownCard = null;
+  function renderRows() {
+    Array.prototype.forEach.call(document.querySelectorAll('.check-row'), function (row) {
+      var id = row.dataset.card, c = card(id), L = noteLines(c), meta = row.querySelector('.row-meta');
+      clear(meta);
+      meta.appendChild(statusEl(c.status, charts.STATUS[c.status].word));
+      meta.appendChild(el('span', 'row-value', c.status === 'grey' ? '' : L.num + ' ' + L.unit));
+      var open = state.card === id;
+      if (row.open !== open) row.open = open;
+      if (open) {
+        var body = row.querySelector('.row-body'), detail = $('check-detail');
+        if (detail.parentNode !== body) body.appendChild(detail);
+      }
     });
-
-    var showCm = state.card === 'muscle';
-    $('g-cm-dd').hidden = !showCm;
-    var cm = $('g-cm');
-    clear(cm);
-    if (showCm) {
-      rules.COUNTERMEASURES.forEach(function (x) {
-        var li = el('li');
-        li.appendChild(el('span', 'cm-name', x.name));
-        li.appendChild(el('span', 'mark-sc mark-' + x.evidence.replace(/\s+/g, '-'), x.evidence));
-        li.appendChild(withLinks(el('span', 'cm-note'), x.note, x.sourceIds));
-        cm.appendChild(li);
-      });
+    // The sub-rows of the shared block close when another check opens.
+    if (shownCard !== state.card) {
+      Array.prototype.forEach.call(document.querySelectorAll('#check-detail .sub-row'), function (d) { d.open = false; });
+      shownCard = state.card;
     }
+  }
+
+  // After any check row opens or closes, the open one in the page is the truth for the state.
+  function syncOpenRow() {
+    var open = document.querySelector('.check-row[open]'), id = open ? open.dataset.card : null;
+    if (id !== state.card) update({ card: id });
+  }
+
+  // The three-step guide on the first screen.
+  function renderGuide(ci) {
+    var d1 = $('guide-checkin-detail');
+    clear(d1);
+    var t1 = el('span', 'guide-text', ci.done ? ci.summary : 'three questions, about 30 seconds');
+    t1.title = t1.textContent;
+    if (ci.done && ci.status === 'amber') {
+      var mk = el('span', 'status st-amber');
+      mk.appendChild(charts.statusIconEl('amber', 14));
+      mk.appendChild(el('span', 'visually-hidden', charts.STATUS.amber.word + ': '));
+      d1.appendChild(mk);
+    }
+    d1.appendChild(t1);
+
+    // One button throughout, so a focused row 3 keeps its focus; with nothing to open it reads as plain text.
+    var step = todayStep(assessment().cards, ci), row = $('guide-do');
+    row.dataset.target = step.target || '';
+    row.classList.toggle('is-plain', !step.target);
+    if (step.target) row.removeAttribute('aria-disabled'); else row.setAttribute('aria-disabled', 'true');
+    var d3 = $('guide-do-detail');
+    clear(d3);
+    // Up to two lines, with "+N more" at the end of the text.
+    var t3 = el('span', 'guide-text guide-text-2', scrub(step.text));
+    t3.title = t3.textContent;
+    if (step.more) t3.appendChild(el('span', 'guide-more', ' +' + step.more + ' more'));
+    d3.appendChild(t3);
   }
 
   // ---- render: morning check-in ------------------------------------------------------
@@ -1027,8 +968,7 @@
     $('ci-temp-hint').hidden = !on;
   }
 
-  function renderCheckin() {
-    var r = checkinResult();
+  function renderCheckin(r) {
     pressed('[data-mood]', 'mood', state.mo == null ? '' : String(state.mo));
     Array.prototype.forEach.call(document.querySelectorAll('[data-sym]'), function (b) {
       b.setAttribute('aria-pressed', String(state.sy.indexOf(b.dataset.sym) >= 0));
@@ -1042,12 +982,11 @@
     $('ci-baseline').textContent = 'Your own baseline is ' + fmtTemp(T.checkinBaselineTempC.value) + '.';
     $('ci-clear').disabled = !r.done;
 
-    var st = $('ci-status');
-    clear(st);
-    var wrap = el('span', 'status st-' + r.status);
-    wrap.appendChild(charts.statusIconEl(r.status, 16));
-    wrap.appendChild(el('span', 'status-word', CI.statusWords[r.status]));
-    st.appendChild(wrap);
+    var meta = $('checkin-meta');
+    clear(meta);
+    if (r.done) meta.appendChild(statusEl(r.status, CI.statusWords[r.status]));
+    else meta.textContent = CI.statusWords.grey + ' · about 30 seconds';
+
     $('ci-meaning').textContent = r.meaning;
     $('ci-meaning').classList.toggle('statement-long', r.meaning.length > 150);
     $('ci-next').hidden = !r.done;
@@ -1067,7 +1006,7 @@
       b.dataset.card = row.card;
       th.appendChild(b);
       tr.appendChild(th);
-      var said = '\u2013';
+      var said = '–';
       if (row.said !== null) {
         var sx = CI.symptoms.filter(function (x) { return x.card === row.card; })[0];
         var parts = [];
@@ -1078,225 +1017,42 @@
       tr.appendChild(el('td', null, said));
       var L = noteLines(c);
       tr.appendChild(el('td', null, row.bunk === 'grey' ? charts.STATUS.grey.word : charts.STATUS[row.bunk].word + ': ' + L.num + ' ' + L.unit));
-      var td = el('td', null, CI.verdicts[row.verdict]);
-      if (row.card === 'radiation') withLinks(td, '', ['V56']);
-      tr.appendChild(td);
+      tr.appendChild(el('td', null, CI.verdicts[row.verdict]));
       tb.appendChild(tr);
     });
-
-    var m = $('ci-method');
-    clear(m);
-    withLinks(m, 'The reading is compared with your own baseline. An Earth cut-off would mislead: on the space station, core temperature at rest rose by about ' +
-      Math.round(evidence.value('V98', 'restingRiseC')) + ' °C over the first ' + evidence.value('V98', 'monthsToDevelop') + ' months.', ['V98']);
-    withLinks(m, ' The ' + T.checkinTempRiseC.value.toFixed(1) + ' °C step is the rule used for older adults in long-term care, whose fevers often stay under the usual cut-offs.', ['V97']);
-    withLinks(m, ' Crew in a ' + evidence.value('V99', 'missionDays') + '-day Mars simulation rated themselves between two words, such as happy and unhappy. ' +
-      'The five-word mood question is a simpler form of that.', ['V99']);
-    withLinks(m, ' NASA encourages astronauts to keep a regular journal.', ['V52']);
-
-    // One line on the first screen.
-    var line = $('checkin-line'), open = el('button', r.done ? 'seg' : 'seg ci-cta', !r.done ? 'three questions, about 30 seconds' : r.status === 'amber' ? 'What it means' : 'Change');
-    open.type = 'button';
-    open.id = 'ci-open';
-    clear(line);
-    if (!r.done) {
-      line.appendChild(document.createTextNode('Morning check-in: '));
-    } else {
-      // What was said stays on one line (cut with an ellipsis, whole in the tooltip and to a screen
-      // reader), so the left column is as tall as before the check-in and Plate I still fits.
-      var said = el('span', 'ci-said');
-      said.title = 'You said: ' + r.summary + '.';
-      if (r.status === 'amber') {
-        var mk = el('span', 'status st-amber');
-        mk.appendChild(charts.statusIconEl('amber', 14));
-        mk.appendChild(el('span', 'visually-hidden', charts.STATUS.amber.word + ': '));
-        said.appendChild(mk);
-        said.appendChild(document.createTextNode(' '));
-      }
-      said.appendChild(document.createTextNode(said.title));
-      line.appendChild(said);
-    }
-    line.appendChild(open);
-    line.appendChild(document.createTextNode('.'));
   }
 
   function openCheckin() {
-    $('checkin').scrollIntoView({ block: 'start', behavior: reducedMotion ? 'auto' : 'smooth' });
+    var row = $('checkin');
+    row.open = true;
+    scrollTo(row);
     document.querySelector('[data-mood="1"]').focus({ preventScroll: true });
-  }
-
-  // ---- render: five hazards ------------------------------------------------------------
-  function renderHazards() {
-    var ul = $('hazard-list');
-    clear(ul);
-    rules.HAZARDS.forEach(function (h) {
-      var li = el('li');
-      li.appendChild(el('span', 'cm-name', h.name));
-      li.appendChild(el('span', 'mark-sc mark-' + h.coverage.replace(/\s+/g, '-'), h.coverage));
-      li.appendChild(el('span', 'cm-note', h.text));
-      if (h.fact) {
-        var f = withLinks(el('span', 'cm-note hz-fact'), h.fact.text, h.fact.sourceIds);
-        var wf = h.worldFact && h.worldFact[data.gen.scenario.env];
-        if (wf) withLinks(f, ' ' + wf.text, wf.sourceIds);
-        li.appendChild(f);
-      }
-      if (h.quote) {
-        var qt = el('span', 'cm-note hz-fact');
-        qt.appendChild(el('q', 'nasa-quote', h.quote.text));
-        li.appendChild(withLinks(qt, '', h.quote.sourceIds));
-      }
-      ul.appendChild(li);
-    });
-    var src = $('hazard-source');
-    clear(src);
-    src.appendChild(document.createTextNode('Source: '));
-    src.appendChild(sourceLink('V43'));
   }
 
   // ---- render: what-if -------------------------------------------------------------
   function renderWhatIf() {
-    var ex = $('adherence'), gs = $('shape'), sh = $('shield'), nz = $('noise');
-    [ex, gs, sh, nz, $('whatif-reset')].forEach(function (n) { n.disabled = false; });
+    var ex = $('adherence');
+    ex.disabled = false;
+    $('whatif-reset').disabled = false;
     ex.value = String(state.ex == null ? 1 : state.ex);
-    gs.value = String(state.gs);
-    sh.value = String(state.sh);
-    nz.value = String(state.nz);
     $('adherence-out').textContent = state.ex == null ? 'As planned' : Math.round(state.ex * 100) + '%';
-    $('shape-out').textContent = state.gs === 1 ? '1 (linear)' : String(state.gs);
-    $('shield-out').textContent = state.sh.toFixed(1);
-    $('noise-out').textContent = Math.round(state.nz * 100) + '%' + (state.nz === WHATIF.nz.def ? ' (assumed)' : '');
-  }
-
-  // ---- render: gravity check -------------------------------------------------------
-  // The rat partial-weight-bearing data (NASA OSDR, V90-V91) against the model's share at 0.4 g
-  // for the current what-if shape. All text comes from model.describeGravityCheck.
-  var GCHECK_SHAPES = { grip: 'circle', plantarflexionTorque: 'square', calfGirth: 'triangle' };
-  function renderGravityCheck() {
-    var box = $('gcheck'), pwb = M.data && M.data.osdrPwb;
-    box.hidden = !pwb;
-    if (box.hidden) return;
-    var c = model.checkGravityTerm(pwb, state.gs), t = model.describeGravityCheck(c);
-    charts.dotScale($('gcheck-chart'), {
-      rows: t.marks.filter(function (m) { return m.share != null; }).map(function (m) {
-        return { value: m.share, label: m.label, shape: GCHECK_SHAPES[m.measure] };
-      }),
-      max: 1.2, ticks: [0, 0.2, 0.4, 0.6, 0.8, 1, 1.2],
-      ref: { value: c.model, label: 'Model, shape ' + c.shape + ': ' + c.model.toFixed(2) },
-      title: 'Share of the fully unloaded loss that remained at 40% weight bearing',
-      label: 'Share of the fully unloaded loss that remained at 40% weight bearing, six rat measures, with the model at ' + c.model.toFixed(2)
-    });
-    var tx = $('gcheck-text');
-    clear(tx);
-    tx.appendChild(el('p', null, t.sentences.join(' ')));
-    var ul = $('gcheck-caveats');
-    clear(ul);
-    t.caveats.forEach(function (x) { ul.appendChild(el('li', null, x)); });
-    var close = $('gcheck-close');
-    clear(close);
-    withLinks(close, 'Sources:', ['V90', 'V91']);
-    close.appendChild(document.createTextNode('. ' + t.closing));
-  }
-
-  // ---- render: evidence drawer (built once) ----------------------------------------
-  function fmtAssumptionValue(v) {
-    if (Array.isArray(v)) return v.join(' to ');
-    if (v && typeof v === 'object') {
-      return Object.keys(v).map(function (k) { return k + ' ' + fmtAssumptionValue(v[k]); }).join('; ');
-    }
-    return String(v);
-  }
-
-  // Topic heading in the drawer: sentence case with the acronyms in capitals ("NASA ratings and requirements").
-  function topicTitle(topic) { return capital(topic).replace(/\b(nasa|eim)\b/gi, function (w) { return w.toUpperCase(); }); }
-
-  function buildEvidence() {
-    var box = $('evidence-list');
-    clear(box);
-    var groups = {}, order = [];
-    evidence.items.forEach(function (it) {
-      if (!has(groups, it.topic)) { groups[it.topic] = []; order.push(it.topic); }
-      groups[it.topic].push(it);
-    });
-    order.forEach(function (topic) {
-      box.appendChild(el('h3', 'ev-group', topicTitle(topic)));
-      var ol = el('ol', 'evidence-list');
-      groups[topic].forEach(function (it) {
-        var li = el('li');
-        li.id = 'ev-' + it.id;
-        li.tabIndex = -1;
-        li.appendChild(el('span', 'ev-id', it.id));
-        var body = el('div');
-        body.appendChild(el('span', 'ev-claim', it.claim));
-        if (it.quote) body.appendChild(el('q', 'ev-quote', it.quote));
-        var a = el('a', 'ev-source', it.source);
-        a.href = it.url;
-        a.target = '_blank';                       // a source opens in a new tab; the page stays
-        a.rel = 'noopener noreferrer';
-        body.appendChild(a);
-        li.appendChild(body);
-        li.appendChild(el('span', 'ev-status ev-' + it.status, it.status));
-        ol.appendChild(li);
-      });
-      box.appendChild(ol);
-    });
-
-    var rows = [];
-    function add(owner, name, x) { rows.push({ owner: owner, name: name, value: x.value, unit: x.unit, note: x.note }); }
-    Object.keys(model.PARAMS).forEach(function (k) { if (model.PARAMS[k].status === 'assumption') add('Muscle model', k, model.PARAMS[k]); });
-    Object.keys(sim.ASSUMPTIONS).forEach(function (k) { add('Simulator', k, sim.ASSUMPTIONS[k]); });
-    Object.keys(sim.NOISE).forEach(function (k) { add('Simulator noise', k, sim.NOISE[k]); });
-    phantom.ASSUMPTIONS.forEach(function (x) { add('Body phantom', x.name, x); });
-    imaging.ASSUMPTIONS.forEach(function (x) { add('Imaging', x.name, x); });
-    Object.keys(T).forEach(function (k) { if (T[k].status === 'assumption') add('Status rules', k, T[k]); });
-
-    box.appendChild(el('h3', 'ev-group', 'Assumptions'));
-    box.appendChild(el('p', 'quiet', 'Modelling choices that no source fixes. Each can be changed in the module that owns it.'));
-    var ol2 = el('ol', 'evidence-list assumption-list');
-    rows.forEach(function (x) {
-      var li = el('li');
-      li.appendChild(el('span', 'ev-id', x.owner));
-      var body = el('div');
-      var head = el('span', 'ev-claim');
-      head.appendChild(el('code', null, x.name));
-      head.appendChild(document.createTextNode(' = ' + fmtAssumptionValue(x.value) + (x.unit ? ' ' + x.unit : '')));
-      body.appendChild(head);
-      if (x.note) body.appendChild(el('span', 'ev-source', x.note));
-      li.appendChild(body);
-      li.appendChild(el('span', 'ev-status ev-assumption', 'assumption'));
-      ol2.appendChild(li);
-    });
-    box.appendChild(ol2);
-    $('evidence-count').textContent = evidence.items.length + ' sources; every assumption is listed below';
-  }
-
-  function openEvidence(id) {
-    Array.prototype.forEach.call(document.querySelectorAll('.ev-target'), function (n) { n.classList.remove('ev-target'); });
-    var target = $('ev-' + id);
-    if (!target) {
-      showNotice('That source is not in the evidence list.');
-      state.ev = null;
-      writeHash();
-      return;
-    }
-    target.closest('details').open = true;
-    target.classList.add('ev-target');
-    target.scrollIntoView({ block: 'center', behavior: reducedMotion ? 'auto' : 'smooth' });
-    target.focus({ preventScroll: true });
   }
 
   // ---- update cycle ----------------------------------------------------------------
   function render() {
     var changed = ensureData();
+    var ci = checkinResult();
     renderTopbar();
     renderBrief();
     renderImage();
     renderHotspots();
     renderTimeline();
+    renderRows();
+    renderGuide(ci);
     renderTrend();
     renderGuidance();
-    renderCheckin();
-    renderHazards();
+    renderCheckin(ci);
     renderWhatIf();
-    renderGravityCheck();
     return changed;
   }
 
@@ -1337,7 +1093,6 @@
     Object.keys(reset).forEach(function (k) { state[k] = reset[k]; });
     if (has(reset, 'tc')) clearTempField();
     Object.keys(changes || {}).forEach(function (k) { state[k] = changes[k]; });
-    if (!has(changes || {}, 'ev')) state.ev = null;
     $('notice').hidden = true;
     render();
     writeHash();
@@ -1373,8 +1128,7 @@
       if (b.dataset.layer) update({ layer: b.dataset.layer });
       else if (b.dataset.view) update({ view: b.dataset.view });
       else if (b.dataset.card) {
-        update({ card: b.dataset.card });
-        if (b.classList.contains('hs') || b.classList.contains('card') || b.classList.contains('ci-card')) revealGuidance();
+        openCard(b.dataset.card);
         // The comparison table is rebuilt on render: keep the focus on the same check's new button.
         if (b.classList.contains('ci-card')) document.querySelector('#ci-rows [data-card="' + b.dataset.card + '"]').focus({ preventScroll: true });
       }
@@ -1388,15 +1142,29 @@
         update({ mo: null, tc: null, sy: '' });
         document.querySelector('[data-mood="1"]').focus();       // the button is now disabled
       }
-      else if (b.id === 'ci-open') openCheckin();
+      else if (b.id === 'guide-checkin') openCheckin();
+      else if (b.id === 'guide-check') openCard(todayStep(assessment().cards, checkinResult()).card);
+      else if (b.id === 'guide-do') {
+        if (b.dataset.target === 'checkin') openCheckin(); else if (b.dataset.target) openCard(b.dataset.target);
+      }
       else if (b.id === 'play') setPlaying(!playTimer);
       else if (b.id === 'whatif-reset') update({ ex: WHATIF.ex.def, gs: WHATIF.gs.def, sh: WHATIF.sh.def, nz: WHATIF.nz.def });
     });
+    Array.prototype.forEach.call(document.querySelectorAll('.check-row'), function (row) {
+      // A click on the title (or Enter or Space on it) changes the state at once, so the row opens
+      // with its detail already inside; the toggle event covers openings this does not see.
+      row.querySelector('summary').addEventListener('click', function (e) {
+        e.preventDefault();
+        update({ card: row.open ? null : row.dataset.card });
+      });
+      row.addEventListener('toggle', syncOpenRow);
+    });
+    $('flux-row').addEventListener('toggle', function () { renderFlux(state.card); });
     // The skip link moves focus without replacing the view in the address.
     document.querySelector('.skip').addEventListener('click', function (e) {
       e.preventDefault();
       var t = $('brief-title');
-      t.scrollIntoView({ block: 'start', behavior: reducedMotion ? 'auto' : 'smooth' });
+      scrollTo(t);
       t.focus({ preventScroll: true });
     });
     $('day').addEventListener('input', function (e) {
@@ -1420,13 +1188,6 @@
     });
     wrap.addEventListener('pointermove', function (e) { if (dragging) nightAt(e); });
     ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function (t) { wrap.addEventListener(t, function () { dragging = false; }); });
-    // Section links in the top bar scroll without replacing the view in the address.
-    Array.prototype.forEach.call(document.querySelectorAll('[data-goto]'), function (a) {
-      a.addEventListener('click', function (e) {
-        e.preventDefault();
-        $(a.dataset.goto).scrollIntoView({ block: 'start', behavior: reducedMotion ? 'auto' : 'smooth' });
-      });
-    });
     // A note or a hotspot under the pointer or the focus lights its pair on the plate.
     var brief = $('brief');
     function hotFrom(e) { var t = e.target.closest && e.target.closest('[data-card]'); setHot(t ? t.dataset.card : null); }
@@ -1435,9 +1196,6 @@
     brief.addEventListener('focusin', hotFrom);
     brief.addEventListener('focusout', function () { setHot(null); });
     $('adherence').addEventListener('input', function (e) { update({ ex: snap(e.target.value, WHATIF.ex) }); });
-    $('shape').addEventListener('input', function (e) { update({ gs: snap(e.target.value, WHATIF.gs) }); });
-    $('shield').addEventListener('input', function (e) { update({ sh: snap(e.target.value, WHATIF.sh) }); });
-    $('noise').addEventListener('input', function (e) { update({ nz: snap(e.target.value, WHATIF.nz) }); });
     // Temperature: the state always mirrors the field, with the address rule (parseTemp). An
     // unfinished entry ("38.", which the field reports as empty and bad) leaves the state alone
     // while typing; anything else that is not a valid temperature clears it. Leaving the field
@@ -1464,7 +1222,7 @@
     root.addEventListener('resize', function () {
       if (pending) return;
       pending = true;
-      root.requestAnimationFrame(function () { pending = false; renderImage(); renderHotspots(); renderTimeline(); renderTrend(); renderGravityCheck(); });
+      root.requestAnimationFrame(function () { pending = false; redrawFigures(); });
     });
     root.addEventListener('hashchange', function () {
       if (location.hash.indexOf('=') < 0) {             // a plain in-page anchor, not a view
@@ -1474,38 +1232,13 @@
       if (location.hash === hashFor(state)) return;
       setPlaying(false);
       renderFromLink(location.hash);
-      if (state.ev) openEvidence(state.ev);
     });
   }
 
-  // Measured data used on this page, from the metadata each data module exports. The DONKI API
-  // address (data/README.md) needs a key, so the page links NASA CCMC's DONKI page a person can read.
-  var READABLE_SOURCE = { donkiSep2017: 'https://ccmc.gsfc.nasa.gov/tools/DONKI/' };
-  function buildMeasured() {
-    var ul = $('measured-list'), D = M.data || {};
-    clear(ul);
-    [['mslRad', 'nightly dose on Mars'], ['lroCrater', 'nightly dose on the Moon'],
-      ['donkiSep2017', 'solar-particle-event records'], ['omniProtons', 'proton flux chart'],
-      ['osdrPwb', 'check of the muscle model\'s gravity term']].forEach(function (x) {
-      var d = D[x[0]];
-      if (!d) return;
-      var li = el('li');
-      li.appendChild(el('strong', null, d.name));
-      li.appendChild(document.createTextNode(': ' + x[1] + '. '));
-      li.appendChild(el('span', null, d.source + ' '));
-      var url = has(READABLE_SOURCE, x[0]) ? READABLE_SOURCE[x[0]] : d.url;
-      var a = el('a', null, 'Source: ' + new URL(url).hostname);
-      a.href = url;
-      a.target = '_blank';
-      a.rel = 'noopener noreferrer';
-      li.appendChild(a);
-      li.appendChild(document.createTextNode('. Retrieved ' + d.retrieved + '. '));
-      li.appendChild(el('span', 'quiet', d.terms));
-      ul.appendChild(li);
-    });
-  }
+  // Figures whose drawing depends on their size or on the web fonts.
+  function redrawFigures() { renderImage(); renderHotspots(); renderTimeline(); renderTrend(); }
 
-  // Sections fade up a few pixels as they enter the viewport (not under reduced motion).
+  // The rows fade up a few pixels as they enter the viewport (not under reduced motion).
   function revealOnScroll() {
     if (reducedMotion || !root.IntersectionObserver) return;
     var io = new root.IntersectionObserver(function (entries) {
@@ -1517,13 +1250,10 @@
 
   // ---- start -----------------------------------------------------------------------
   revealOnScroll();
-  buildEvidence();
-  buildMeasured();
   wire();
   var initialHash = location.hash;
   renderFromLink(initialHash.indexOf('=') >= 0 ? initialHash : '');
   if (initialHash.indexOf('=') < 0 && isBrokenAnchor(initialHash)) showNotice();
-  if (state.ev) openEvidence(state.ev);
   // Text measured in the figures changes once the web fonts are in: draw them again.
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { renderImage(); renderHotspots(); renderTimeline(); renderTrend(); renderGravityCheck(); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(redrawFigures);
 })(typeof globalThis !== 'undefined' ? globalThis : this);

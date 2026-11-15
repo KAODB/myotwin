@@ -59,7 +59,7 @@
     muscle: {
       green: { meaning: 'Calf muscle signal is in line with your baseline and the mission plan.', actions: ['Keep the current exercise plan.'] },
       amber: { meaning: 'The calf muscle signal is lower than the mission plan expects. A strength test confirms it.', actions: ['Review the last two weeks of the {exerciseLog}.', 'Schedule an active strength check.', 'Tell the {clinician} at the next contact.'] },
-      red: { meaning: 'The calf muscle signal is more than ' + THRESHOLDS.muscleRedDropPct.value + '% below your own baseline, beyond the largest test-retest variability reported for this measurement.', actions: ['Notify the {clinician}.', 'Confirm with {strengthCheck}.', 'Do not increase training loads on your own until this is confirmed.'] },
+      red: { meaning: 'The calf muscle signal is more than ' + THRESHOLDS.muscleRedDropPct.value + '% below your own baseline.', actions: ['Notify the {clinician}.', 'Confirm with {strengthCheck}.', 'Do not increase training loads on your own until this is confirmed.'] },
       grey: { meaning: 'Not enough usable scans this week.', actions: ['Check that bare calves rest on the electrode strip.', 'Check the position of the sleep liner.'] }
     },
     sleep: {
@@ -75,9 +75,9 @@
       grey: { meaning: 'Not enough radar data.', actions: ['Check the radar unit.'] }
     },
     radiation: {
-      green: { meaning: "Last night's replayed dose was in the usual range.", actions: ['No change needed.'] },
+      green: { meaning: "Last night's dose was in the usual range.", actions: ['No change needed.'] },
       amber: { meaning: "Last night's dose was more than twice the usual level.", actions: ['Check the space weather bulletin.', 'Mention it at the next contact with the {clinician}.'] },
-      red: { meaning: "Last night's replayed dose was more than ten times the usual level, or a solar particle event is on record for the night. This is a record of what happened overnight: real-time warnings come from space-weather alerts and the flight rules.", actions: ['Report the logged dose to the {clinician}.', 'Use the direction map to see which side more particles came from.'] },
+      red: { meaning: "Last night's dose was more than ten times the usual level, or a solar particle event was recorded. This is a record of the night; live warnings come from space-weather alerts and the flight rules.", actions: ['Report the logged dose to the {clinician}.', 'Use the direction map to see which side more particles came from.'] },
       grey: { meaning: 'Not enough dose history to judge, or no particle detector at this bed.', actions: ['No action.'] }
     }
   };
@@ -95,7 +95,7 @@
     cardio: { risk: evidence.value('V44', 'cardioRisk'), note: 'NASA says weightlessness alters how the heart and blood vessels function.', sourceIds: ['V44'] },
     radiation: {
       risk: evidence.value('V44', 'radiationRisk'),
-      note: 'This version does not measure neutrons, about ' + evidence.value('V46', 'neutronSharePct') + "% of total radiation on the ISS. The Canadian Space Agency's CANS spectrometer is designed to measure them continuously.",
+      note: 'Neutrons are about ' + evidence.value('V46', 'neutronSharePct') + "% of total radiation on the ISS. The Canadian Space Agency's CANS spectrometer is designed to measure them continuously.",
       sourceIds: ['V44', 'V46']
     }
   };
@@ -149,7 +149,7 @@
       { text: 'NASA-STD-3001 asks for “Assessing, recording, monitoring, and trending vital signs” in mission.', sourceIds: ['V77'] }
     ]),
     radiation: nasa('radiation', 'V73', 'V51', [
-      { text: 'For habitats on planetary surfaces, NASA-STD-3001 limits the effective dose from galactic cosmic rays to less than ' + evidence.value('V83', 'surfaceLimitMSvPerDay') + ' mSv per day. This card shows absorbed dose, not effective dose, so it cannot be compared with that limit without a conversion this version does not do.', sourceIds: ['V83'] },
+      { text: 'For habitats on planetary surfaces, NASA-STD-3001 limits the effective dose from galactic cosmic rays to less than ' + evidence.value('V83', 'surfaceLimitMSvPerDay') + ' mSv per day. This card shows absorbed dose, which is a different quantity.', sourceIds: ['V83'] },
       { text: 'NASA-STD-3001 requires the radiation monitoring system to alert the crew and operations teams when exposure rates exceed predefined thresholds; the rationale adds that the crew must be alerted even if ground communication is disrupted.', sourceIds: ['V84'] }
     ])
   };
@@ -197,7 +197,7 @@
     meaning: {
       notDone: 'Three questions before breakfast: how you feel, your temperature, and anything you notice.',
       none: 'Nothing in your check-in needs action today.',
-      fever: 'Your temperature is {rise} °C above your own baseline of {base} °C. In care homes on Earth, a rise of more than {limit} °C over a person\'s own baseline counts as fever.',
+      fever: 'Your temperature is {rise} °C above your own baseline of {base} °C. That counts as a fever.',
       low: 'Your temperature is {drop} °C below your own baseline of {base} °C.',
       ill: 'You feel ill this morning.',
       illTempInRange: ' Your temperature is within {limit} °C of your own baseline.',

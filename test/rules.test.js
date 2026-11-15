@@ -19,6 +19,7 @@ test('CONTEXT covers the four cards with a V44 risk, a note and known sources', 
     for (const s of c.sourceIds) assert.ok(evidence.get(s), id + ' source ' + s);
   }
   assert.match(rules.CONTEXT.radiation.note, new RegExp(evidence.value('V46', 'neutronSharePct') + '%'));
+  assert.strictEqual(rules.CONTEXT.radiation.note, 'Neutrons are about 30% of total radiation on the ISS. The Canadian Space Agency\'s CANS spectrometer is designed to measure them continuously.');
 });
 
 test('HAZARDS lists the five V43 hazards in order with a valid coverage', () => {
@@ -182,13 +183,13 @@ test('hazard facts: one NASA fact on each of the first four rows, numbers from e
 });
 
 test('radiation wording: the solar particle event is on record', () => {
-  assert.match(rules.TEXT.radiation.red.meaning, /a solar particle event is on record for the night/);
+  assert.match(rules.TEXT.radiation.red.meaning, /a solar particle event was recorded/);
   assert.doesNotMatch(rules.TEXT.radiation.red.meaning, /detector flagged/);
 });
 
-test('radiation wording names a replayed dose, and the direction map is not a shielding claim', () => {
-  assert.match(rules.TEXT.radiation.green.meaning, /^Last night's replayed dose /);
-  assert.match(rules.TEXT.radiation.red.meaning, /^Last night's replayed dose /);
+test('radiation wording names the dose of last night, and the direction map is not a shielding claim', () => {
+  assert.match(rules.TEXT.radiation.green.meaning, /^Last night's dose /);
+  assert.match(rules.TEXT.radiation.red.meaning, /^Last night's dose /);
   assert.doesNotMatch(JSON.stringify(rules.TEXT.radiation), /sleep station/);
   assert.ok(rules.TEXT.radiation.red.actions.includes('Use the direction map to see which side more particles came from.'));
   // The alert requirement and its rationale are told apart.

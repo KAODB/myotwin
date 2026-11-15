@@ -80,7 +80,7 @@ test('temperature boundary in whole tenths: 37.7 is not raised, 37.8 is', () => 
 
 test('fever: meaning and actions', () => {
   const r = engine.checkin(input({ tempC: 38.2 }), MARS42);
-  assert.strictEqual(r.meaning, 'Your temperature is 1.6 °C above your own baseline of 36.6 °C. In care homes on Earth, a rise of more than 1.1 °C over a person\'s own baseline counts as fever.');
+  assert.strictEqual(r.meaning, 'Your temperature is 1.6 °C above your own baseline of 36.6 °C. That counts as a fever.');
   assert.deepStrictEqual(r.actions, ['Tell the crew medical officer today.', 'Take your temperature again this evening.']);
 });
 
