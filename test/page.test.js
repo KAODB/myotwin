@@ -29,48 +29,32 @@ test('index.html loads data/osdr-pwb.js before js/model.js, which writes the gra
   assert.ok(i >= 0 && i < scripts.indexOf('js/model.js'));
 });
 
-// The what-if shape slider: index.html and the WHATIF table in js/app.js agree, and the
-// address parser's snap() (read from js/app.js) keeps 0.25 and an old value such as 2.5.
-test('shape slider runs 0.25 to 4 in steps of 0.25; old and new address values load unchanged', () => {
-  const input = html.match(/<input type="range" id="shape"[^>]*>/)[0];
-  const attr = (k) => parseFloat(input.match(new RegExp(k + '="([^"]+)"'))[1]);
-  assert.deepStrictEqual([attr('min'), attr('max'), attr('step'), attr('value')], [0.25, 4, 0.25, 1]);
+// The what-if address values: the shape and shielding keys keep working for old links (WHATIF in
+// js/app.js and its snap()), though only the exercise slider is on the page.
+test('the shape and shielding address values still load; only the exercise slider is on the page', () => {
   const app = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8');
   const gs = new Function('return ' + app.match(/gs: (\{[^}]+\})/)[1])();
+  const sh = new Function('return ' + app.match(/sh: (\{[^}]+\})/)[1])();
   assert.deepStrictEqual(gs, { min: 0.25, max: 4, step: 0.25, def: 1 });
+  assert.deepStrictEqual(sh, { min: 0.6, max: 1, step: 0.1, def: 1 });
   const snap = new Function('return ' + app.match(/function snap\(v, o\) \{[\s\S]*?\n  \}/)[0])();
   for (const v of ['0.25', '0.5', '1', '2.5', '4']) assert.equal(snap(v, gs), parseFloat(v), v);
   assert.equal(snap('0.1', gs), 1);       // outside the range: the default (the page then shows its notice)
-  assert.equal(snap('4.5', gs), 1);
   assert.equal(snap('nope', gs), 1);
-});
-
-// The shielding what-if acts on the tracks only and runs 0.6 to 1.
-test('shielding slider runs 0.6 to 1 in steps of 0.1 and matches WHATIF.sh; the dose note is gone', () => {
-  const input = html.match(/<input type="range" id="shield"[^>]*>/)[0];
-  const attr = (k) => parseFloat(input.match(new RegExp(k + '="([^"]+)"'))[1]);
-  assert.deepStrictEqual([attr('min'), attr('max'), attr('step'), attr('value')], [0.6, 1, 0.1, 1]);
-  assert.match(html, /this setting does not change the dose/);
-  const app = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8');
-  const sh = new Function('return ' + app.match(/sh: (\{[^}]+\})/)[1])();
-  assert.deepStrictEqual(sh, { min: 0.6, max: 1, step: 0.1, def: 1 });
-  const snap = new Function('return ' + app.match(/function snap\(v, o\) \{[\s\S]*?\n  \}/)[0])();
   assert.equal(snap('0.6', sh), 0.6);
-  assert.equal(snap('0.3', sh), 1);      // an old link below 0.6: the default and the notice
-  assert.doesNotMatch(app, /shieldNote|CRATER_SHIELD|behind about 8 cm/);
+  assert.equal(snap('0.3', sh), 1);
+  for (const id of ['shape', 'shield', 'noise']) assert.doesNotMatch(html, new RegExp('id="' + id + '"'), id);
+  assert.match(html, /<input type="range" id="adherence" min="0" max="1" step="0\.05" value="1" disabled>/);
+  assert.match(html, /<span class="knob-label">Sessions done<\/span>/);
+  assert.match(html, /<button type="button" id="whatif-reset" class="text-btn" disabled>Back to the plan<\/button>/);
 });
 
-// The limits list on the page carries as many items as that section of docs/SUBMISSION.md, in the
-// page's "Not accounted for / Next step" format.
-test('the page limits list has the same number of items as the SUBMISSION limits section', () => {
+// The limits stay in the docs and are not on the page.
+test('docs/SUBMISSION.md keeps its 13 numbered limits; the page has none', () => {
   const sub = fs.readFileSync(path.join(root, 'docs/SUBMISSION.md'), 'utf8');
   const sec = sub.split('### What this version does not account for, and the next step')[1].split('\n### ')[0];
-  const n = (sec.match(/^\d+\. /gm) || []).length;
-  const ol = html.match(/<ol class="limits-list">([\s\S]*?)<\/ol>/)[1];
-  const items = ol.match(/<li[^>]*>[\s\S]*?<\/li>/g);
-  assert.strictEqual(n, 13);
-  assert.strictEqual(items.length, n);
-  for (const li of items) assert.match(li, /<strong>Not accounted for:<\/strong>[\s\S]*<strong>Next step:<\/strong>/);
+  assert.strictEqual((sec.match(/^\d+\. /gm) || []).length, 13);
+  assert.doesNotMatch(html, /limits-list|Not accounted for|Next step:/);
 });
 
 // The page carries no warnings or disclaimers, and no home presentation: neither in index.html nor in
@@ -88,14 +72,50 @@ test('no disclaimer words and no home presentation on the page', () => {
   assert.doesNotMatch(html, /data-mode|space-only|home-only|mode-eldercare|class="badges"|id="g-disclaimer"/);
 });
 
-// The morning check-in: its section sits between the night ruler and Plate II, with the controls
-// the page script drives, a line on the first screen and a link in the top bar.
-test('the morning check-in section, its controls, the first-screen line and the nav link exist', () => {
+// The page is for the person using it: no evidence, references or method sections, no evidence ids.
+const bodyHtml = html.slice(html.indexOf('<body'));
+const strings = (src) => (src.match(/'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"/g) || []);
+test('no evidence, reference or limitation sections and no evidence ids on the page', () => {
+  for (const id of ['origin', 'gcheck', 'hazards', 'limits', 'measured', 'evidence']) {
+    assert.doesNotMatch(bodyHtml, new RegExp('id="' + id + '"'), id);
+  }
+  assert.doesNotMatch(bodyHtml, /data-ev/);
+  assert.doesNotMatch(bodyHtml.replace(/<!--[\s\S]*?-->/g, ''), /\bV\d{1,3}\b/);
+  const app = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8');
+  for (const str of strings(app)) assert.doesNotMatch(str, /\bV\d{1,3}\b/, 'js/app.js: ' + str);
+});
+
+test('the first screen has the three-step guide', () => {
+  const guide = html.match(/<ol id="guide" class="guide"[^>]*>([\s\S]*?)<\/ol>/);
+  assert.ok(guide, 'ol#guide');
+  assert.strictEqual((guide[1].match(/<li\b/g) || []).length, 3);
+  assert.match(guide[1], /<button type="button" id="guide-checkin" class="guide-row"><span class="guide-name">Check in<\/span>/);
+  assert.match(guide[1], /<button type="button" id="guide-check" class="guide-row"><span class="guide-name">Open a check<\/span>/);
+  assert.match(guide[1], /id="guide-do" class="guide-row"><span class="guide-name">Do today<\/span>/);
+  assert.ok(html.indexOf('id="headline"') < html.indexOf('id="guide"'));
+  for (const id of ['scenario-summary', 'checkin-line', 'image-caption', 'brief-note', 'ci-open', 'ci-method']) {
+    assert.doesNotMatch(html, new RegExp('id="' + id + '"'), id);
+  }
+  assert.doesNotMatch(html, /class="nav-link"|data-goto/);
+});
+
+test('below the first screen: seven rows in order, all closed in the markup', () => {
+  const rows = [...html.matchAll(/<details class="row( check-row)?" id="([\w-]+)"([^>]*)>\s*<summary><h2 class="row-title">([^<]+)<\/h2>/g)];
+  assert.deepStrictEqual(rows.map((m) => m[2]), ['checkin', 'row-muscle', 'row-sleep', 'row-cardio', 'row-radiation', 'how', 'whatif']);
+  assert.deepStrictEqual(rows.map((m) => m[4]), ['Morning check-in', 'Muscle', 'Sleep', 'Heart and breathing', 'Radiation',
+    'How the bunk measures', 'What if I miss exercise sessions?']);
+  for (const m of rows) assert.doesNotMatch(m[3], /\bopen\b/, m[2]);
+  for (const m of rows.slice(1, 5)) assert.match(m[3], /data-card="\w+" name="check"/, m[2]);
+  assert.doesNotMatch(html, /<details[^>]*\bopen\b/);
+  assert.ok(html.indexOf('id="timeline"') < html.indexOf('id="checkin"'));
+});
+
+// The morning check-in row: the controls the page script drives.
+test('the morning check-in row and its controls exist', () => {
   const rules = require('../js/rules.js');
-  const sec = html.match(/<section id="checkin" class="checkin reveal" aria-labelledby="checkin-title">([\s\S]*?)\n  <\/section>/);
-  assert.ok(sec, 'section #checkin');
-  assert.ok(html.indexOf('id="timeline"') < html.indexOf('id="checkin"') && html.indexOf('id="checkin"') < html.indexOf('id="checks"'));
-  for (const id of ['checkin-title', 'ci-temp', 'ci-temp-hint', 'ci-baseline', 'ci-clear', 'ci-status', 'ci-meaning', 'ci-actions', 'ci-decides', 'ci-rows', 'ci-method', 'ci-compare']) {
+  const sec = html.match(/<details class="row" id="checkin">([\s\S]*?)\n    <\/details>/);
+  assert.ok(sec, 'details#checkin');
+  for (const id of ['checkin-meta', 'ci-temp', 'ci-temp-hint', 'ci-baseline', 'ci-clear', 'ci-meaning', 'ci-actions', 'ci-decides', 'ci-rows', 'ci-compare']) {
     assert.match(sec[1], new RegExp('id="' + id + '"'), id);
   }
   assert.match(sec[1], /<input type="number" id="ci-temp" min="34" max="42" step="0.1" inputmode="decimal" autocomplete="off"/);
@@ -104,6 +124,4 @@ test('the morning check-in section, its controls, the first-screen line and the 
   assert.strictEqual(rules.CHECKIN.tempMinC, 34);
   assert.strictEqual(rules.CHECKIN.tempMaxC, 42);
   assert.match(sec[1], /class="ci-result" aria-live="polite"/);
-  assert.match(html, /<p id="scenario-summary" class="deck"><\/p>\s*<p id="checkin-line" class="checkin-line">[\s\S]*?id="ci-open"/);
-  assert.match(html, /<a class="nav-link" href="#checkin" data-goto="checkin">Check-in<\/a>\s*<a class="nav-link" href="#checks"/);
 });

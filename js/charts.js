@@ -206,7 +206,7 @@
     // Event labels sit in a strip above the plot, so no data point or selected-night line runs under them.
     var nLab = (opts.markers || []).filter(function (mk) { return mk.label; }).length;
     var rows = Math.min(nLab, W - m.l - m.r < 420 ? 3 : 2);
-    if (rows) m.t = 6 + 14 * rows;
+    if (rows) m.t = 6 + 16 * rows;
     clear(svg);
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
     svg.setAttribute('role', 'img');
@@ -315,7 +315,9 @@
       }
     });
 
-    // Event markers (labels are drawn last, see below)
+    // Event markers (labels are drawn last, see below). Each label takes the first row of the strip
+    // where it clears the labels already placed there; with no clear row it keeps its own row.
+    var rowSpans = [];
     (opts.markers || []).forEach(function (mk, k) {
       if (mk.missionDay < x0 || mk.missionDay > x1) return;
       var mx = X(mk.missionDay);
@@ -324,7 +326,7 @@
       labels.push(function () {
         // Beside its own line: the longest wording that fits to its right, else to its left;
         // when none fits, the shortest wording, kept inside the chart as close to its line as it can be.
-        var n = text(svg, mx + 4, 16 + (k % rows) * 14, mk.label, 'event-label', 'start');
+        var n = text(svg, mx + 4, 16 + (k % rows) * 16, mk.label, 'event-label', 'start');
         var words = [mk.label, mk.shortLabel, mk.tinyLabel].filter(Boolean), lx = null;
         for (var j = 0; j < words.length && lx == null; j++) {
           n.textContent = words[j];
@@ -334,6 +336,12 @@
         }
         if (lx == null) lx = Math.max(2, Math.min(W - 2 - widthOf(n), mx - widthOf(n) / 2));
         n.setAttribute('x', lx);
+        var span = [lx - 6, lx + widthOf(n) + 6], row = k % rows;
+        for (var r = 0; r < rows; r++) {
+          if (!(rowSpans[r] || []).some(function (q) { return q[0] < span[1] && span[0] < q[1]; })) { row = r; break; }
+        }
+        (rowSpans[row] = rowSpans[row] || []).push(span);
+        n.setAttribute('y', 16 + row * 16);
       });
     });
 
@@ -807,7 +815,10 @@
   /**
    * The night ruler into an <svg>: one tick per night, taller every ten mission nights; baseline
    * nights quiet, nights up to the selected one brighter; labels "Arrival", 10, 20...; a blue marker
-   * on the selected night. opts: { days: [missionDay], selected: index }
+   * on the selected night. opts: { days: [missionDay], selected: index, events: [{ from, to, label }] }
+   * `events` (indices into days) are drawn as a short bracket above the ticks with a tiny label at its
+   * start, above the ruler and away from the tick numbers; a label that would run into the previous
+   * one or past the right end is left out (the bracket stays).
    */
   function ruler(svg, opts) {
     var size = sizeOf(svg, 800, 46), W = size.w, H = 46, n = opts.days.length, base = 22;
@@ -824,6 +835,15 @@
         else if (arrivalX != null && x - arrivalX < 46) return;
         text(svg, x, 41, d === 0 ? 'Arrival' : String(d), 'ruler-label');
       }
+    });
+    var lastEnd = -Infinity;
+    (opts.events || []).forEach(function (e) {
+      var x0 = rulerX(e.from, W, n), x1 = Math.max(rulerX(e.to, W, n), x0 + 3), y = 8;
+      el('path', { d: 'M' + x0 + ' ' + (y + 3) + 'V' + y + 'H' + x1 + 'V' + (y + 3), 'class': 'ruler-event' }, svg);
+      if (!e.label) return;
+      var t = text(svg, x0, -1, e.label, 'ruler-event-label', 'start'), w = widthOf(t);
+      if (x0 < lastEnd + 8 || x0 + w > W) { svg.removeChild(t); return; }
+      lastEnd = x0 + w;
     });
     var sx = rulerX(opts.selected, W, n);
     el('line', { x1: sx, y1: 4, x2: sx, y2: base + 4, 'class': 'ruler-mark' }, svg);

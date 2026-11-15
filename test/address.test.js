@@ -37,7 +37,7 @@ test('a link to the removed home scenario S4 shows the notice and the default vi
   const def = H.parseHash('');
   delete st.rejected; delete def.rejected;
   assert.deepStrictEqual(st, def);
-  assert.strictEqual(H.hashFor(st), '#s=S2&d=42&layer=density&view=raw&card=muscle');
+  assert.strictEqual(H.hashFor(st), '#s=S2&d=42&layer=density&view=raw');
 });
 
 test('a repeated key shows the notice', () => {
@@ -47,7 +47,7 @@ test('a repeated key shows the notice', () => {
 });
 
 test('really invalid values still show the notice', () => {
-  for (const h of ['#s=S9', '#s=S2&d=ten', '#s=S2&layer=xray', '#s=S2&gs=9', '#s=S2&foo=1', '#s=S2&card']) {
+  for (const h of ['#s=S9', '#s=S2&d=ten', '#s=S2&layer=xray', '#s=S2&gs=9', '#s=S2&foo=1', '#s=S2&card', '#s=S2&card=heart', '#s=S2&ev=85']) {
     assert.strictEqual(H.parseHash(h).rejected, true, h);
   }
 });
@@ -55,8 +55,8 @@ test('really invalid values still show the notice', () => {
 test('what-if values are kept in the address only when they differ from the default', () => {
   const st = H.parseHash('#s=S1&d=30&ex=0.5&gs=4&sh=0.6&nz=0.05');
   assert.strictEqual(st.rejected, false);
-  assert.strictEqual(H.hashFor(st), '#s=S1&d=30&layer=density&view=raw&card=muscle&ex=0.5&gs=4&sh=0.6&nz=0.05');
-  assert.strictEqual(H.hashFor(H.parseHash('#s=S2&gs=1')), '#s=S2&d=42&layer=density&view=raw&card=muscle');
+  assert.strictEqual(H.hashFor(st), '#s=S1&d=30&layer=density&view=raw&ex=0.5&gs=4&sh=0.6&nz=0.05');
+  assert.strictEqual(H.hashFor(H.parseHash('#s=S2&gs=1')), '#s=S2&d=42&layer=density&view=raw');
 });
 
 test('each scenario remembers its own night, layer and view within the page session', () => {
@@ -76,20 +76,20 @@ test('each scenario remembers its own night, layer and view within the page sess
   assert.deepStrictEqual(H.scenarioChanges(mem, st, 'S3'), { s: 'S3', d: 20, layer: 'pressure', view: 'diff' });
 });
 
-test('check-in keys: valid values load and are written after the what-if values, before ev', () => {
-  const st = H.parseHash('#s=S2&d=62&card=cardio&gs=2&mo=2&tc=37.9&sy=li&ev=V97');
+test('check-in keys: valid values load and are written after the what-if values', () => {
+  const st = H.parseHash('#s=S2&d=62&card=cardio&gs=2&mo=2&tc=37.9&sy=li');
   assert.strictEqual(st.rejected, false);
   assert.deepStrictEqual([st.mo, st.tc, st.sy], [2, 37.9, 'li']);
-  assert.strictEqual(H.hashFor(st), '#s=S2&d=62&layer=density&view=raw&card=cardio&gs=2&mo=2&tc=37.9&sy=li&ev=V97');
+  assert.strictEqual(H.hashFor(st), '#s=S2&d=62&layer=density&view=raw&card=cardio&gs=2&mo=2&tc=37.9&sy=li');
   for (const sy of ['l', 'r', 'i', 'lr', 'li', 'ri', 'lri']) assert.strictEqual(H.parseHash('#s=S2&sy=' + sy).sy, sy, sy);
   for (const tc of ['34', '34.0', '36.6', '42', '42.0']) assert.strictEqual(H.parseHash('#s=S2&tc=' + tc).rejected, false, tc);
-  assert.strictEqual(H.hashFor(H.parseHash('#s=S2&tc=37')), '#s=S2&d=42&layer=density&view=raw&card=muscle&tc=37');
+  assert.strictEqual(H.hashFor(H.parseHash('#s=S2&tc=37')), '#s=S2&d=42&layer=density&view=raw&tc=37');
 });
 
 test('check-in keys are absent by default and not written', () => {
   const st = H.parseHash('#s=S2&d=42');
   assert.deepStrictEqual([st.mo, st.tc, st.sy], [null, null, '']);
-  assert.strictEqual(H.hashFor(st), '#s=S2&d=42&layer=density&view=raw&card=muscle');
+  assert.strictEqual(H.hashFor(st), '#s=S2&d=42&layer=density&view=raw');
   const def = H.parseHash('');
   assert.deepStrictEqual([def.mo, def.tc, def.sy], [null, null, '']);
 });
@@ -118,4 +118,27 @@ test('a check-in belongs to one morning: night or scenario changes clear it, oth
   assert.deepStrictEqual(H.checkinReset(st, { d: 62 }), {});
   assert.deepStrictEqual(H.checkinReset(st, { s: 'S2' }), {});
   assert.deepStrictEqual(H.checkinReset(st, { card: 'sleep', layer: 'pressure' }), {});
+});
+
+test('no row is open by default: the default address carries no card', () => {
+  const def = H.parseHash('');
+  assert.strictEqual(def.card, null);
+  assert.strictEqual(H.hashFor(def), '#s=S2&d=42&layer=density&view=raw');
+  assert.strictEqual(H.hashFor(H.parseHash('#s=S1&d=30')), '#s=S1&d=30&layer=density&view=raw');
+});
+
+test('a link with card=sleep opens that row and round-trips', () => {
+  const st = H.parseHash('#s=S2&d=42&layer=density&view=raw&card=sleep');
+  assert.strictEqual(st.rejected, false);
+  assert.strictEqual(st.card, 'sleep');
+  assert.strictEqual(H.hashFor(st), '#s=S2&d=42&layer=density&view=raw&card=sleep');
+  assert.strictEqual(H.hashFor(Object.assign({}, st, { card: null })), '#s=S2&d=42&layer=density&view=raw');
+});
+
+test('an evidence id from an older link is accepted, ignored and not written back', () => {
+  const st = H.parseHash('#s=S2&d=62&card=cardio&ev=V85');
+  assert.strictEqual(st.rejected, false);
+  assert.ok(!('ev' in st));
+  assert.strictEqual(H.hashFor(st), '#s=S2&d=62&layer=density&view=raw&card=cardio');
+  assert.strictEqual(H.parseHash('#s=S2&ev=V85&ev=V86').rejected, true);   // repeated
 });

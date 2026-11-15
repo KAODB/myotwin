@@ -162,7 +162,7 @@ test('radiation 10.5x is red and carries ratio and cumulative dose', () => {
   assert.match(c.reason, /10\.5x the usual level/);
   assert.match(c.reason, /\u00b5Gy/);
   assert.ok(!/uGy/.test(c.reason));
-  assert.match(c.meaning, /record of what happened overnight/);
+  assert.match(c.meaning, /record of the night/);
 });
 test('radiation solar particle event flag is red', () => {
   assert.equal(card(assessDay(tonightRad({ spe: true })), 'radiation').status, 'red');
