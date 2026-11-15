@@ -181,7 +181,3 @@ Code and tools from others:
 - pptxgenjs, MIT licence. Builds the slide file. https://github.com/gitbrent/PptxGenJS
 - LibreOffice turns the slide file into the PDF. Headless Chrome takes the screenshots and runs the page checks. Node.js runs the tests. Python (standard library only) rebuilds the data files. GitHub Pages hosts the page.
 - Claude through Claude Code, the one SI tool used; see the SI field.
-
-Earlier work of my own:
-
-- The form of the muscle model (a first-order approach to a loss plateau, with a gravity term and an exercise term) comes from a private simulator I wrote on 11 to 13 November 2026, before the hackathon. For MyoTwin it was refitted to the two published results above and rewritten. Everything else in the repository was written during the hackathon, 14 and 15 November 2026.

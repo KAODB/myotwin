@@ -68,11 +68,3 @@ stated.
 No SI-generated images of people are used. The body images are outputs of
 the software, computed from a simplified phantom, and are labelled as
 simulated.
-
-## Earlier work
-
-The form of the muscle model (a first-order approach to a loss plateau, with a
-gravity term and an exercise term) comes from a private simulator the team
-member wrote on 11-13 November 2026, before the hackathon. For MyoTwin it was
-refitted to published anchors (V4, V5) and rewritten. Everything else in this
-repository was written during the hackathon, 14-15 November 2026.
