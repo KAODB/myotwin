@@ -224,12 +224,12 @@
   function headline(cards, words) {
     var names = function (s) { return cards.filter(function (c) { return c.status === s; }).map(function (c) { return NAMES[c.id]; }); };
     var red = names('red'), amber = names('amber'), grey = names('grey');
-    if (grey.length === cards.length) return 'No check has enough data tonight.';
+    if (grey.length === cards.length) return 'Not enough data yet: all four checks.';
     var redLine = red.length ? 'Report to the ' + words.clinician + ' today: ' + red.join(', ') + '.' : '';
     var amberLine = amber.length ? amber.length + (amber.length === 1 ? ' check' : ' checks') + ' to watch: ' + amber.join(', ') + '.' : '';
     if (redLine || amberLine) return (redLine + ' ' + amberLine).trim();
-    if (grey.length) return 'The checks with enough data are in your normal range. Not enough data: ' + grey.join(', ') + '.';
-    return 'All four checks are in your normal range.';
+    if (grey.length) return 'Not enough data yet: ' + grey.join(', ') + '.';
+    return 'All four checks: in range.';
   }
 
   function assess(records, index, opts) {
