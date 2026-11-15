@@ -15,7 +15,7 @@ const engine = require('../js/engine.js');
 
 const app = fs.readFileSync(path.join(__dirname, '..', 'js', 'app.js'), 'utf8');
 const block = app.match(/\/\/ BEGIN presentation helpers\n([\s\S]*?)\n\s*\/\/ END presentation helpers/)[1];
-const P = new Function(block + '\nreturn { splitHeadline, firstSentence, todayStep };')();
+const P = new Function(block + '\nreturn { splitHeadline, firstSentence, todayStep, isTap };')();
 const rules = require('../js/rules.js');
 
 test('a headline with a colon splits into a lead line and an emphasised, capitalised line', () => {
@@ -173,4 +173,14 @@ test('ruler: labels are spaced at least 34 px apart', () => {
     const step = charts.rulerStep(W, 104);
     assert.ok(step * (W - 12) / 103 >= 34 || step === 100, W + ' px: step ' + step);
   }
+});
+
+// The trend chart goes to a night only on a press and release that did not move (within 5 px).
+test('isTap: a press and release within 5 px is a tap; a drag is not', () => {
+  assert.strictEqual(P.isTap({ x: 100, y: 50 }, { x: 100, y: 50 }), true);
+  assert.strictEqual(P.isTap({ x: 100, y: 50 }, { x: 105, y: 45 }), true);
+  assert.strictEqual(P.isTap({ x: 100, y: 50 }, { x: 106, y: 50 }), false);
+  assert.strictEqual(P.isTap({ x: 100, y: 50 }, { x: 100, y: 56 }), false);
+  assert.strictEqual(P.isTap({ x: 300, y: 50 }, { x: 700, y: 50 }), false);
+  assert.strictEqual(P.isTap(null, { x: 100, y: 50 }), false);
 });

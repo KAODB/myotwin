@@ -19,14 +19,22 @@
   var inNode = typeof module === 'object' && module.exports;
 
   var reduce = !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  var playing = false;
+  var playing = false, dead = false;                   // dead: the library failed once; motion stays off
   function lib() { var a = root.anime; return a && typeof a.animate === 'function' ? a : null; }
-  function on() { return !reduce && !playing && !!root.document && !!lib(); }
+  function on() { return !dead && !reduce && !playing && !!root.document && !!lib(); }
 
   // ---- running animations and their clean-up ------------------------------------------
   // Each entry: { anim, els, after, tag, node }. finalize() is idempotent: it stops the animation,
   // writes the end state (after) and removes what the animation left on its elements.
   var entries = [];
+  // Every element a motion function is about to change, registered BEFORE it is touched, with the
+  // function that puts it back (an SVG attribute such as a ring's radius). An entry's end removes
+  // its elements; after a failure fail() puts back whatever is still listed.
+  var touched = new Map();
+  function touch(els, restore) {
+    list(els).forEach(function (el) { if (!touched.has(el) || restore) touched.set(el, restore || null); });
+  }
+  function untouch(els) { list(els).forEach(function (el) { touched.delete(el); }); }
   var STYLE_PROPS = ['opacity', 'transform', 'translate', 'scale', '--sweep', '--sweep-o', 'stroke-linecap'];
   var DRAW_ATTRS = ['pathLength', 'stroke-dasharray', 'stroke-dashoffset', 'draw'];
 
@@ -49,11 +57,14 @@
     try { lib().utils.cleanInlineStyles(e.anim); } catch (err) { /* nothing to clean */ }
     try { if (e.after) e.after(); } catch (err) { /* the end state is the stylesheet's */ }
     e.els.forEach(cleanEl);
+    untouch(e.els);
+    if (e.raw) untouch(e.raw);
   }
   // Start one animation on `targets` (elements, or a plain object for `obj` counts).
   function run(targets, params, opt) {
     opt = opt || {};
-    var e = { els: opt.obj ? [] : list(targets), after: opt.after, tag: opt.tag || '', node: opt.node || null, done: false };
+    var e = { els: opt.obj ? [] : list(targets), raw: opt.raw || null, after: opt.after, tag: opt.tag || '', node: opt.node || null, done: false };
+    touch(e.els);
     params.onComplete = function () { finalize(e); };
     e.anim = lib().animate(targets, params);
     entries.push(e);
@@ -66,9 +77,10 @@
   function draw(els, params, tag) {
     els = list(els);
     if (!els.length) return null;
+    touch(els, undrawEl);
     var drawables = lib().svg.createDrawable(els);
     return run(drawables, Object.assign({ draw: ['0 0', '0 1'] }, params), {
-      tag: tag,
+      tag: tag, raw: els,
       after: function () {
         els.forEach(function (el) {
           DRAW_ATTRS.forEach(function (a) { el.removeAttribute(a); });
@@ -77,12 +89,14 @@
       }
     });
   }
+  function undrawEl(el) { DRAW_ATTRS.forEach(function (a) { el.removeAttribute(a); }); cleanEl(el); }
   // Animate an SVG attribute (for example a ring's radius) and write its own value back at the end.
   function attr(el, name, params, tag) {
     var orig = el.getAttribute(name), p = {};
+    touch(el, function () { el.setAttribute(name, orig); });
     p[name] = params.values;
     Object.keys(params).forEach(function (k) { if (k !== 'values') p[k] = params[k]; });
-    return run(el, p, { tag: tag, after: function () { el.setAttribute(name, orig); } });
+    return run(el, p, { tag: tag, raw: [el], after: function () { el.setAttribute(name, orig); } });
   }
   function spring(duration, bounce) { return lib().spring({ duration: duration, bounce: bounce }); }
 
@@ -103,6 +117,7 @@
   // Show a hidden part from opacity 0: set it inline first, so lifting its token never shows a frame at full.
   function fadeIn(els, params, token, tag) {
     els = list(els);
+    touch(els);
     if (els.length) lib().utils.set(els, { opacity: 0 });
     if (token) unwait(token);
     if (!els.length) return null;
@@ -120,6 +135,7 @@
   function startIntro(p) {
     if (!on() || intro) return false;
     var doc = root.document;
+    intro = { p: p, fired: 0 };                          // set first, so a failure below still ends it
     setWait(WAIT);
     p.drawFigure(0);
     var fig = { v: 0 };
@@ -135,6 +151,7 @@
       }],
       [300, function () {
         var frame = q('.frame');
+        touch(frame, undrawEl);
         if (frame.length) lib().svg.createDrawable(frame);   // starts them at "0 0" (hidden) before the token lifts
         unwait('frame');
         draw(frame, { duration: 620, ease: 'inOutQuad' }, 'intro');
@@ -142,6 +159,7 @@
       }],
       [820, function () {
         var leaders = q('.leaders polyline');
+        touch(leaders, undrawEl);
         if (leaders.length) lib().svg.createDrawable(leaders);
         // Each ring grows from nothing with a spring; it holds r = 0 until its turn, and its own r comes back at the end.
         Array.prototype.forEach.call(q('.rings circle'), function (c, k) {
@@ -164,7 +182,7 @@
         run(p.sweep, { '--sweep': [0, 1, 1], '--sweep-o': [1, 1, 0], duration: 300, ease: 'linear' }, { tag: 'intro' });
       }]
     ].sort(function (a, b) { return a[0] - b[0]; });
-    intro = { steps: steps, p: p, fired: 0 };
+    intro.steps = steps;
     var t0 = root.performance.now();
     // One timer drives the steps; each step finds its elements when it starts.
     intro.timer = lib().createTimer({
@@ -173,13 +191,13 @@
         var t = root.performance.now() - t0;
         try {
           while (intro && intro.fired < steps.length && steps[intro.fired][0] <= t) steps[intro.fired++][1]();
-        } catch (err) { finishIntro(); }
+        } catch (err) { fail(); }
       },
       // At 1.6 s whatever is still moving jumps to its end, so the sequence never runs longer.
-      onComplete: function () { finishIntro(); }
+      onComplete: endIntro
     });
     ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(function (type) {
-      doc.addEventListener(type, finishIntro, { capture: true, passive: true });
+      doc.addEventListener(type, endIntro, { capture: true, passive: true });
     });
     return true;
   }
@@ -190,13 +208,16 @@
     var p = intro.p, timer = intro.timer;
     intro = null;
     ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(function (type) {
-      root.document.removeEventListener(type, finishIntro, { capture: true, passive: true });
+      root.document.removeEventListener(type, endIntro, { capture: true, passive: true });
     });
-    try { timer.cancel(); } catch (err) { /* already done */ }
-    stop(function (e) { return e.tag === 'intro'; });
-    setWait([]);
-    p.drawFigure(1);
+    try { if (timer) timer.cancel(); } catch (err) { /* already done */ }
+    try { stop(function (e) { return e.tag === 'intro'; }); } finally {
+      setWait([]);
+      p.drawFigure(1);
+    }
   }
+  // The input listener: ending the sequence must never throw into the page's own handlers.
+  function endIntro() { try { finishIntro(); } catch (err) { fail(); } }
 
   // ---- B. a row opens ------------------------------------------------------------------
   /**
@@ -208,6 +229,7 @@
     if (!on() || intro) return false;
     blocks = list(blocks).filter(function (b) { return !b.hidden; });
     if (blocks.length) {
+      touch(blocks);
       lib().utils.set(blocks, { opacity: 0, y: 6 });
       run(blocks, { opacity: [0, 1], y: [6, 0], duration: 260, ease: 'outQuad', delay: lib().stagger(60) }, { tag: 'row', node: row });
     }
@@ -223,12 +245,14 @@
    */
   function valueTo(node, from, to, format) {
     stopValue(node);
-    if (!on() || intro || !node || !isFinite(from) || !isFinite(to) || from === to) return false;
+    if (!on() || intro || !node || !countable(from, to)) return false;
     var o = { v: from };
     run(o, { v: to, duration: 200, ease: 'outQuad', onUpdate: function () { node.textContent = format(o.v); } },
       { obj: true, tag: 'value', node: node, after: function () { node.textContent = format(to); } });
     return true;
   }
+  /** True when a count can run: two different real numbers (null, '–' or NaN at either end swaps at once). */
+  function countable(from, to) { return Number.isFinite(from) && Number.isFinite(to) && from !== to; }
   /** End a running count in `node` at its last value. */
   function stopValue(node) { stop(function (e) { return e.tag === 'value' && e.node === node; }); }
 
@@ -253,6 +277,7 @@
   function fadeRows(els) {
     els = list(els);
     if (!on() || intro || !els.length) return false;
+    touch(els);
     lib().utils.set(els, { opacity: 0 });
     run(els, { opacity: [0, 1], duration: 220, ease: 'outQuad', delay: lib().stagger(50) }, { tag: 'rows' });
     return true;
@@ -268,13 +293,24 @@
   /** True while the landing sequence runs. */
   function introRunning() { return !!intro; }
 
-  // Every call stays safe: an error inside the library ends all motion and the page carries on.
+  // Any error inside the library: motion stays off for the rest of the page's life, and the page
+  // is put back exactly as it is without motion (every touched element cleaned, nothing waiting,
+  // the figure drawn in full). Each undo step runs on its own, so one failure cannot stop the rest.
+  function fail() {
+    dead = true;
+    var safe = function (f) { try { f(); } catch (err) { /* keep undoing */ } };
+    safe(finishIntro);
+    if (intro) { var p = intro.p; intro = null; safe(function () { p.drawFigure(1); }); }
+    entries.slice().forEach(function (e) { safe(function () { finalize(e); }); });
+    entries = [];
+    touched.forEach(function (restore, el) { safe(function () { if (restore) restore(el); cleanEl(el); }); });
+    touched.clear();
+    safe(function () { if (root.document) setWait([]); });
+  }
+  // Every call stays safe: an error ends all motion (fail) and the page carries on.
   function guard(fn) {
     return function () {
-      try { return fn.apply(null, arguments); } catch (err) {
-        try { finishIntro(); stopAll(); } catch (e2) { /* nothing more to undo */ }
-        return false;
-      }
+      try { return fn.apply(null, arguments); } catch (err) { fail(); return false; }
     };
   }
 
@@ -289,7 +325,8 @@
     pulse: guard(pulse),
     settle: guard(settle),
     fadeRows: guard(fadeRows),
-    setPlaying: guard(setPlaying)
+    setPlaying: guard(setPlaying),
+    countable: countable
   };
   ns.motion = api;
   if (inNode) module.exports = api;

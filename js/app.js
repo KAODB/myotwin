@@ -181,6 +181,13 @@
   // Watch, else muscle. "Do today" takes its action from the most urgent source: cards on Report,
   // then cards on Watch, then the check-in when it is on Watch. `target` is that source (a card id
   // or 'checkin', null when there is none), `text` its first action and `more` how many follow.
+  // A press and release on the trend chart goes to a night only when the pointer stayed within
+  // TAP_PX of where it went down; a drag or a text selection does not.
+  var TAP_PX = 5;
+  function isTap(down, up) {
+    return !!down && !!up && Math.abs(up.x - down.x) <= TAP_PX && Math.abs(up.y - down.y) <= TAP_PX;
+  }
+
   function todayStep(cards, checkin) {
     var first = function (st) { return cards.filter(function (c) { return c.status === st; })[0]; };
     var flagged = first('red') || first('amber');
@@ -407,7 +414,8 @@
     btn.setAttribute('aria-pressed', String(state.card === c.id));
     setStatus(btn, c.status);
     var L = noteLines(c), numNode = btn.querySelector('.num'), n = noteNumber(c), was = shownNotes[c.id];
-    var counted = nightStep && !!was && was.family === n.family && n.v != null && n.fmt(n.v) === L.num &&
+    // A change to or from "no value" (null) swaps the text at once: only two real numbers count.
+    var counted = nightStep && !!was && was.family === n.family && Number.isFinite(was.v) && Number.isFinite(n.v) && n.fmt(n.v) === L.num &&
       motion.valueTo(numNode, was.v, n.v, n.fmt);
     if (!counted) { motion.stopValue(numNode); swapText(numNode, L.num); }
     if (nightStep && was && was.status !== c.status) pulseIds.push(c.id);
@@ -1269,7 +1277,17 @@
     var chart = $('trend-chart');
     chart.addEventListener('pointermove', function (e) { showReadout(e.clientX - chart.getBoundingClientRect().left); });
     chart.addEventListener('pointerleave', hideReadout);
+    var chartDown = null;
+    chart.addEventListener('pointerdown', function (e) {
+      chartDown = { x: e.clientX, y: e.clientY };
+      if (e.pointerType === 'mouse') e.preventDefault();        // a press here reads a night; it starts no text selection
+    });
     chart.addEventListener('click', function (e) {
+      // A drag (or a press that started elsewhere) is not a tap; a press on the chart starts no
+      // text selection (pointerdown above).
+      var down = chartDown;
+      chartDown = null;
+      if (!isTap(down, { x: e.clientX, y: e.clientY })) return;
       var day = readoutDay(e.clientX - chart.getBoundingClientRect().left);
       if (day == null || day === state.d) return;
       setPlaying(false);

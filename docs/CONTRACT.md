@@ -386,7 +386,11 @@ Motion (`js/motion.js`, Anime.js; `js/app.js` calls only this API and never `ani
   call returns false and does nothing when `anime` is missing, under `prefers-reduced-motion`, or
   while "Play the mission" runs (`setPlaying(true)` also ends everything at once). When an
   animation ends or is cut short, the inline styles and drawing attributes it set are removed.
-  Nothing writes HTML (no text splitting); springs use `anime.spring`.
+  Nothing writes HTML (no text splitting); springs use `anime.spring`. Every element is registered
+  before a motion function touches it; if the library throws at any call, motion stays off for
+  the rest of the page's life and every touched element is put back (no inline opacity or
+  transform, no drawing attributes, no `data-wait`, rings at their own radius, the figure in full),
+  without throwing to the page (`test/motion-failure.test.js`).
 - `intro(parts)`, once per page load, at most 1.6 s: the headline, the three guide rows in order,
   the stipple from head to feet (`charts.stipple` option `progress`, 0 to 1; at 1 the drawing is
   the same as without it), the plate frame and leaders drawing in, the rings settling with a
@@ -401,7 +405,8 @@ Motion (`js/motion.js`, Anime.js; `js/app.js` calls only this API and never `ani
   and the guide for the others).
 - `valueTo(node, from, to, format)`: on a step to another night (ruler or arrow keys) a note's
   number counts from the old value to the new one in about 200 ms, written with the note's own
-  formatting, ending on the exact text; `pulse(ring)`: a note whose status changed pulses its ring.
+  formatting, ending on the exact text; a change to or from "no value" swaps the text at once
+  (`countable`: only two different finite numbers count); `pulse(ring)`: a note whose status changed pulses its ring.
 - `settle(marks)`: a changed check-in status mark settles with a spring; `fadeRows(rows)`: the
   comparison table's rows fade in one after another as it appears.
 - Check rows carry a sparkline in their title (between the title and the meta text; 120 x 28 px,
@@ -409,7 +414,8 @@ Motion (`js/motion.js`, Anime.js; `js/app.js` calls only this API and never `ani
   `charts.sparkPoints` (tested), last point marked, ink, the accent only on Watch or Report; hidden
   under 700 px. The trend chart reads the night under the pointer (`charts.nearestDay`, tested): a
   hairline at that night and one line above the plot ("Night 31 · 7.84 deg"; the value only up to
-  the selected night); a click goes to that night, as the ruler does.
+  the selected night); a press and release that stays within 5 px (`isTap`, presentation helpers)
+  goes to that night, as the ruler does; a drag does not, and a press on the chart starts no text selection.
 - `--map-heat` and `--map-diverging` remain for `charts.image` (used by `demo/gallery.html`).
 
 Measured radiation data on the page:
