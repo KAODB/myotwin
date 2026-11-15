@@ -368,6 +368,21 @@ button.guide-row { cursor: pointer; }
 .ex-missed { stroke: var(--quiet); stroke-width: 1.4; stroke-opacity: 0.6; }
 .flux-shade { fill: var(--blue); fill-opacity: 0.22; }
 
+/* The trend chart's readout: a hairline at the night under the pointer and one line of text above the plot. */
+#trend-chart { cursor: pointer; }
+.trend-readout { min-height: 1.45em; margin-bottom: 2px; font-size: 15px; font-style: italic; color: var(--quiet); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.readout-line { stroke: var(--ink); stroke-opacity: 0.55; stroke-width: 1; pointer-events: none; }
+
+/* Sparklines in the check rows' titles: the last 30 nights, ink, the accent only on Watch or Report. */
+.check-row > summary { grid-template-columns: minmax(0, 1fr) auto auto auto; }
+.check-row > summary > .spark { grid-column: 2; align-self: center; display: block; overflow: visible; }
+.check-row > summary > .row-meta { grid-column: 3; }
+.check-row > summary > .row-sign { grid-column: 4; }
+.spark-line { fill: none; stroke: var(--ink); stroke-opacity: 0.7; stroke-width: 1.2; stroke-linejoin: round; }
+.spark-dot { fill: var(--ink); }
+.spark.st-amber .spark-line, .spark.st-red .spark-line { stroke: var(--accent); stroke-opacity: 1; }
+.spark.st-amber .spark-dot, .spark.st-red .spark-dot { fill: var(--accent); }
+
 .legend { display: flex; flex-wrap: wrap; gap: 4px 22px; list-style: none; padding: 0; margin-top: 10px; font-size: 15px; color: var(--quiet); }
 .legend li { display: inline-flex; align-items: center; gap: 8px; }
 .key { display: inline-block; width: 18px; height: 10px; }
@@ -452,6 +467,22 @@ input[type="range"]::-moz-range-thumb { width: 2px; height: 18px; background: va
 .swap { animation: swap 0.32s ease-out; }
 .motion .reveal { opacity: 0; transform: translateY(10px); transition: opacity 0.4s ease-out, transform 0.4s ease-out; }
 .motion .reveal.in { opacity: 1; transform: none; }
+/* Anime.js motion (js/motion.js). During the landing sequence the parts not yet shown are listed in
+   <html data-wait>; js/motion.js lifts each token as its part starts and never sets one under
+   reduced motion or without the library. */
+html[data-wait~="headline"] #headline,
+html[data-wait~="g1"] #guide > li:nth-child(1), html[data-wait~="g2"] #guide > li:nth-child(2), html[data-wait~="g3"] #guide > li:nth-child(3),
+html[data-wait~="frame"] #plate-ink .frame, html[data-wait~="frame"] #plate-ink .frame-axis, html[data-wait~="frame"] #plate-ink .track,
+html[data-wait~="marks"] #plate-ink .leaders, html[data-wait~="marks"] #plate-ink .rings,
+html[data-wait~="n1"] #cards .card:nth-child(1), html[data-wait~="n2"] #cards .card:nth-child(2),
+html[data-wait~="n3"] #cards .card:nth-child(3), html[data-wait~="n4"] #cards .card:nth-child(4),
+html[data-wait~="mark"] #ruler .ruler-mark, html[data-wait~="mark"] #ruler .ruler-mark-dot { opacity: 0; }
+/* The one underline sweep under "Check in" at the end of the landing sequence (scale and opacity from --sweep, --sweep-o). */
+#guide-checkin .guide-name { position: relative; justify-self: start; }
+#guide-checkin .guide-name::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 3px; height: 1px; background: var(--blue); pointer-events: none;
+  transform: scaleX(var(--sweep, 0)); transform-origin: left center; opacity: var(--sweep-o, 0);
+}
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
   .motion .reveal { opacity: 1; transform: none; }
@@ -506,6 +537,10 @@ input[type="range"]::-moz-range-thumb { width: 2px; height: 18px; background: va
   .row > summary { grid-template-columns: minmax(0, 1fr) auto; }
   .row-meta { grid-column: 1; grid-row: 2; margin-top: 4px; white-space: normal; flex-wrap: wrap; gap: 4px 12px; }
   .row > summary > .row-sign { grid-column: 2; grid-row: 1; }
+  .check-row > summary { grid-template-columns: minmax(0, 1fr) auto; }
+  .check-row > summary > .row-meta { grid-column: 1; }
+  .check-row > summary > .row-sign { grid-column: 2; }
+  .check-row > summary > .spark { grid-column: 1; grid-row: 3; margin-top: 8px; }
   .rose-fig { grid-template-columns: minmax(0, 1fr); justify-items: start; }
   .origin-table, .origin-table tbody, .origin-table tr, .origin-table th, .origin-table td { display: block; width: auto; }
   .origin-table thead { display: none; }
@@ -517,6 +552,7 @@ input[type="range"]::-moz-range-thumb { width: 2px; height: 18px; background: va
   .origin-table.ci-table td:nth-child(4)::before { content: "Together: "; font-style: italic; }
   .origin-table.ci-table tbody th { font-size: 20px; padding-bottom: 2px; }
 }
+@media (max-width: 699px) { .check-row > summary > .spark { display: none; } }
 /* Phones: the figure controls sit above the plate, where they may take two lines. */
 @media (max-width: 599px) {
   .plate { height: auto; }

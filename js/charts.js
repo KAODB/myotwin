@@ -388,7 +388,50 @@
 
     // Labels last, over every line and mark; their halo (CSS paint-order) keeps them readable.
     labels.forEach(function (draw) { draw(); });
-    return { x: X, y: Y };
+    return { x: X, y: Y, top: m.t, bottom: m.t + ph, left: m.l, right: W - m.r, days: series.map(function (p) { return p.missionDay; }) };
+  }
+
+  /** The day among `days` whose x (by X) is nearest to px, or null when there is none. */
+  function nearestDay(px, days, X) {
+    var best = null, dist = Infinity;
+    (days || []).forEach(function (d) {
+      var e = Math.abs(X(d) - px);
+      if (e < dist) { dist = e; best = d; }
+    });
+    return best;
+  }
+
+  // ---- sparkline -------------------------------------------------------------------
+  /**
+   * Points of a sparkline w x h px: values (null = gap) spread evenly across the width, the lowest
+   * at the bottom and the highest at the top, `pad` px inside each edge; all equal values sit in
+   * the middle. Returns [[x, y] | null, ...], one per value.
+   */
+  function sparkPoints(values, w, h, pad) {
+    pad = pad == null ? 3 : pad;
+    var ok = (values || []).filter(function (v) { return v != null && isFinite(v); });
+    var lo = Math.min.apply(null, ok), hi = Math.max.apply(null, ok), n = (values || []).length;
+    return (values || []).map(function (v, i) {
+      if (v == null || !isFinite(v)) return null;
+      var x = n > 1 ? pad + i * (w - 2 * pad) / (n - 1) : w / 2;
+      var y = hi > lo ? h - pad - (v - lo) / (hi - lo) * (h - 2 * pad) : h / 2;
+      return [Math.round(x * 10) / 10, Math.round(y * 10) / 10];
+    });
+  }
+
+  /** Draw a sparkline into an <svg> (its size from the stylesheet, w x h): the line with gaps, the last point marked. */
+  function spark(svg, values, w, h) {
+    clear(svg);
+    svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+    var pts = sparkPoints(values, w, h, 3), d = '', pen = false, last = null;
+    pts.forEach(function (p) {
+      if (!p) { pen = false; return; }
+      d += (pen ? 'L' : 'M') + p[0] + ',' + p[1];
+      pen = true;
+      last = p;
+    });
+    if (d) el('path', { d: d, 'class': 'spark-line' }, svg);
+    if (last) el('circle', { cx: last[0], cy: last[1], r: 2.2, 'class': 'spark-dot' }, svg);
   }
 
   // ---- image -------------------------------------------------------------------
@@ -716,9 +759,17 @@
 
   /**
    * Draw an image as a stipple onto a canvas sized W x H CSS px: one dot per body cell.
-   * img: { values, min, max }; lay: plateLayout(); opts: { mode: 'raw'|'diff', overlay: Uint8Array|null, dpr }.
-   * Returns the number of dots drawn.
+   * img: { values, min, max }; lay: plateLayout(); opts: { mode: 'raw'|'diff', overlay: Uint8Array|null, dpr, progress }.
+   * `progress` (0 to 1, default 1) reveals the figure from head to feet: a body row shows once the
+   * progress reaches it, fading in over the next STIPPLE_FADE rows; at 1 every dot is drawn exactly as
+   * without it, at 0 none is. Returns the number of dots drawn.
    */
+  var STIPPLE_FADE = 6;
+  function rowShare(progress, k, rows) {
+    if (progress == null || progress >= 1) return 1;
+    var t = (progress * (rows + STIPPLE_FADE) - k) / STIPPLE_FADE;
+    return t <= 0 ? 0 : t >= 1 ? 1 : t;
+  }
   function stipple(canvas, img, ph, lay, opts) {
     opts = opts || {};
     var dpr = opts.dpr || 1, tones = themeTones(), n = 0;
@@ -728,6 +779,8 @@
     ctx.clearRect(0, 0, lay.W, lay.H);
     var b = lay.box, ov = opts.overlay;
     for (var y = b.y0; y <= b.y1; y++) {
+      var share = rowShare(opts.progress, y - b.y0, b.y1 - b.y0 + 1);
+      if (!share) break;
       for (var x = b.x0; x <= b.x1; x++) {
         var i = y * ph.w + x;
         if (!ph.region[i]) continue;
@@ -736,7 +789,7 @@
         ctx.beginPath();
         ctx.arc(lay.cx(x), lay.cy(y), d.r, 0, Math.PI * 2);
         var c = tones[d.tone === 'hollow' ? 'ink' : d.tone];
-        var rgba = 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + d.alpha.toFixed(3) + ')';
+        var rgba = 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + (share === 1 ? d.alpha : d.alpha * share).toFixed(3) + ')';
         if (d.tone === 'hollow') { ctx.lineWidth = 1; ctx.strokeStyle = rgba; ctx.stroke(); } else { ctx.fillStyle = rgba; ctx.fill(); }
         n++;
       }
@@ -856,6 +909,9 @@
     plateLayout: plateLayout,
     stippleDot: stippleDot,
     stipple: stipple,
+    nearestDay: nearestDay,
+    sparkPoints: sparkPoints,
+    spark: spark,
     plateFrame: plateFrame,
     dotLegend: dotLegend,
     hexRgb: hexRgb,

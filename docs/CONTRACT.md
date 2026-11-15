@@ -15,8 +15,10 @@ and the UI must say so at all times.
 
 ## Ground rules
 
-1. Static site. No build step, no backend, no network requests, no third-party
-   scripts, no CDN. It must work when `index.html` is opened from disk
+1. Static site. No build step, no backend, no network requests, no CDN. The only
+   third-party script is Anime.js 4.5.0 (MIT), vendored unchanged in `vendor/` with its
+   licence and SHA-256 (`vendor/README.md`, checked by `test/page.test.js`) and used only
+   through `js/motion.js`. It must work when `index.html` is opened from disk
    (`file://`) and from GitHub Pages.
 2. Plain `<script>` tags, no ES modules (modules do not load from `file://`).
    Modern JavaScript syntax is fine (const, let, arrow functions, classes).
@@ -49,7 +51,7 @@ Every file in `js/` uses this wrapper so it works in the browser and in Node:
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 ```
 
-Browser load order: `evidence, model, sim, rules, engine, phantom, imaging, charts, app`.
+Browser load order: `evidence, model, sim, rules, engine, phantom, imaging, charts, vendor/anime.umd.min.js, motion, app`.
 
 ## File ownership
 
@@ -59,7 +61,8 @@ Browser load order: `evidence, model, sim, rules, engine, phantom, imaging, char
 | `js/model.js`, `js/sim.js`, `test/model.test.js`, `test/sim.test.js` | model-sim agent | evidence |
 | `js/rules.js`, `js/engine.js`, `test/engine.test.js` | engine agent | evidence |
 | `js/phantom.js`, `js/imaging.js`, `test/imaging.test.js` | imaging agent | evidence |
-| `index.html`, `css/style.css`, `js/charts.js`, `js/app.js` | UI agent | all of the above |
+| `index.html`, `css/style.css`, `js/charts.js`, `js/motion.js`, `js/app.js` | UI agent | all of the above |
+| `vendor/` (third-party files, unchanged) | orchestrator | none |
 | `test/fixture.js`, `test/evidence.test.js`, `docs/CONTRACT.md` | orchestrator | evidence |
 
 Do not edit a file you do not own. If you need something from another module
@@ -375,7 +378,38 @@ Colour scheme and type (`css/style.css`, palette at the top; `test/palette.test.
   with their licence texts (`font-src 'self'` in the Content Security Policy). No sans-serif.
 - No cards, filled panels, shadows, gradients or rounded containers: structure is hairline rules
   and space. Motion (tracks drifting, the halo of a flagged hotspot, value cross-fades, sections
-  fading up) is off under `prefers-reduced-motion`.
+  fading up, and the Anime.js motion below) is off under `prefers-reduced-motion`.
+
+Motion (`js/motion.js`, Anime.js; `js/app.js` calls only this API and never `anime`):
+
+- One job: lead the eye through the three steps on landing and confirm what a click did. Every
+  call returns false and does nothing when `anime` is missing, under `prefers-reduced-motion`, or
+  while "Play the mission" runs (`setPlaying(true)` also ends everything at once). When an
+  animation ends or is cut short, the inline styles and drawing attributes it set are removed.
+  Nothing writes HTML (no text splitting); springs use `anime.spring`.
+- `intro(parts)`, once per page load, at most 1.6 s: the headline, the three guide rows in order,
+  the stipple from head to feet (`charts.stipple` option `progress`, 0 to 1; at 1 the drawing is
+  the same as without it), the plate frame and leaders drawing in, the rings settling with a
+  spring, the four notes fading in (opacity only, so the leaders are measured from still notes),
+  the ruler marker dropping to its night, and one underline sweep under "Check in" when the
+  check-in is not done. Parts not yet shown are listed in `<html data-wait>` (read by the
+  stylesheet). Any key, pointer press, wheel or touch jumps it to the end state at once
+  (`finishIntro()`), before the press reaches its target.
+- `rowOpened(row, blocks, path)`: the opened row's blocks fade up a few px one after another and a
+  check row's trend line draws in. Closing is instant (`rowClosed()`); opening another row cuts the
+  first opening short. Called where a row opens (the state update for check rows, the title click
+  and the guide for the others).
+- `valueTo(node, from, to, format)`: on a step to another night (ruler or arrow keys) a note's
+  number counts from the old value to the new one in about 200 ms, written with the note's own
+  formatting, ending on the exact text; `pulse(ring)`: a note whose status changed pulses its ring.
+- `settle(marks)`: a changed check-in status mark settles with a spring; `fadeRows(rows)`: the
+  comparison table's rows fade in one after another as it appears.
+- Check rows carry a sparkline in their title (between the title and the meta text; 120 x 28 px,
+  `aria-hidden`): that check's judged values for the 30 nights up to the selected night,
+  `charts.sparkPoints` (tested), last point marked, ink, the accent only on Watch or Report; hidden
+  under 700 px. The trend chart reads the night under the pointer (`charts.nearestDay`, tested): a
+  hairline at that night and one line above the plot ("Night 31 · 7.84 deg"; the value only up to
+  the selected night); a click goes to that night, as the ruler does.
 - `--map-heat` and `--map-diverging` remain for `charts.image` (used by `demo/gallery.html`).
 
 Measured radiation data on the page:
