@@ -136,6 +136,7 @@ button, input, select { font: inherit; color: inherit; }
 .deck { color: var(--quiet); font-size: 20px; max-width: 17em; }
 .checkin-line { margin-top: 14px; color: var(--quiet); font-size: 18px; max-width: 22em; }
 .checkin-line .st-icon { width: 14px; height: 14px; vertical-align: -1px; }
+.ci-said { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fig-note { margin-top: 30px; font-style: italic; color: var(--quiet); font-size: 16.5px; line-height: 1.5; }
 .fig-note b { font-style: normal; font-weight: 500; color: var(--ink); letter-spacing: 0.04em; margin-right: 4px; }
 .switches { display: block; margin-top: 8px; font-style: normal; }
@@ -527,7 +528,7 @@ input[type="range"]::-moz-range-thumb { width: 2px; height: 18px; background: va
 
 /* ---- responsive ------------------------------------------------------------- */
 /* Short wide screens: tighten the left column and the notes so all of Plate I stays above the ruler. */
-@media (min-width: 1100px) and (max-height: 720px) {
+@media (min-width: 1100px) and (max-height: 760px) {
   .headline { margin: 14px 0 18px; }
   .deck { font-size: 18px; }
   .fig-note { margin-top: 20px; font-size: 15.5px; }
@@ -536,15 +537,21 @@ input[type="range"]::-moz-range-thumb { width: 2px; height: 18px; background: va
   .card-sub { font-size: 15.5px; }
   .checkin-line { margin-top: 8px; font-size: 15.5px; line-height: 1.32; max-width: none; }
 }
-/* Shortest wide screens (about 1280 x 617): tighter spacing in the left column for the check-in line. */
-@media (min-width: 1100px) and (max-height: 640px) {
+/* Shorter wide screens (1280 x 617 up to about 1440 x 690): tighter spacing in the left column for the check-in line. */
+@media (min-width: 1100px) and (max-height: 690px) {
   .say .headline { margin: 8px 0 10px; }
   #brief-title { letter-spacing: 0.14em; }
   .deck { line-height: 1.32; }
   .say .fig-note { margin-top: 10px; line-height: 1.38; }
 }
+/* Shortest wide screens (up to 620 px high): the figure caption is left to screen readers and the notes close up. */
+@media (min-width: 1100px) and (max-height: 620px) {
+  #cap-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .card { padding: 7px 0 9px; }
+}
 @media (max-width: 1240px) { .tagline { display: none; } }
 @media (max-width: 1099px) {
+  .ci-said { white-space: normal; }
   :root { --gutter: 32px; }
   .plate-one { grid-template-columns: minmax(0, 1fr); grid-template-areas: "say" "plate" "notes" "note"; }
   .say { padding: 40px 0 8px; }
