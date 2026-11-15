@@ -44,7 +44,7 @@ Each morning MyoTwin answers three questions for the person who slept in the bun
 - **Radiation.** The dose over the sleep period, how it compares with a usual night, and the running total.
 - **Morning check-in.** Three questions, about 30 seconds: how the crew member feels on a five-step scale, their temperature, and whether their legs feel weaker, they did not feel rested, or they feel ill. Each answer is set beside the bunk's reading for the same part of the body.
 
-The body figure is the way in. Select the head, the chest or the calves to open that check, or the whole body for radiation. Each check shows its status in words (In range, Watch, Report, No data), what it means, what to do now and who decides. Below that comes the NASA context: the Human Research Program risk it relates to, NASA's rating of that risk for the mission selected, two sentences from NASA's own page on the risk, the NASA standard that applies, and one open NASA research gap.
+The first screen leads with three steps: check in, open a check, do today. The body figure is the way in to each check: select the head, the chest or the calves, or the whole body for radiation. Each check shows its status in words (In range, Watch, Report, No data), what it means, what to do now and who decides. Everything below the first screen is a row that shows only its title until it is opened. One row inside each check gives the NASA context: the Human Research Program risk it relates to, NASA's rating of that risk for the mission selected, two sentences from NASA's own page on the risk, and the NASA standard that applies. The page is written for the person using it; the sources, the limits and the method are in this text, the slides and the repository.
 
 Every morning also brings a whole-body image in three layers: a density map made from the scattering of the cosmic rays that already pass through the sleeper, a pressure map, and the calf impedance. The density layer is experimental.
 
@@ -62,14 +62,14 @@ One record per night goes into an assessment engine. Its rules are written as da
 
 The first nights after arrival show No data, because I do not mix nights from before departure with nights on the surface.
 
-The simulated muscle follows a first-order model with a gravity term and an exercise term. I fitted it to two published results: 60 days of bed rest (the model gives -28.9% and -8.1% against the published -29% and -8%) and six months on the ISS (-10.5% against -13 +/- 2%, so it underestimates). The gravity term is linear by assumption, and the page sets that assumption against rats kept for 28 days at 40% weight bearing, from NASA's Open Science Data Repository: across three measures in each sex (six results) they lost between 0.25 and 1.05 of what fully unloaded rats lost, median 0.56, where the model assumes 0.60. That is a plausibility check of one assumption, not a fit. The simulator and the mission plan use the same model, so the page shows the workflow, not how well a real decline would be caught.
+The simulated muscle follows a first-order model with a gravity term and an exercise term. I fitted it to two published results: 60 days of bed rest (the model gives -28.9% and -8.1% against the published -29% and -8%) and six months on the ISS (-10.5% against -13 +/- 2%, so it underestimates). The gravity term is linear by assumption, and the code sets that assumption against rats kept for 28 days at 40% weight bearing, from NASA's Open Science Data Repository: across three measures in each sex (six results) they lost between 0.25 and 1.05 of what fully unloaded rats lost, median 0.56, where the model assumes 0.60. That is a plausibility check of one assumption, not a fit. The simulator and the mission plan use the same model, so the page shows the workflow, not how well a real decline would be caught.
 
 ### How NASA data and resources are used
 
-In four ways, and the page keeps them apart.
+In four ways.
 
 1. **Measured data that drive numbers.** Mars nights replay Curiosity's RAD dose rate, measured in 2012, from 94 sols of RAD data in NASA's Planetary Data System (the 90-night scenario uses sols 13 to 108). Moon nights replay the dose LRO's CRaTER measured in lunar orbit in 2017, summed over a 22:00 to 06:00 UTC sleep window and scaled to the surface by the instrument team. In the solar-event scenario, mission night 20 replays the night of 10 September 2017, after the smaller events of 4 to 7 September: 43.5 mGy at CRaTER's D5&6 detectors, about 500 times a quiet night. That pair is a lightly shielded detector on an orbiter, not a model of a habitat. Thick habitat shielding stops most solar protons, so a crew inside would receive much less. Under 23 g/cm2 of Martian air, Curiosity's RAD saw the dose rate rise only two- to threefold in the same event. NASA's DONKI records mark the nights with a solar energetic particle event, and a chart shows NASA's OMNI proton flux for those days. Surface gravity for the muscle model and the pressure map comes from NASA's planetary fact sheets.
-2. **NASA's words and ratings on every check.** All five resources on the challenge page are used, and so are twelve of the pages they link to. Each check quotes NASA's page on its risk and shows the Human Research Roadmap rating for the mission selected. For muscle that is 5x4, Requires Mitigation, on a Mars planetary mission and 5x3 on a long lunar-surface mission.
+2. **NASA's words and ratings on every check.** All five resources on the challenge page are used, in the product, the slides or this text, and so are twelve of the pages they link to. Each check quotes NASA's page on its risk and shows the Human Research Roadmap rating for the mission selected. For muscle that is 5x4, Requires Mitigation, on a Mars planetary mission and 5x3 on a long lunar-surface mission.
 3. **NASA standards as the lines and the reasons.** A 2026 NASA bulletin describes the two isometric strength tests used on the ISS as "location specific requiring specialized equipment", which is the gap a passive nightly reading is meant to sit in. NASA-STD-3001 gives the 80% strength line, the recommended 8.5-hour sleep period, the requirement to record and trend vital signs in mission, the dose-rate limit for surface habitats, and the requirements to monitor radiation where the crew lives and to alert the crew when dose rates pass set thresholds. The rationale of the alert requirement adds that the alert must work even without ground contact. It also requires horizontal sleep surfaces in partial gravity, which is why a panel built into the bed is a reasonable place to measure on the Moon or Mars.
 4. **NASA research that makes the measurement plausible, and NASA open data that check the model.** A NASA-funded study adds impedance myography before and after flight in astronauts, and another NASA-funded study used it every week in rats under partial weight bearing. Open data from that line of rat studies, in NASA's Open Science Data Repository, are what the muscle model's gravity term is checked against.
 
@@ -97,7 +97,7 @@ The check-in follows the same route. In long-term care, older adults often stay 
 
 ### Tools and languages
 
-Plain HTML, CSS and JavaScript with no build step and no server; two open-licence typefaces (Cormorant Garamond and EB Garamond) served from the repository; Node.js tests; Python scripts (standard library only) that rebuild the data files from the NASA downloads; GitHub Pages; pptxgenjs for the slides; Claude through Claude Code.
+Plain HTML, CSS and JavaScript with no build step and no server; two open-licence typefaces (Cormorant Garamond and EB Garamond) served from the repository; Anime.js 4.5.0 (MIT) for motion, served from the repository; Node.js tests; Python scripts (standard library only) that rebuild the data files from the NASA downloads; GitHub Pages; pptxgenjs for the slides; Claude through Claude Code.
 
 ## Use of Super Intelligence (SI)
 
@@ -112,23 +112,23 @@ Measured data that drive numbers on the page or check the model (files in `data/
 - **NASA CCMC DONKI**, solar energetic particle records for September 2017 (V62). Marks the nights with an event on record. https://api.nasa.gov/DONKI/SEP?startDate=2017-09-01&endDate=2017-09-30&api_key=DEMO_KEY
 - **NASA GSFC SPDF OMNI2**, hourly proton flux above 10 MeV (V63). The proton chart in the solar-event scenario. https://spdf.gsfc.nasa.gov/pub/data/omni/low_res_omni/omni2_2017.dat
 - **NASA NSSDC Moon and Mars Fact Sheets** (V14). Surface gravity in the muscle model and the pressure map. https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html
-- **NASA Open Science Data Repository, OSD-652 and OSD-616** (V90, V91). Rats at full, 40% and zero weight bearing for 28 days: grip force, plantarflexion torque and calf girth. Checks the muscle model's gravity term in its own panel. https://doi.org/10.26030/z92y-7b97
+- **NASA Open Science Data Repository, OSD-652 and OSD-616** (V90, V91). Rats at full, 40% and zero weight bearing for 28 days: grip force, plantarflexion torque and calf girth. Checks the muscle model's gravity term, in the code and its tests. https://doi.org/10.26030/z92y-7b97
 
 Resources listed on the challenge page:
 
-- **NASA Human Research Program, 5 Hazards of Human Spaceflight** (V43). The panel showing where MyoTwin sits in the five hazards. https://www.nasa.gov/hrp/hazards/
+- **NASA Human Research Program, 5 Hazards of Human Spaceflight** (V43). The frame for the project: each check answers one of the five hazards. https://www.nasa.gov/hrp/hazards/
 - **NASA Human Research Program, Risks of Human Spaceflight** (V44). The NASA risk named on each check. https://www.nasa.gov/hrp/risks/
-- **NASA Human Research Program, Ongoing HRP Research in Space** (V45). ARCHeR and Standard Measures, cited on the sleep check. https://www.nasa.gov/hrp/ongoing-hrp-research/
+- **NASA Human Research Program, Ongoing HRP Research in Space** (V45). ARCHeR and Standard Measures, cited in the NASA row of the sleep check. https://www.nasa.gov/hrp/ongoing-hrp-research/
 
 Pages those resources link to:
 
-- Risk pages quoted on the checks: reduced cardiorespiratory and musculoskeletal fitness (V48), inadequate sleep and irregular schedules (V49), cardiovascular adaptations (V50), radiation-induced cancers (V51). The page on behavioural conditions (V52) is quoted in the hazard panel, under isolation and confinement, and in the note under the morning check-in. https://www.nasa.gov/reference/risk-of-reduced-cardiorespiratory-and-musculoskeletal-fitness/
-- Hazard pages used in the hazard panel: gravity fields (V53), distance from Earth (V54), isolation and confinement (V55), space radiation (V56). https://www.nasa.gov/hrp/hazard-distance-from-earth/
+- Risk pages quoted on the checks: reduced cardiorespiratory and musculoskeletal fitness (V48), inadequate sleep and irregular schedules (V49), cardiovascular adaptations (V50), radiation-induced cancers (V51). The page on behavioural conditions (V52) is the source of the journal advice in the morning check-in. https://www.nasa.gov/reference/risk-of-reduced-cardiorespiratory-and-musculoskeletal-fitness/
+- Hazard pages: gravity fields (V53), distance from Earth (V54, the 20-minute delay), isolation and confinement (V55), space radiation (V56, the reason the check-in has no question about radiation: it cannot be felt). https://www.nasa.gov/hrp/hazard-distance-from-earth/
 - Research pages: ARCHeR (V57), Tempus Pro (V58), Artemis II Standard Measures (V59). https://www.nasa.gov/reference/archer/
 
 NASA ratings, standards and reports:
 
-- **NASA Human Research Roadmap**, rating by mission type and open gaps for six risks: muscle and aerobic fitness (V70), sleep (V71), cardiovascular (V72), radiation carcinogenesis (V73), medical conditions in mission (V74), Earth-independent operations (V75). Shown on each check and in the hazard panel for the mission selected. https://humanresearchroadmap.nasa.gov/Risks/?i=180
+- **NASA Human Research Roadmap**, rating by mission type and open gaps for six risks: muscle and aerobic fitness (V70), sleep (V71), cardiovascular (V72), radiation carcinogenesis (V73), medical conditions in mission (V74), Earth-independent operations (V75). The four check ratings are shown inside each check for the mission selected. The rating for Earth-independent operations is cited in the summary above, and the one for medical conditions in mission is kept in the rules data. https://humanresearchroadmap.nasa.gov/Risks/?i=180
 - **NASA-STD-3001, Volumes 1 and 2**: health monitoring in mission (V76, V77), the recommended sleep period (V78), horizontal sleep surfaces in partial gravity (V80), the 80% strength line and its rationale (V81, also V1), the dose-rate limit for surface habitats (V83), radiation monitoring and alerting (V84), the career dose limit (V21). https://www.nasa.gov/wp-content/uploads/2023/11/nasa-std-3001-vol-1-rev-c-with-signature.pdf
 - **NASA OCHMO technical briefs**: sleep accommodations (V79, the 7-hour line), the 2026 bulletin on strength measurement (V82), exercise overview (V3). https://www.nasa.gov/wp-content/uploads/2023/12/ochmo-tb-041-sleep-accommodations.pdf
 - **NASA evidence reports**: muscle and aerobic capacity (V85), sleep (V86). https://humanresearchroadmap.nasa.gov/evidence/reports/Sleep.pdf
@@ -141,11 +141,11 @@ NASA ratings, standards and reports:
 
 Space agency partners:
 
-- **Canadian Space Agency, Monitoring radiation for astronaut health, 2026** (V46), a resource listed on the challenge page. Neutrons are about 30% of total radiation on the ISS; the CANS spectrometer is being developed to measure them. MyoTwin does not measure neutrons and says so. https://www.asc-csa.gc.ca/eng/news/articles/2026/2026-02-26-monitoring-radiation-astronaut-health.asp
+- **Canadian Space Agency, Monitoring radiation for astronaut health, 2026** (V46), a resource listed on the challenge page. Neutrons are about 30% of total radiation on the ISS; the CANS spectrometer is being developed to measure them. MyoTwin does not measure neutrons; the radiation check states their share, and the limits above list the gap. https://www.asc-csa.gc.ca/eng/news/articles/2026/2026-02-26-monitoring-radiation-astronaut-health.asp
 - **Canadian Space Agency, Why do we conduct science experiments in space?** (V47), a resource listed on the challenge page. The reason tools built for older adults are the starting point. https://www.asc-csa.gc.ca/eng/iss/science/why-do-we-conduct-science-experiments-in-space.asp
 - **European Space Agency, MARES** (V89). The 200 kg dynamometer on the ISS, which ESA describes as too complex for everyday exercise. https://www.esa.int/Science_Exploration/Human_and_Robotic_Exploration/Columbus/Muscle_Atrophy_Research_and_Exercise_System
 - **University of Tsukuba-led study with JAXA, using JAXA's centrifuge on the ISS.** Tsuji R et al., Sci Adv 2026 (V6). In mice, 0.33 g preserved soleus size and 0.67 g was sufficient to maintain muscle function. Cited as the reason the gravity term is an adjustable assumption. https://doi.org/10.1126/sciadv.aed2258
-- **ESA muscle stimulation study (ongoing)** and Hackney KJ et al. 2012 (V41), read as search summaries only. Cited in the countermeasure list as under study. https://www.axiomspace.com/research/muscle-stimulation
+- **ESA muscle stimulation study (ongoing)** and Hackney KJ et al. 2012 (V41), read as search summaries only. Background on countermeasures under study, kept in the rules data. https://www.axiomspace.com/research/muscle-stimulation
 
 Other references. "Computes" means the code uses the number; "cites" means the text refers to it.
 
