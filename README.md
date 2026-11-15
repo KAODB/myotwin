@@ -33,6 +33,8 @@ Screenshots:
 
 ![Morning brief on Mars, night 45. The headline reports muscle. The sleeper is drawn as a stipple of dots inside a square and a circle, with the four checks as notes in the margin and the nights as a ruler along the bottom](demo/screenshots/brief-mars-day45.png)
 
+![The morning check-in on Mars, night 62. On the left the three questions: mood, temperature and what the crew member notices. On the right what it means and what to do, and below a table that sets each answer beside the bunk's reading](demo/screenshots/checkin-mars-day62.png)
+
 ![The plate on Mars, night 45: change in density since arrival, with blue dots where the legs have lost](demo/screenshots/wholebody-density-diff.png)
 
 ## Run it
