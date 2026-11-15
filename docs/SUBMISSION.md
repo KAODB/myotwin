@@ -19,7 +19,7 @@ On the Moon or Mars a crew member has to notice changes in their own body. From 
 
 MyoTwin takes the tools clinics use to find muscle loss in older adults and rebuilds them for a crew member asleep on the Moon or Mars. It is a morning health brief built from the hours a crew member already spends lying still. A sensor panel in the bunk, which I assume and have not built, measures the calf muscle, sleep, heart and breathing rate, and radiation overnight. Nothing is worn and the measuring takes no crew time. In the morning the crew member answers three questions in about 30 seconds: how they feel, their temperature, and anything they notice. One screen then shows a body figure you can click, four checks in plain words, what the crew member said beside what the bunk measured, what NASA says about each risk, and what to do today.
 
-The radiation numbers are real measurements replayed night by night: Curiosity's RAD on Mars and LRO's CRaTER at the Moon, including the solar storms of September 2017. The crew member's own readings are simulated, and the radiation card says where its number was measured.
+The radiation numbers are real measurements replayed night by night: Curiosity's RAD on Mars and LRO's CRaTER at the Moon, including the solar storms of September 2017. The crew member's own readings are simulated.
 
 ## Link to Project Demo
 
