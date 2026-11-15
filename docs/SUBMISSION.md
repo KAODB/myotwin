@@ -64,6 +64,8 @@ The first nights after arrival show No data, because I do not mix nights from be
 
 The simulated muscle follows a first-order model with a gravity term and an exercise term. I fitted it to two published results: 60 days of bed rest (the model gives -28.9% and -8.1% against the published -29% and -8%) and six months on the ISS (-10.5% against -13 +/- 2%, so it underestimates). The gravity term is linear by assumption, and the code sets that assumption against rats kept for 28 days at 40% weight bearing, from NASA's Open Science Data Repository: across three measures in each sex (six results) they lost between 0.25 and 1.05 of what fully unloaded rats lost, median 0.56, where the model assumes 0.60. That is a plausibility check of one assumption, not a fit. The simulator and the mission plan use the same model, so the page shows the workflow, not how well a real decline would be caught.
 
+Every calculation, with its parameters and their sources, is written out step by step in docs/CALCULATIONS.md in the repository.
+
 ### How NASA data and resources are used
 
 In four ways.
