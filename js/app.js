@@ -20,6 +20,9 @@
   }
   var evidence = M.evidence, sim = M.sim, rules = M.rules, engine = M.engine,
     phantom = M.phantom, imaging = M.imaging, charts = M.charts;
+  // All animation goes through js/motion.js; without it every motion call does nothing.
+  var MOTION_CALLS = ['intro', 'finishIntro', 'introRunning', 'rowOpened', 'rowClosed', 'valueTo', 'stopValue', 'pulse', 'settle', 'fadeRows', 'setPlaying'];
+  var motion = M.motion || MOTION_CALLS.reduce(function (o, k) { o[k] = function () { return false; }; return o; }, {});
   var T = rules.THRESHOLDS;
   var has = function (o, k) { return Object.prototype.hasOwnProperty.call(o, k); };
 
@@ -386,14 +389,29 @@
     node.querySelector('.status-word').textContent = charts.STATUS[status].word;
   }
 
+  // The number of a note as a value and the formatting that gives its text, for counting from one
+  // night's value to the next; `family` changes when the unit or rounding does (no count across it).
+  function noteNumber(c) {
+    if (c.id === 'muscle') return { v: c.status === 'grey' ? null : c.deltaPct, fmt: fmtPct, family: 'pct' };
+    if (c.id === 'radiation') return { v: c.value, fmt: function (x) { return doseParts(x)[0]; }, family: c.value != null && isFinite(c.value) ? doseParts(c.value)[1] : '' };
+    return { v: c.value, fmt: function (x) { return fmtValue(x, c.unit); }, family: c.unit };
+  }
+
+  // On a step to another night (ruler or arrow keys, not during Play) a note's number counts from
+  // the old value to the new one, and a note whose status changed pulses its ring (after the rings are drawn).
+  var nightStep = false, shownNotes = {}, pulseIds = [];
   function renderCard(c) {
     var btn = document.querySelector('.card[data-card="' + c.id + '"]');
     if (!btn) return;
     btn.className = 'card st-' + c.status + (btn.classList.contains('is-hot') ? ' is-hot' : '');
     btn.setAttribute('aria-pressed', String(state.card === c.id));
     setStatus(btn, c.status);
-    var L = noteLines(c);
-    swapText(btn.querySelector('.num'), L.num);
+    var L = noteLines(c), numNode = btn.querySelector('.num'), n = noteNumber(c), was = shownNotes[c.id];
+    var counted = nightStep && !!was && was.family === n.family && n.v != null && n.fmt(n.v) === L.num &&
+      motion.valueTo(numNode, was.v, n.v, n.fmt);
+    if (!counted) { motion.stopValue(numNode); swapText(numNode, L.num); }
+    if (nightStep && was && was.status !== c.status) pulseIds.push(c.id);
+    shownNotes[c.id] = { v: n.v, family: n.family, status: c.status };
     btn.querySelector('.unit').textContent = L.unit;
     var sub = btn.querySelector('.card-sub');
     sub.textContent = L.sub;
@@ -490,6 +508,12 @@
   }
 
   var LAYER_WORDS = { density: 'density', pressure: 'pressure', impedance: 'impedance' };
+  // The last stipple drawn, so the landing sequence can draw it again from head to feet (`figP`, 0 to 1).
+  var lastStipple = null, figP = 1;
+  function drawFigure(p) {
+    figP = p;
+    if (lastStipple) { lastStipple[4].progress = p; charts.stipple.apply(null, lastStipple); }
+  }
   var HOTSPOT_CM = null;                           // hotspotCm(), set on the first drawing
 
   // The plate's drawing box in CSS px (the canvas and the ink layer fill it).
@@ -513,6 +537,7 @@
     var noImage = r.missionDay < 0;
     $('plate-art').classList.toggle('no-image', noImage);
     if (noImage) {
+      lastStipple = null;
       canvas.hidden = true;
       empty.hidden = true;
       charts.dotLegend(bar, null);
@@ -583,7 +608,8 @@
 
     canvas.hidden = false;
     empty.hidden = true;
-    charts.stipple(canvas, shown, ph, lay, { mode: state.view === 'diff' ? 'diff' : 'raw', overlay: overlay, dpr: Math.min(2, root.devicePixelRatio || 1) });
+    lastStipple = [canvas, shown, ph, lay, { mode: state.view === 'diff' ? 'diff' : 'raw', overlay: overlay, dpr: Math.min(2, root.devicePixelRatio || 1), progress: figP }];
+    charts.stipple.apply(null, lastStipple);
     canvas.setAttribute('aria-label', scrub(label) + ', ' + dayLabel(r));
     charts.dotLegend(bar, legend);
     $('cap-label').textContent = cap;
@@ -805,7 +831,9 @@
     var cardId = state.card;
     if (!cardId) return;
     var t = trendSpec(cardId);
-    charts.line($('trend-chart'), t.opts);
+    trendGeo = charts.line($('trend-chart'), t.opts);
+    trendGeo.unit = t.opts.unit;
+    if (readoutX != null) showReadout(readoutX);
     $('trend-note').textContent = scrub(card(cardId).reason);
     renderLegend(t.legend);
 
@@ -831,6 +859,38 @@
       var k = charts.rose($('rose'), sum, { highlightMax: true });
       $('rose-reading').textContent = 'Most particles arrive from the ' + charts.ROSE_DIRECTIONS[k] + ' side.';
     }
+  }
+
+  // ---- the trend chart's readout ----------------------------------------------------
+  // Under the pointer: a hairline at the nearest night and one line of text above the plot
+  // ("Night 31 · 7.84 deg"; the value only up to the selected night, as the chart draws it). A click
+  // on the chart goes to that night, as the ruler does. `trendGeo` is the last charts.line() result.
+  var trendGeo = null, readoutX = null;
+  function readoutDay(px) {
+    var g = trendGeo;
+    if (!g || !state.card || px < g.left - 8 || px > g.right + 8) return null;
+    return charts.nearestDay(px, g.days, g.x);
+  }
+  function readoutText(day) {
+    var i = data.dayIndex[day], c = data.assessments[i].cards[CARD_IDS.indexOf(state.card)], v = c.value;
+    var shown = day <= state.d && v != null && isFinite(v);
+    var value = !shown ? '' : c.unit === 'uGy' ? fmtDose(v) : fmtValue(v, c.unit) + ' ' + unitLabel(c.unit);
+    return dayLabel(data.gen.records[i]) + (value ? ' · ' + value : '');
+  }
+  function hideReadout() {
+    readoutX = null;
+    var old = $('trend-chart').querySelector('.readout');
+    if (old) old.parentNode.removeChild(old);
+    $('trend-readout').textContent = '';
+  }
+  function showReadout(px) {
+    var day = readoutDay(px);
+    hideReadout();
+    if (day == null) return;
+    readoutX = px;
+    var x = trendGeo.x(day).toFixed(1), g = svgEl('g', { 'class': 'readout' }, $('trend-chart'));
+    svgEl('line', { x1: x, x2: x, y1: trendGeo.top, y2: trendGeo.bottom, 'class': 'readout-line' }, g);
+    $('trend-readout').textContent = readoutText(day);
   }
 
   // Solar-event scenario only: OMNI2 proton flux near Earth, with the selected night's sleep window
@@ -899,15 +959,36 @@
   // Each check row's meta (status and the value of its margin note), and which row is open: the
   // open row follows state.card, and the shared detail block moves into it. `open` is set only
   // when it differs, so the toggle events this causes find nothing to change (syncOpenRow).
-  var shownCard = null;
+  var shownCard = null, rowToOpen = null;
+  // The sparkline in a check row's title: that check's nightly values for the 30 nights up to the
+  // selected night (the series its trend chart judges), in the accent only on Watch or Report.
+  var SPARK_W = 120, SPARK_H = 28, SPARK_NIGHTS = 30;
+  function renderSpark(row, id, status) {
+    var k = CARD_IDS.indexOf(id), i = idx(), vals = [];
+    for (var j = Math.max(0, i - SPARK_NIGHTS + 1); j <= i; j++) vals.push(data.assessments[j].cards[k].value);
+    var svg = row.querySelector('.spark');
+    svg.setAttribute('class', 'spark st-' + status);
+    charts.spark(svg, vals, SPARK_W, SPARK_H);
+  }
+  // The blocks of a row that fade up when it opens, and the line that draws in.
+  function rowBlocks(row) {
+    return row.classList.contains('check-row') ? [$('guidance'), $('trend'), $('nasa-row')] : row.querySelector('.row-body').children;
+  }
+  function openRowMotion(row) {
+    motion.rowOpened(row, rowBlocks(row), row.classList.contains('check-row') ? $('trend-chart').querySelector('path.series') : null);
+  }
   function renderRows() {
     Array.prototype.forEach.call(document.querySelectorAll('.check-row'), function (row) {
       var id = row.dataset.card, c = card(id), L = noteLines(c), meta = row.querySelector('.row-meta');
       clear(meta);
       meta.appendChild(statusEl(c.status, charts.STATUS[c.status].word));
       meta.appendChild(el('span', 'row-value', c.status === 'grey' ? '' : L.num + ' ' + L.unit));
+      renderSpark(row, id, c.status);
       var open = state.card === id;
-      if (row.open !== open) row.open = open;
+      if (row.open !== open) {
+        row.open = open;
+        if (open) rowToOpen = row; else motion.rowClosed(row);
+      }
       if (open) {
         var body = row.querySelector('.row-body'), detail = $('check-detail');
         if (detail.parentNode !== body) body.appendChild(detail);
@@ -968,6 +1049,7 @@
     $('ci-temp-hint').hidden = !on;
   }
 
+  var ciShown = null;                              // the check-in status last drawn ('' when not done)
   function renderCheckin(r) {
     pressed('[data-mood]', 'mood', state.mo == null ? '' : String(state.mo));
     Array.prototype.forEach.call(document.querySelectorAll('[data-sym]'), function (b) {
@@ -995,6 +1077,7 @@
     r.actions.forEach(function (a) { ol.appendChild(el('li', null, a)); });
     $('ci-decides').textContent = r.decides + '.';
 
+    var tableWasHidden = $('ci-compare').hidden;
     $('ci-compare').hidden = !r.done;
     var tb = $('ci-rows');
     clear(tb);
@@ -1020,11 +1103,16 @@
       tr.appendChild(el('td', null, CI.verdicts[row.verdict]));
       tb.appendChild(tr);
     });
+    // A changed status settles its marks; the table's rows fade in one after another as it appears.
+    var token = r.done ? r.status : '';
+    if (ciShown != null && token !== ciShown && token) motion.settle(document.querySelectorAll('#checkin-meta .st-icon, #guide-checkin-detail .st-icon'));
+    if (ciShown != null && tableWasHidden && r.done) motion.fadeRows(tb.children);
+    ciShown = token;
   }
 
   function openCheckin() {
     var row = $('checkin');
-    row.open = true;
+    if (!row.open) { row.open = true; openRowMotion(row); }
     scrollTo(row);
     document.querySelector('[data-mood="1"]').focus({ preventScroll: true });
   }
@@ -1039,8 +1127,12 @@
   }
 
   // ---- update cycle ----------------------------------------------------------------
+  var lastView = null;
   function render() {
     var changed = ensureData();
+    nightStep = !!lastView && lastView.s === state.s && lastView.key === data.key && lastView.d !== state.d && !playTimer;
+    pulseIds = [];
+    rowToOpen = null;
     var ci = checkinResult();
     renderTopbar();
     renderBrief();
@@ -1053,6 +1145,10 @@
     renderGuidance();
     renderCheckin(ci);
     renderWhatIf();
+    lastView = { s: state.s, d: state.d, key: data.key };
+    // Motion that needs the finished drawing: the opened row's trend line, the rings drawn this time.
+    if (rowToOpen) openRowMotion(rowToOpen);
+    pulseIds.forEach(function (id) { motion.pulse($('plate-ink').querySelector('.hs-mark[data-card="' + id + '"] .hs-ring')); });
     return changed;
   }
 
@@ -1109,6 +1205,7 @@
   function setPlaying(on) {
     if (playTimer) { clearInterval(playTimer); playTimer = null; }
     $('headline').setAttribute('aria-live', on ? 'off' : 'polite');
+    motion.setPlaying(on);
     if (on) {
       if (idx() === data.gen.records.length - 1) update({ d: data.gen.records[0].missionDay });
       playTimer = setInterval(function () { if (!stepDay(1)) setPlaying(false); }, reducedMotion ? 1000 : 125);
@@ -1159,7 +1256,25 @@
       });
       row.addEventListener('toggle', syncOpenRow);
     });
+    // The other rows open and close here too, so an opening row starts its motion before it is drawn.
+    Array.prototype.forEach.call(document.querySelectorAll('.row:not(.check-row)'), function (row) {
+      row.querySelector('summary').addEventListener('click', function (e) {
+        e.preventDefault();
+        row.open = !row.open;
+        if (row.open) openRowMotion(row); else motion.rowClosed(row);
+      });
+    });
     $('flux-row').addEventListener('toggle', function () { renderFlux(state.card); });
+    // The trend chart: the pointer reads a night, a click goes to it.
+    var chart = $('trend-chart');
+    chart.addEventListener('pointermove', function (e) { showReadout(e.clientX - chart.getBoundingClientRect().left); });
+    chart.addEventListener('pointerleave', hideReadout);
+    chart.addEventListener('click', function (e) {
+      var day = readoutDay(e.clientX - chart.getBoundingClientRect().left);
+      if (day == null || day === state.d) return;
+      setPlaying(false);
+      update({ d: day });
+    });
     // The skip link moves focus without replacing the view in the address.
     document.querySelector('.skip').addEventListener('click', function (e) {
       e.preventDefault();
@@ -1248,12 +1363,32 @@
     Array.prototype.forEach.call(document.querySelectorAll('.reveal'), function (n) { io.observe(n); });
   }
 
+  // Elements only the script uses: a sparkline in each check row's title (decorative, the meta text
+  // says the value) and the trend chart's readout line (pointer only; keyboard users have the ruler).
+  function buildExtras() {
+    Array.prototype.forEach.call(document.querySelectorAll('.check-row > summary'), function (sum) {
+      var svg = svgEl('svg', { 'class': 'spark', width: SPARK_W, height: SPARK_H, 'aria-hidden': 'true', focusable: 'false' });
+      sum.insertBefore(svg, sum.querySelector('.row-meta'));
+    });
+    var p = el('p', 'trend-readout');
+    p.id = 'trend-readout';
+    p.setAttribute('aria-hidden', 'true');
+    $('trend').insertBefore(p, $('trend-chart'));
+  }
+
   // ---- start -----------------------------------------------------------------------
+  buildExtras();
   revealOnScroll();
   wire();
   var initialHash = location.hash;
   renderFromLink(initialHash.indexOf('=') >= 0 ? initialHash : '');
   if (initialHash.indexOf('=') < 0 && isBrokenAnchor(initialHash)) showNotice();
+  // The landing sequence leads the eye through the three steps, ending on "Check in" when it is still to do.
+  motion.intro({
+    headline: $('headline'), guide: document.querySelectorAll('#guide > li'), drawFigure: drawFigure,
+    ink: $('plate-ink'), notes: document.querySelectorAll('#cards .card'), ruler: $('ruler'),
+    sweep: checkinResult().done ? null : document.querySelector('#guide-checkin .guide-name')
+  });
   // Text measured in the figures changes once the web fonts are in: draw them again.
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(redrawFigures);
 })(typeof globalThis !== 'undefined' ? globalThis : this);

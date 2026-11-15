@@ -125,3 +125,16 @@ test('the morning check-in row and its controls exist', () => {
   assert.strictEqual(rules.CHECKIN.tempMaxC, 42);
   assert.match(sec[1], /class="ci-result" aria-live="polite"/);
 });
+
+// Anime.js is vendored unchanged and loaded before the page script, through js/motion.js only.
+test('index.html loads vendor/anime.umd.min.js and js/motion.js before js/app.js; the vendor file is the recorded one', () => {
+  const app = scripts.indexOf('js/app.js'), vendor = scripts.indexOf('vendor/anime.umd.min.js'), motion = scripts.indexOf('js/motion.js');
+  assert.ok(vendor >= 0 && motion >= 0, 'both scripts are loaded');
+  assert.ok(vendor < motion && motion < app, 'vendor, then motion, then app');
+  const sha = require('node:crypto').createHash('sha256').update(fs.readFileSync(path.join(root, 'vendor/anime.umd.min.js'))).digest('hex');
+  const readme = fs.readFileSync(path.join(root, 'vendor/README.md'), 'utf8');
+  assert.match(readme, new RegExp('SHA-256 of `anime.umd.min.js`: `' + sha + '`'));
+  assert.ok(fs.existsSync(path.join(root, 'vendor/anime-LICENSE.md')));
+  assert.doesNotMatch(fs.readFileSync(path.join(root, 'js/app.js'), 'utf8'), /\banime\./);
+  assert.doesNotMatch(fs.readFileSync(path.join(root, 'js/motion.js'), 'utf8'), /innerHTML|splitText|scrambleText|createSpring/);
+});
